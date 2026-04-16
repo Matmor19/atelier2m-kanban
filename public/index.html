@@ -16,7 +16,7 @@
 html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);color:var(--txt);overflow:hidden}
 .bg-photo{position:fixed;inset:0;z-index:0;background-image:url('https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?w=1920&q=80');background-size:cover;background-position:center 35%}
 .bg-ov{position:fixed;inset:0;z-index:1;background:rgba(6,5,3,0.28)}
-.bg-wm{position:fixed;bottom:2%;right:2%;z-index:2;width:110px;opacity:0.06;pointer-events:none}
+.bg-wm{position:fixed;top:20px;left:20px;z-index:1000;width:140px;opacity:1;background:white;padding:5px;border-radius:8px;}
 .app{position:relative;z-index:3;display:flex;flex-direction:column;height:100vh;overflow:hidden}
 
 /* HEADER */
@@ -247,6 +247,7 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
 </style>
 </head>
 <body>
+<img class="bg-wm" src="logo.png">
 <div class="bg-photo"></div>
 <div class="bg-ov"></div>
 <img class="bg-wm" src="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;120&#39; height=&#39;60&#39; viewBox=&#39;0 0 120 60&#39;%3E%3Crect width=&#39;120&#39; height=&#39;60&#39; fill=&#39;%23d4762a&#39; rx=&#39;4&#39;/%3E%3Ctext x=&#39;60&#39; y=&#39;42&#39; font-family=&#39;Arial Black,sans-serif&#39; font-size=&#39;36&#39; font-weight=&#39;900&#39; fill=&#39;%230a0806&#39; text-anchor=&#39;middle&#39;%3EM%3C/text%3E%3C/svg%3E" alt="">
