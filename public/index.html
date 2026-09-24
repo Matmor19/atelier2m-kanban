@@ -187,6 +187,16 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
 .ck-lbl{font-size:12px;font-weight:500;color:var(--txt2);line-height:1.4}
 .ck-lbl.done{text-decoration:line-through;color:var(--txt3)}
 .ck-empty{padding:14px;text-align:center;color:var(--txt3);font-size:10px;font-style:italic;border:1px dashed var(--brd);border-radius:3px;line-height:1.6}
+.doc-drop{border:1.5px dashed rgba(212,118,42,.45);border-radius:4px;padding:14px;text-align:center;font-size:11px;color:var(--txt2);cursor:pointer;transition:all .15s;margin-top:4px}
+.doc-drop:hover,.doc-drop.over{border-color:var(--or);background:rgba(212,118,42,.08);color:var(--txt)}
+.doc-drop b{color:var(--or-l)}
+.doc-list{display:flex;flex-direction:column;gap:4px;margin-top:6px}
+.doc-it{display:flex;align-items:center;gap:8px;padding:7px 9px;background:rgba(255,255,255,.03);border:1px solid rgba(212,118,42,.15);border-radius:3px;font-size:11px}
+.doc-it a{color:var(--txt);text-decoration:none;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.doc-it a:hover{color:var(--or-l);text-decoration:underline}
+.doc-it .meta{font-size:9px;color:var(--txt3);white-space:nowrap}
+.doc-it .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:0 2px}.doc-it .rm:hover{color:#ff5555}
+.doc-it.up{opacity:.6;font-style:italic}
 .notes-box{background:rgba(255,255,255,.02);border:1px solid rgba(212,118,42,0.1);border-radius:3px;padding:10px;font-size:11px;color:var(--txt3);font-style:italic;line-height:1.6;min-height:44px;cursor:pointer;margin-top:4px}
 .notes-box:hover{border-color:var(--brd2)}
 .notes-edit{width:100%;background:rgba(28,22,10,0.95);border:1px solid var(--brd2);border-radius:3px;padding:10px;font-family:'Montserrat',sans-serif;font-size:11px;color:var(--txt);line-height:1.6;resize:vertical;min-height:68px;outline:none;margin-top:4px}
@@ -332,6 +342,11 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
       </div>
       <input class="sd-inp" id="d-cad-e" placeholder="Parcelle cadastrale (ex : BL 41)" onchange="sf('cad',this.value)">
       <textarea class="sd-inp pj-area" id="d-res-e" placeholder="Résumé du projet envisagé / en cours…" onchange="sf('resume',this.value)"></textarea>
+      <div class="sec-lbl" style="margin-top:14px">Documents</div>
+      <div class="doc-drop" id="doc-drop" onclick="document.getElementById('doc-in').click()">📎 <b>Ajouter un document</b> — cliquez ou glissez vos fichiers ici<br><span style="font-size:9px;color:var(--txt3)">PDF, images, plans… rangés dans votre Google Drive, dossier du client</span></div>
+      <input type="file" id="doc-in" multiple style="display:none" onchange="uploadDocs(this.files);this.value=''">
+      <div class="doc-list" id="doc-list"></div>
+      <div id="doc-folder" style="margin-top:4px"></div>
       <div class="sec-lbl" style="margin-top:14px">Missions</div>
       <div class="ms-grid" id="ms-grid"></div>
       <div id="d-chk"></div>
@@ -806,7 +821,8 @@ function render(){
       }
       var contLbl=card.cont&&card.contMotif?'<div class="cont-lbl"><b>MOTIF</b>'+esc(card.contMotif)+'</div>':'';
       var staleLbl=stale?'<div class="stale-lbl">Stagnant · '+daysSince(card.upd)+' j</div>':'';
-      var foot=(card.date||card.hono)?'<div class="card-foot">'+(card.date?'<span>'+card.date+'</span>':'')+(card.hono?'<span>'+Math.round(parseFloat(card.hono)).toLocaleString('fr-FR')+'€ HT</span>':'')+'</div>':'';
+      var nDoc=(card.files||[]).length;
+      var foot=(card.date||card.hono||nDoc)?'<div class="card-foot">'+(card.date?'<span>'+card.date+'</span>':'')+(nDoc?'<span title="Documents">📎 '+nDoc+'</span>':'')+(card.hono?'<span>'+Math.round(parseFloat(card.hono)).toLocaleString('fr-FR')+'€ HT</span>':'')+'</div>':'';
       var el=document.createElement('div');
       el.className='card '+cc+(stale?' stale':'')+(card.cont?' cont':'');el.dataset.id=card.id;
       el.innerHTML='<div class="card-stripe" style="'+stripColor(card)+'"></div>'+
@@ -843,7 +859,7 @@ function openDet(id){
   document.getElementById('d-hono-e').value=act.hono||'';
   document.getElementById('d-due-e').value=act.due||'';
   document.getElementById('d-prop-e').checked=!!act.prop;
-  renderCont();renderIns();
+  renderCont();renderIns();renderDocs();
   renderTelLink();
   var sel=document.getElementById('d-col-sel');sel.innerHTML='';
   COLS.forEach(function(col){var o=document.createElement('option');o.value=col.id;o.textContent=col.name;if(col.id===act.col)o.selected=true;sel.appendChild(o);});
@@ -1014,6 +1030,74 @@ function setPcDem(on){
   act.upd=Date.now();sv();render();renderIns();
   toast(on?'Demande de pièces complémentaires notée':'Demande de pièces retirée');
 }
+
+// ── DOCUMENTS (rangés dans Google Drive via le script) ─────────────
+var MAX_MO=20;
+function fmtSize(b){if(!b)return'';return b>1048576?(b/1048576).toFixed(1).replace('.',',')+' Mo':Math.max(1,Math.round(b/1024))+' Ko';}
+function docIcon(n){var e=(n.split('.').pop()||'').toLowerCase();return e==='pdf'?'📄':/^(jpe?g|png|gif|webp|heic)$/.test(e)?'🖼':/^(dwg|dxf|pln|ifc|skp)$/.test(e)?'📐':/^(xlsx?|csv|ods)$/.test(e)?'📊':/^(docx?|odt)$/.test(e)?'📝':'📎';}
+var uploading=[];
+function renderDocs(){
+  if(!act)return;
+  var files=act.files||[],h='';
+  files.forEach(function(f,i){
+    h+='<div class="doc-it"><span>'+docIcon(f.name)+'</span><a href="'+esc(f.url)+'" target="_blank" rel="noopener" title="Ouvrir">'+esc(f.name)+'</a>'+
+       '<span class="meta">'+fmtD(f.date)+(f.size?' · '+fmtSize(f.size):'')+'</span>'+
+       '<button class="rm" title="Retirer" onclick="removeDoc('+i+')">×</button></div>';
+  });
+  uploading.filter(function(u){return u.card===act.id;}).forEach(function(u){
+    h+='<div class="doc-it up"><span>⏳</span><span style="flex:1">'+esc(u.name)+'</span><span class="meta">envoi…</span></div>';
+  });
+  document.getElementById('doc-list').innerHTML=h;
+  document.getElementById('doc-folder').innerHTML=act.folderUrl?'<a href="'+esc(act.folderUrl)+'" target="_blank" rel="noopener" style="font-size:10px;color:var(--or-l);text-decoration:none">→ Ouvrir le dossier du client dans Google Drive</a>':'';
+}
+function uploadDocs(list){
+  if(!act||!list||!list.length)return;
+  if(location.protocol==='file:'||!remoteReady){toast('Connexion au serveur nécessaire pour envoyer un document');return;}
+  var card=act;
+  Array.prototype.forEach.call(list,function(file){
+    if(file.size>MAX_MO*1048576){toast(file.name+' : trop lourd (max '+MAX_MO+' Mo)');return;}
+    var u={card:card.id,name:file.name};uploading.push(u);renderDocs();
+    var r=new FileReader();
+    r.onload=function(){
+      var b64=String(r.result).split(',')[1]||'';
+      fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+        body:JSON.stringify({action:'upload',ref:card.ref||'',nom:card.nom||'',name:file.name,mimeType:file.type||'application/octet-stream',base64:b64})})
+        .then(function(x){return x.json();})
+        .then(function(res){
+          if(!res||!res.ok)throw new Error((res&&res.erreur)||'erreur');
+          card.files=card.files||[];
+          card.files.push({id:res.id,name:res.name,url:res.url,size:res.size||file.size,date:new Date().toISOString().split('T')[0]});
+          if(res.folderUrl)card.folderUrl=res.folderUrl;
+          card.upd=Date.now();sv();render();toast('Document ajouté : '+file.name);
+        })
+        .catch(function(e){toast('Échec de l\'envoi de '+file.name+' — réessayez');console.log(e);})
+        .then(function(){uploading.splice(uploading.indexOf(u),1);if(act&&act.id===card.id)renderDocs();});
+    };
+    r.readAsDataURL(file);
+  });
+}
+function removeDoc(i){
+  if(!act||!act.files||!act.files[i])return;
+  var f=act.files[i];
+  if(!confirm('Retirer « '+f.name+' » de ce dossier ?\nLe fichier sera placé dans la corbeille de Google Drive (récupérable 30 jours).'))return;
+  act.files.splice(i,1);act.upd=Date.now();sv();render();renderDocs();
+  if(f.id&&remoteReady)fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'delete',id:f.id})}).catch(function(){});
+  toast('Document retiré');
+}
+(function(){
+  document.addEventListener('DOMContentLoaded',function(){});
+  var dz=null;
+  function setup(){
+    dz=document.getElementById('doc-drop');if(!dz)return;
+    ['dragenter','dragover'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.add('over');});});
+    ['dragleave','drop'].forEach(function(ev){dz.addEventListener(ev,function(e){e.preventDefault();dz.classList.remove('over');});});
+    dz.addEventListener('drop',function(e){uploadDocs(e.dataTransfer.files);});
+  }
+  if(document.readyState!=='loading')setup();else document.addEventListener('DOMContentLoaded',setup);
+})();
+// Évite que le navigateur ouvre le fichier si on le lâche à côté de la zone
+window.addEventListener('dragover',function(e){e.preventDefault();});
+window.addEventListener('drop',function(e){e.preventDefault();});
 
 function renderCont(){
   if(!act)return;
@@ -1210,6 +1294,7 @@ function expFicheTravail(){
     '<h2>Projet</h2>'+kv(projetRows(c,true),true)+
     '<h2>Résumé du projet</h2>'+(c.resume?'<div class="box">'+nl2br(c.resume)+'</div>':'<div class="miss">Non renseigné</div>')+
     '<h2>Checklists — '+p.d+'/'+p.t+' étapes · '+p.pct+'%</h2>'+missionsHtml(c)+
+    ((c.files||[]).length?'<h2>Documents ('+c.files.length+')</h2>'+c.files.map(function(f){return '<div class="st"><b>'+docIcon(f.name)+'</b>'+esc(f.name)+' <span style="color:#999">— '+fmtD(f.date)+'</span></div>';}).join(''):'')+
     (c.notes?'<h2>Notes</h2><div class="box">'+nl2br(c.notes)+'</div>':'')+
     '<h2>Notes de terrain</h2><div class="lines">'+new Array(7).join('<div></div>')+'</div>';
   openFiche('Fiche de travail',b);toast('Fiche de travail générée');
