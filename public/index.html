@@ -74,6 +74,9 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
 .board-wrap::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:4px}
 .board{display:flex;height:100%;width:100%;gap:12px}
 .col{flex:1;min-width:228px;display:flex;flex-direction:column;background:var(--col-bg);border:1px solid var(--brd);border-radius:14px;position:relative;transition:background .15s,border-color .15s,transform .15s}
+.col:not([data-col="prospects"]){background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 20%,transparent) 0%,color-mix(in srgb,var(--acc) 9%,transparent) 45%,color-mix(in srgb,var(--acc) 2%,transparent) 100%),var(--col-bg);border-color:color-mix(in srgb,var(--acc) 28%,var(--brd))}
+:root[data-theme="dark"] .col:not([data-col="prospects"]){background:linear-gradient(180deg,color-mix(in srgb,var(--acc) 24%,transparent) 0%,color-mix(in srgb,var(--acc) 8%,transparent) 45%,color-mix(in srgb,var(--acc) 2%,transparent) 100%),var(--col-bg)}
+.col:not([data-col="prospects"]) .col-lbl{color:color-mix(in srgb,var(--acc) 75%,var(--txt))}
 .col.drop{background:color-mix(in srgb,var(--acc) 12%,var(--surface));border-color:var(--acc);border-style:dashed;transform:scale(1.01)}
 .col-head{flex-shrink:0;padding:12px 14px 10px;display:flex;align-items:center;gap:8px;position:relative}
 .col-acc{position:absolute;top:0;left:14px;right:14px;height:4px;border-radius:0 0 4px 4px}
@@ -125,6 +128,12 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .ins-lbl{font-size:10.5px;color:var(--purple);margin-top:5px;line-height:1.5;background:color-mix(in srgb,var(--purple) 8%,transparent);border-radius:8px;padding:5px 8px}.ins-lbl b{font-size:8.5px;letter-spacing:.08em;margin-right:4px}.ins-lbl .warn,.ins-lbl .warn b{color:var(--amber) !important}
 .ins-box{border:1px solid color-mix(in srgb,var(--purple) 45%,transparent);background:color-mix(in srgb,var(--purple) 7%,var(--surface));border-radius:10px;padding:9px}
 .ins-box .sec-lbl{color:var(--purple) !important}
+.kd-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+.kd{display:flex;gap:7px;align-items:flex-start;font-size:11px;line-height:1.35;color:var(--txt2);background:var(--surface);border:1px solid var(--brd);border-radius:8px;padding:6px 8px}
+.kd b{color:var(--txt);white-space:nowrap}
+.kd.past{opacity:.55}
+.kd.soon{border-color:var(--amber);background:color-mix(in srgb,var(--amber) 8%,var(--surface))}
+.kd-note{font-size:10px;color:var(--txt3);margin-top:4px;line-height:1.4}
 .ins-box .sd-lbl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--purple);margin:5px 0 3px}
 .ins-box label[for="d-pcd-e"]{color:var(--amber) !important}
 #d-ins-info span[style]{color:var(--amber) !important}
@@ -209,7 +218,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .notes-edit{width:100%;background:var(--inp);border:1px solid var(--or);border-radius:10px;padding:10px 12px;font-family:'Montserrat',sans-serif;font-size:12px;color:var(--txt);line-height:1.6;resize:vertical;min-height:80px;outline:none;margin-top:4px}
 
 /* Sidebar détail */
-.md-side{width:240px;flex-shrink:0;padding:22px 16px;display:flex;flex-direction:column;gap:11px;overflow-y:auto;max-height:88vh;background:var(--surface2)}
+.md-side{width:275px;flex-shrink:0;padding:22px 16px;display:flex;flex-direction:column;gap:11px;overflow-y:auto;max-height:88vh;background:var(--surface2)}
 .ic{background:var(--surface);border:1px solid var(--brd);border-radius:10px;padding:7px 10px;margin-bottom:3px}
 .ik{font-size:8.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--txt3);margin-bottom:2px}
 .iv{font-size:12px;font-weight:700;color:var(--or) !important}
@@ -409,6 +418,11 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
         <div class="sd-lbl">Date de dépôt</div>
         <input class="sd-inp" id="d-depot-e" type="date" onchange="sf('depotDate',this.value);renderIns()">
         <input class="sd-inp" id="d-ndos-e" placeholder="N° de dossier (ex : PC 019 031 26 X0012)" onchange="sf('nDossier',this.value)">
+        <div class="sd-lbl">Type d'autorisation</div>
+        <select class="sd-inp" id="d-itype-e" onchange="sf('insType',this.value);renderIns()"></select>
+        <label class="sd-chk" style="margin:4px 0"><input type="checkbox" id="d-abf-e" onchange="sf('abf',this.checked);renderIns()"><label for="d-abf-e">Avis ABF (abords monument historique, site patrimonial) : +1 mois</label></label>
+        <div class="sd-lbl">Délai notifié par la mairie (si différent)</div>
+        <input class="sd-inp" id="d-dm-e" type="number" min="1" max="12" placeholder="automatique" onchange="sf('delaiMairie',this.value);renderIns()">
         <label class="sd-chk" style="margin:6px 0 0"><input type="checkbox" id="d-pcd-e" onchange="setPcDem(this.checked)"><label for="d-pcd-e" style="color:#ffb040;font-weight:800">📎 Pièces complémentaires demandées</label></label>
         <div id="d-pcd-det" style="display:none;margin-top:4px">
           <div class="sd-lbl">Demande reçue le</div>
@@ -417,7 +431,11 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
           <div class="sd-lbl">Pièces transmises le</div>
           <input class="sd-inp" id="d-pce-e" type="date" onchange="sf('pcEnvDate',this.value);renderIns()">
         </div>
-        <div id="d-ins-info" style="font-size:9px;color:var(--txt2);margin-top:6px;line-height:1.5"></div>
+        <div class="sd-lbl" style="margin-top:8px">Autorisation obtenue le</div>
+        <input class="sd-inp" id="d-acc-e" type="date" onchange="sf('accordDate',this.value);renderIns()">
+        <div class="sd-lbl">Panneau affiché sur le terrain depuis le</div>
+        <input class="sd-inp" id="d-aff-e" type="date" onchange="sf('affDate',this.value);renderIns()">
+        <div id="d-ins-info" class="kd-list"></div>
       </div>
       <div class="cont-box">
         <label class="sd-chk" style="margin:0"><input type="checkbox" id="d-cont-e" onchange="setCont(this.checked)"><label for="d-cont-e" style="color:#ff7070;font-weight:800">⚠ Dossier en contentieux</label></label>
@@ -516,6 +534,9 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
         <label>Alerte stagnation (jours)</label>
         <input id="p-stale" type="number" min="1" max="90" value="14">
       </div>
+      <div class="fld">
+        <label class="sd-chk" style="text-transform:none;letter-spacing:0"><input type="checkbox" id="p-cal"> <span style="font-size:12px;color:var(--txt2);font-weight:600">Ajouter les dates importantes dans Google Agenda</span></label>
+      </div>
       <div style="border-top:1px solid var(--brd);margin-top:14px;padding-top:14px">
         <div style="font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--txt3);margin-bottom:8px">Sauvegarde des dossiers</div>
         <button class="mb-s" style="width:100%;margin-bottom:6px" onclick="exportData()">⬇ Exporter mes dossiers (fichier)</button>
@@ -541,11 +562,11 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 <script>
 var COLS=[
   {id:'prospects',   name:'Prospects',    acc:'#4a4238'},
-  {id:'propositions',name:'Propositions', acc:'#a85a1a'},
+  {id:'propositions',name:'Propositions', acc:'#d9a300'},
   {id:'afaire',      name:'À faire',      acc:'#d4762a'},
   {id:'encours',     name:'En cours',     acc:'#2460a8'},
   {id:'instruction', name:'Déposé · en instruction', acc:'#7a4fc0'},
-  {id:'attente',     name:'En attente',   acc:'#c47020'},
+  {id:'attente',     name:'En attente',   acc:'#6f7c8f'},
   {id:'termines',    name:'Terminés',     acc:'#2a8a5a'}
 ];
 
@@ -648,6 +669,36 @@ var DB={cards:[],archived:[]},act=null,filt='all',sortMode='date_desc',staledays
 var API='https://script.google.com/macros/s/AKfycbz7RvskxhCGT2oR8yHBJYFoLb_uyd8ISc4HWXqZHF_oRsH6r5YLCbAESNAmSiiD7B0xog/exec';
 var remoteReady=false,pushTimer=null;
 
+// ── GOOGLE AGENDA ───────────────────────────────────────────
+var calQueue=[],calBusy=false,calWarned=false;
+function calEventsFor(c){
+  if(DB.calOff)return [];
+  var desc=[c.ref?'Dossier '+c.ref:'',c.nom,c.addr?'Chantier : '+c.addr:'',c.nDossier?'N° '+c.nDossier:'',c.tel?'Tél. '+c.tel:'','— Kanban Atelier 2M'].filter(Boolean).join('\n');
+  return keyDates(c).map(function(x){return {key:x.k,date:isoOf(x.d),title:x.i+' '+x.t.split(' (')[0]+' — '+c.nom+(c.ref?' ('+c.ref+')':''),desc:x.t+'\n\n'+desc};});
+}
+function calSyncAll(){
+  if(!remoteReady||location.protocol==='file:')return;
+  DB.cards.forEach(function(c){
+    var sig=JSON.stringify(calEventsFor(c));
+    if(sig!==(c.calSig||'[]')&&calQueue.every(function(q){return q.id!==c.id;}))calQueue.push({id:c.id,card:c});
+  });
+  calNext();
+}
+function calRemove(c){if(c&&c.calSig&&c.calSig!=='[]'){calQueue.push({id:c.id,card:c,clear:true});calNext();}}
+function calNext(){
+  if(calBusy||!calQueue.length)return;
+  var q=calQueue.shift(),c=q.card,evs=q.clear?[]:calEventsFor(c),sig=JSON.stringify(evs);
+  calBusy=true;
+  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'calsync',cardId:String(c.id),events:evs})})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(res&&res.ok){c.calSig=q.clear?'[]':sig;if(!q.clear)sv();}
+      else if(!calWarned){calWarned=true;toast('Agenda : mettez à jour le script Google (voir les instructions)');}
+    })
+    .catch(function(){})
+    .then(function(){calBusy=false;setTimeout(calNext,300);});
+}
+
 function saveLocal(){try{localStorage.setItem('a2m_kanban',JSON.stringify(DB));}catch(e){}}
 function payload(){var c=JSON.parse(JSON.stringify(DB));delete c.dirty;return JSON.stringify(c);}
 
@@ -670,6 +721,7 @@ function pushRemote(){
     .then(function(res){
       if(!res||!res.ok){toast('Sauvegarde Google refusée : '+((res&&res.erreur)||'erreur'));return;}
       if(DB.savedAt===sentAt&&!pushTimer){DB.dirty=false;saveLocal();}
+      calSyncAll();
     })
     .catch(function(){toast('Hors ligne — sauvegardé sur cet appareil');});
 }
@@ -699,6 +751,7 @@ function load(){
       if(remoteHas&&!(DB.dirty&&(DB.savedAt||0)>(p.savedAt||0))){takeRemote(p);}
       else if(DB.cards.length){sv();}
       render();
+      setTimeout(calSyncAll,1500);
     })
     .catch(function(e){console.log('Mode local:',e.message);toast('Serveur injoignable — mode local');});
 }
@@ -870,7 +923,7 @@ function render(){
         var de=decisionEstimee(card);
         insLbl='<div class="ins-lbl">'+(card.depotDate?'<b>DÉPÔT</b>'+fmtD(card.depotDate)+' · J+'+daysFrom(card.depotDate):'<b>DÉPÔT</b>date à saisir')+
           (lim?'<br><span class="warn"><b>PIÈCES</b>avant le '+lim.toLocaleDateString('fr-FR')+' ('+(daysTo(lim)>=0?daysTo(lim)+' j':'dépassé')+')</span>':'')+
-          (de&&!lim?'<br><b>DÉCISION</b>≈ '+de.toLocaleDateString('fr-FR'):'')+'</div>';
+          (de&&!lim?'<br><b>DÉCISION</b>≈ '+de.toLocaleDateString('fr-FR')+(card.abf?' · ABF':''):'')+(card.pcDem&&!card.pcEnvDate?'<br>Délai suspendu (pièces)':'')+'</div>';
       }
       var contLbl=card.cont&&card.contMotif?'<div class="cont-lbl"><b>MOTIF</b>'+esc(card.contMotif)+'</div>':'';
       var staleLbl=stale?'<div class="stale-lbl">💤 Sans activité depuis '+daysSince(card.upd)+' j</div>':'';
@@ -1147,11 +1200,39 @@ function tck(m,i,v){
 function addMonths(iso,n){var d=new Date(iso);if(isNaN(d))return null;d.setMonth(d.getMonth()+n);return d;}
 function daysTo(d){return Math.ceil((d-new Date(new Date().toDateString()))/864e5);}
 function daysFrom(iso){return Math.floor((new Date(new Date().toDateString())-new Date(iso))/864e5);}
-// Délai d'instruction de droit commun : PC maison individuelle 2 mois, DP 1 mois (à partir du dossier complet)
+// Délais d'instruction de droit commun (Code de l'urbanisme R423-23), +1 mois si avis de l'ABF (R423-24).
+// Ce sont des ESTIMATIONS : le délai officiel figure sur le récépissé ou dans le courrier de la mairie.
+var INS_TYPES={pcmi:{l:'PC maison individuelle',s:'PC',m:2},pc:{l:'PC autre projet',s:'PC',m:3},dp:{l:'Déclaration préalable',s:'DP',m:1},pa:{l:"Permis d'aménager",s:'PA',m:3},pd:{l:'Permis de démolir',s:'PD',m:2}};
+function insType(c){return c.insType&&INS_TYPES[c.insType]?c.insType:((c.ms||[]).indexOf('pc')>=0?'pcmi':(c.ms||[]).indexOf('dt')>=0?'dp':'pcmi');}
+function delaiMois(c){var dm=parseInt(c.delaiMairie);return dm>0?dm:INS_TYPES[insType(c)].m+(c.abf?1:0);}
 function decisionEstimee(c){
+  if(c.pcDem&&!c.pcEnvDate)return null;            // délai suspendu tant que les pièces ne sont pas fournies
   var base=(c.pcDem?c.pcEnvDate:c.depotDate);
   if(!base)return null;
-  return addMonths(base,(c.ms||[]).indexOf('pc')>=0?2:1);
+  return addMonths(base,delaiMois(c));
+}
+function isoOf(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+// Dates clés d'un dossier (affichées dans la fiche et envoyées dans Google Agenda)
+function keyDates(c){
+  var L=[],T=INS_TYPES[insType(c)].s,d;
+  if(c.depotDate){
+    L.push({k:'depot',i:'📨',t:'Dépôt du '+T+' en mairie',d:new Date(c.depotDate)});
+    if(!c.accordDate){
+      if(!c.pcDem)L.push({k:'complet',i:'📋',t:'Fin du délai de demande de pièces (sans courrier, le dossier est complet)',d:addMonths(c.depotDate,1)});
+      if((d=limitePieces(c)))L.push({k:'pieces',i:'📎',t:'Date limite pour fournir les pièces complémentaires',d:d});
+      if((d=decisionEstimee(c)))L.push({k:'decision',i:'🏛️',t:'Décision attendue du '+T+' (estimation, '+delaiMois(c)+' mois)',d:d});
+    }
+  }
+  if(c.accordDate){
+    L.push({k:'accord',i:'✅',t:T+' obtenu',d:new Date(c.accordDate)});
+    L.push({k:'retrait',i:'🔒',t:'Fin du délai de retrait par la mairie (3 mois)',d:addMonths(c.accordDate,3)});
+    if(c.affDate)L.push({k:'recours',i:'⚖️',t:'Fin du délai de recours des tiers (2 mois d\'affichage)',d:addMonths(c.affDate,2)});
+    var fin=addMonths(c.accordDate,36);
+    L.push({k:'prorog',i:'🔁',t:'Penser à demander la prorogation du '+T+' (au plus tard 2 mois avant la fin de validité)',d:addMonths(c.accordDate,33)});
+    L.push({k:'peremption',i:'⌛',t:'Fin de validité du '+T+' (3 ans) si les travaux n\'ont pas commencé',d:fin});
+  }
+  if(c.due&&c.col!=='termines')L.push({k:'due',i:'⏱',t:'Échéance du dossier',d:new Date(c.due)});
+  return L.filter(function(x){return x.d&&!isNaN(x.d);}).sort(function(a,b){return a.d-b.d;});
 }
 // Délai pour fournir les pièces : 3 mois après la demande
 function limitePieces(c){return c.pcDem&&c.pcDemDate&&!c.pcEnvDate?addMonths(c.pcDemDate,3):null;}
@@ -1167,9 +1248,14 @@ function onAccord(c){
 }
 function renderIns(){
   if(!act)return;
-  var show=act.col==='instruction'||!!act.depotDate;
+  var show=act.col==='instruction'||!!act.depotDate||!!act.accordDate;
   document.getElementById('d-ins-box').style.display=show?'block':'none';
   if(!show)return;
+  var sel=document.getElementById('d-itype-e');
+  if(!sel.options.length)Object.keys(INS_TYPES).forEach(function(k){var o=document.createElement('option');o.value=k;o.textContent=INS_TYPES[k].l+' ('+INS_TYPES[k].m+' mois)';sel.appendChild(o);});
+  sel.value=insType(act);
+  document.getElementById('d-abf-e').checked=!!act.abf;
+  document.getElementById('d-dm-e').value=act.delaiMairie||'';
   document.getElementById('d-depot-e').value=act.depotDate||'';
   document.getElementById('d-ndos-e').value=act.nDossier||'';
   document.getElementById('d-pcd-e').checked=!!act.pcDem;
@@ -1177,12 +1263,16 @@ function renderIns(){
   document.getElementById('d-pcdd-e').value=act.pcDemDate||'';
   document.getElementById('d-pcl-e').value=act.pcListe||'';
   document.getElementById('d-pce-e').value=act.pcEnvDate||'';
-  var h='';
-  if(act.depotDate)h+='Déposé depuis <b>'+daysFrom(act.depotDate)+' j</b><br>';
-  var lim=limitePieces(act);
-  if(lim){var r=daysTo(lim);h+='<span style="color:#ffb040">Pièces à fournir avant le <b>'+lim.toLocaleDateString('fr-FR')+'</b> ('+(r>=0?'reste '+r+' j':'dépassé de '+(-r)+' j')+')</span><br>';}
-  var de=decisionEstimee(act);
-  if(de)h+='Décision attendue vers le <b>'+de.toLocaleDateString('fr-FR')+'</b> <span style="color:var(--txt3)">(estimation : '+((act.ms||[]).indexOf('pc')>=0?'2 mois PC':'1 mois DP')+')</span>';
+  document.getElementById('d-acc-e').value=act.accordDate||'';
+  document.getElementById('d-aff-e').value=act.affDate||'';
+  var today=new Date(new Date().toDateString()),h='';
+  keyDates(act).forEach(function(x){
+    var diff=Math.round((x.d-today)/864e5);
+    var when=diff===0?"aujourd'hui":diff>0?'dans '+diff+' j':'';
+    h+='<div class="kd'+(diff<0?' past':diff<=15?' soon':'')+'"><span>'+x.i+'</span><span><b>'+x.d.toLocaleDateString('fr-FR')+'</b>'+(when?' · '+when:'')+'<br>'+x.t+'</span></div>';
+  });
+  if(act.pcDem&&!act.pcEnvDate)h+='<div class="kd-note">Le délai d\'instruction est suspendu tant que les pièces ne sont pas transmises.</div>';
+  if(h)h+='<div class="kd-note">'+(DB.calOff?'Agenda Google désactivé (Paramètres).':'📅 Ces dates sont ajoutées dans Google Agenda (agenda « Atelier 2M — Dossiers »).')+' Les délais sont des estimations : le délai officiel figure sur le récépissé de dépôt.</div>';
   document.getElementById('d-ins-info').innerHTML=h;
 }
 function setPcDem(on){
@@ -1284,14 +1374,14 @@ function moveC(d){if(!act)return;var i=COLS.findIndex(function(c){return c.id===
 function dupC(){
   if(!act)return;
   var c=JSON.parse(JSON.stringify(act));
-  c.id=Date.now();c.ref=genRef(act.nom+' copie');c.nom=act.nom+' (copie)';c.col='prospects';c.upd=Date.now();c.created=Date.now();c.prop=false;
+  c.id=Date.now();c.calSig='[]';c.ref=genRef(act.nom+' copie');c.nom=act.nom+' (copie)';c.col='prospects';c.upd=Date.now();c.created=Date.now();c.prop=false;
   DB.cards.push(c);sv();render();closeM();toast('Dupliqué dans Prospects');
 }
 
 function archC(){
   if(!act)return;
   if(!confirm('Archiver "'+act.nom+'" ?\nRestaurations possible depuis les Archives.'))return;
-  DB.archived.push(act);DB.cards=DB.cards.filter(function(c){return c.id!==act.id;});
+  calRemove(act);DB.archived.push(act);DB.cards=DB.cards.filter(function(c){return c.id!==act.id;});
   act=null;closeM();sv();render();toast('Projet archivé');
 }
 
@@ -1299,7 +1389,7 @@ function delC(){
   if(!act)return;
   if(!confirm('Supprimer "'+act.nom+'" ?\nCette action est irréversible.'))return;
   if(!confirm('CONFIRMATION FINALE — Supprimer définitivement "'+act.nom+'" ?'))return;
-  DB.cards=DB.cards.filter(function(c){return c.id!==act.id;});
+  calRemove(act);DB.cards=DB.cards.filter(function(c){return c.id!==act.id;});
   act=null;closeM();sv();render();toast('Projet supprimé');
 }
 
@@ -1312,10 +1402,10 @@ function showArch(){
   showM('m-arch');
 }
 
-function restoreArch(i){var c=DB.archived.splice(i,1)[0];DB.cards.push(c);sv();render();closeM();toast('Restauré : '+c.nom);}
+function restoreArch(i){var c=DB.archived.splice(i,1)[0];c.calSig='[]';DB.cards.push(c);sv();render();closeM();toast('Restauré : '+c.nom);}
 
-function showParams(){document.getElementById('p-stale').value=staledays;showM('m-params');}
-function saveParams(){staledays=parseInt(document.getElementById('p-stale').value)||14;closeM();render();toast('Paramètres enregistrés');}
+function showParams(){document.getElementById('p-stale').value=staledays;document.getElementById('p-cal').checked=!DB.calOff;showM('m-params');}
+function saveParams(){staledays=parseInt(document.getElementById('p-stale').value)||14;var off=!document.getElementById('p-cal').checked;if(off!==!!DB.calOff){DB.calOff=off;sv();}closeM();render();toast('Paramètres enregistrés');}
 
 function openNew(){document.getElementById('n-col').value='prospects';showM('m-new');}
 
@@ -1395,11 +1485,12 @@ function clientRows(c){
 function projetRows(c,full){
   var ms=(c.ms||[]).filter(function(m){return m!=='ur';}).map(function(m){return MSL[m];}).join(', ');
   var r=[['Nature du projet',esc(c.nat)],['Adresse du chantier',esc(c.addr)],['Parcelle cadastrale',esc(c.cad)],
-    ['Surface',c.surf?esc(c.surf)+' m²':''],['Missions',esc(ms)],['Statut',colName(c.col)],['Dépôt en mairie',fmtD(c.depotDate)],['N° de dossier',esc(c.nDossier)],
+    ['Surface',c.surf?esc(c.surf)+' m²':''],['Missions',esc(ms)],['Statut',colName(c.col)],['Type d\'autorisation',(c.depotDate||c.accordDate)?INS_TYPES[insType(c)].l+(c.abf?' — avis ABF':''):''],['Dépôt en mairie',fmtD(c.depotDate)],['N° de dossier',esc(c.nDossier)],
     ['Pièces complémentaires',c.pcDem?('Demandées'+(c.pcDemDate?' le '+fmtD(c.pcDemDate):'')+(c.pcEnvDate?' — transmises le '+fmtD(c.pcEnvDate):' — à fournir')+(c.pcListe?'<br><span style="font-weight:400">'+nl2br(c.pcListe)+'</span>':'')):''],
-    ['Décision attendue vers',c.col==='instruction'&&decisionEstimee(c)?decisionEstimee(c).toLocaleDateString('fr-FR')+' <span style="font-weight:400;color:#888;font-size:10px">(estimation)</span>':''],['Échéance',fmtD(c.due)],
+    ['Autorisation obtenue le',fmtD(c.accordDate)],['Fin du délai de recours',c.affDate?addMonths(c.affDate,2).toLocaleDateString('fr-FR'):''],['Validité jusqu\'au',c.accordDate?addMonths(c.accordDate,36).toLocaleDateString('fr-FR')+' <span style="font-weight:400;color:#888;font-size:10px">(si travaux non commencés)</span>':''],
+    ['Décision attendue vers',c.col==='instruction'&&!c.accordDate&&decisionEstimee(c)?decisionEstimee(c).toLocaleDateString('fr-FR')+' <span style="font-weight:400;color:#888;font-size:10px">(estimation)</span>':''],['Échéance',fmtD(c.due)],
     ['Honoraires',c.hono?eur(c.hono)+' <span style="font-weight:400;color:#888;font-size:10px">— TVA non applicable, art. 293 B du CGI</span>':'']];
-  if(!(c.col==='instruction'||c.depotDate)){var skip=['Dépôt en mairie','N° de dossier','Pièces complémentaires','Décision attendue vers'];r=r.filter(function(x){return skip.indexOf(x[0])<0;});}
+  if(!(c.col==='instruction'||c.depotDate||c.accordDate)){var skip=['Type d\'autorisation','Dépôt en mairie','N° de dossier','Pièces complémentaires','Décision attendue vers','Autorisation obtenue le','Fin du délai de recours','Validité jusqu\'au'];r=r.filter(function(x){return skip.indexOf(x[0])<0;});}
   else if(!c.pcDem){r=r.filter(function(x){return x[0]!=='Pièces complémentaires';});}
   if(full){
     var j=Math.floor((Date.now()-(c.created||c.upd||Date.now()))/864e5);
