@@ -104,6 +104,16 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
 .t-v3d{background:rgba(60,140,240,0.14);color:#5ab4ff;border:1px solid rgba(60,140,240,0.45)}
 .t-amo{background:rgba(150,60,220,0.14);color:#c060ff;border:1px solid rgba(150,60,220,0.45)}
 .t-dce{background:rgba(32,184,176,0.14);color:#20d4cc;border:1px solid rgba(32,184,176,0.45)}
+.t-cont{background:#8b0000;color:#fff;border:1px solid #ff4040;font-weight:800}
+.card.cont{box-shadow:0 0 0 2px #d02020 inset}
+.cont-lbl{font-size:9px;color:#ff7070;margin-top:5px;line-height:1.35}.cont-lbl b{font-size:7px;letter-spacing:.1em;margin-right:4px;color:#ff4040}
+.fb-cont{color:#fff;border-color:#b02020;background:rgba(160,20,20,.35)}.fb-cont.on{background:#b02020}
+.cont-box{border:1px solid rgba(220,40,40,.45);background:rgba(160,20,20,.12);border-radius:3px;padding:8px}
+.t-pcd{background:rgba(230,150,20,.18);color:#ffb040;border:1px solid rgba(230,150,20,.6);font-weight:800}
+.t-pce{background:rgba(40,160,90,.15);color:#50d890;border:1px solid rgba(40,160,90,.5)}
+.ins-lbl{font-size:9px;color:#b9a0ee;margin-top:5px;line-height:1.45}.ins-lbl b{font-size:7px;letter-spacing:.1em;margin-right:4px;color:#9d7ae6}.ins-lbl .warn{color:#ffb040}
+.ins-box{border:1px solid rgba(122,79,192,.55);background:rgba(122,79,192,.1);border-radius:3px;padding:8px}
+.ins-box .sd-lbl{font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:#9d7ae6;margin:4px 0 3px}
 .t-ur {background:rgba(220,40,40,0.16);color:#ff5555;border:1px solid rgba(220,40,40,0.5);animation:urg 2s infinite}
 .t-prop{background:rgba(212,118,42,0.14);color:var(--or-l);border:1px solid var(--brd2)}
 .t-multi{background:rgba(212,118,42,0.18);color:var(--or-l);border:1px dashed rgba(212,118,42,0.6);font-weight:800}
@@ -277,6 +287,7 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
     <button class="fb fb-amo" id="f-amo" onclick="setF(&#39;amo&#39;)">AMO</button>
     <button class="fb fb-dce" id="f-dce" onclick="setF(&#39;dce&#39;)">DCE</button>
     <button class="fb fb-ur" id="f-ur" onclick="setF(&#39;ur&#39;)">Urgent</button>
+    <button class="fb fb-cont" id="f-cont" onclick="setF(&#39;cont&#39;)">⚠ Contentieux</button>
     <div class="tb-sep"></div>
     <span class="fl">Trier :</span>
     <select class="tb-sort" id="sort-sel" onchange="sortMode=this.value;render()">
@@ -303,6 +314,8 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
   <div class="leg"><div class="leg-dot" style="background:#20b8b0"></div>DCE</div>
   <div class="leg"><div class="leg-multi"></div>Multi</div>
   <div class="leg"><div class="leg-dot" style="background:#c02828"></div>Urgent</div>
+  <div class="leg"><div class="leg-dot" style="background:#8b0000;outline:1px solid #ff4040"></div>Contentieux</div>
+  <div class="leg"><div class="leg-dot" style="background:#ffb040"></div>Pièces compl.</div>
 </div>
 
 <!-- MODAL DETAIL -->
@@ -349,6 +362,28 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
       </div>
       <div id="d-age-box"></div>
       <label class="sd-chk"><input type="checkbox" id="d-prop-e" onchange="sf(&#39;prop&#39;,this.checked)"><label for="d-prop-e">Proposition envoyée</label></label>
+      <div class="ins-box" id="d-ins-box" style="display:none">
+        <div class="sec-lbl" style="color:#b9a0ee;margin-bottom:4px">Instruction en mairie</div>
+        <div class="sd-lbl">Date de dépôt</div>
+        <input class="sd-inp" id="d-depot-e" type="date" onchange="sf('depotDate',this.value);renderIns()">
+        <input class="sd-inp" id="d-ndos-e" placeholder="N° de dossier (ex : PC 019 031 26 X0012)" onchange="sf('nDossier',this.value)">
+        <label class="sd-chk" style="margin:6px 0 0"><input type="checkbox" id="d-pcd-e" onchange="setPcDem(this.checked)"><label for="d-pcd-e" style="color:#ffb040;font-weight:800">📎 Pièces complémentaires demandées</label></label>
+        <div id="d-pcd-det" style="display:none;margin-top:4px">
+          <div class="sd-lbl">Demande reçue le</div>
+          <input class="sd-inp" id="d-pcdd-e" type="date" onchange="sf('pcDemDate',this.value);renderIns()">
+          <textarea class="sd-inp" id="d-pcl-e" style="min-height:48px;resize:vertical" placeholder="Pièces demandées (PC4 notice, attestation RE2020…)" onchange="sf('pcListe',this.value)"></textarea>
+          <div class="sd-lbl">Pièces transmises le</div>
+          <input class="sd-inp" id="d-pce-e" type="date" onchange="sf('pcEnvDate',this.value);renderIns()">
+        </div>
+        <div id="d-ins-info" style="font-size:9px;color:var(--txt2);margin-top:6px;line-height:1.5"></div>
+      </div>
+      <div class="cont-box">
+        <label class="sd-chk" style="margin:0"><input type="checkbox" id="d-cont-e" onchange="setCont(this.checked)"><label for="d-cont-e" style="color:#ff7070;font-weight:800">⚠ Dossier en contentieux</label></label>
+        <div id="d-cont-det" style="display:none;margin-top:6px">
+          <input class="sd-inp" id="d-contm-e" placeholder="Motif (impayé, litige, malfaçon…)" onchange="sf('contMotif',this.value)">
+          <div style="font-size:9px;color:var(--txt3)" id="d-contd"></div>
+        </div>
+      </div>
       <div>
         <div class="sec-lbl">Colonne</div>
         <select class="col-sel" id="d-col-sel" onchange="moveTo(this.value)"></select>
@@ -467,6 +502,7 @@ var COLS=[
   {id:'propositions',name:'Propositions', acc:'#a85a1a'},
   {id:'afaire',      name:'À faire',      acc:'#d4762a'},
   {id:'encours',     name:'En cours',     acc:'#2460a8'},
+  {id:'instruction', name:'Déposé · en instruction', acc:'#7a4fc0'},
   {id:'attente',     name:'En attente',   acc:'#c47020'},
   {id:'termines',    name:'Terminés',     acc:'#2a8a5a'}
 ];
@@ -705,7 +741,7 @@ function applyF(){
     var id=parseInt(el.dataset.id);
     var c=DB.cards.find(function(x){return x.id===id;});
     if(!c){el.classList.add('hidden');return;}
-    var mOk=filt==='all'||(c.ms||[]).indexOf(filt)>=0;
+    var mOk=filt==='all'||(filt==='cont'?!!c.cont:(c.ms||[]).indexOf(filt)>=0);
     var sOk=!q||[c.nom,c.addr,c.cadr,c.ref,c.tel,c.mail,c.nat].join(' ').toLowerCase().indexOf(q)>=0;
     el.classList.toggle('hidden',!(mOk&&sOk));
   });
@@ -725,15 +761,19 @@ function render(){
   DB.cards.forEach(function(c){
     if(c.col==='prospects'||c.col==='propositions')tot.p++;
     else if(c.col==='afaire'||c.col==='encours')tot.e++;
+    else if(c.col==='instruction')tot.i=(tot.i||0)+1;
     else if(c.col==='attente')tot.a++;
     else if(c.col==='termines'){tot.t++;tot.cr+=parseFloat(c.hono)||0;}
     if(c.col!=='termines')tot.ca+=parseFloat(c.hono)||0;
+    if(c.cont)tot.k=(tot.k||0)+1;
   });
   document.getElementById('hstats').innerHTML=
     '<div class="hstat"><div class="hsv">'+tot.p+'</div><div class="hsl">Prospects</div></div>'+
     '<div class="hstat"><div class="hsv">'+tot.e+'</div><div class="hsl">En cours</div></div>'+
+    '<div class="hstat"><div class="hsv" style="color:#9d7ae6">'+(tot.i||0)+'</div><div class="hsl">Instruction</div></div>'+
     '<div class="hstat"><div class="hsv">'+tot.a+'</div><div class="hsl">Attente</div></div>'+
     '<div class="hstat"><div class="hsv">'+tot.t+'</div><div class="hsl">Terminés</div></div>'+
+    (tot.k?'<div class="hstat" style="cursor:pointer" onclick="setF(\'cont\')"><div class="hsv" style="color:#ff4040">'+tot.k+'</div><div class="hsl" style="color:#ff7070">Contentieux</div></div>':'')+
     '<div class="hdr-sep"></div>'+
     '<div class="hstat"><div class="hsv" style="font-size:15px;color:var(--or-l)">'+Math.round(tot.ca).toLocaleString('fr-FR')+'€</div><div class="hsl">CA potentiel</div></div>'+
     '<div class="hstat"><div class="hsv-gr">'+Math.round(tot.cr).toLocaleString('fr-FR')+'€</div><div class="hsl">CA réalisé</div></div>';
@@ -750,19 +790,30 @@ function render(){
       var tags=nonUr.map(function(m){return'<span class="tag '+tcls(m)+'">'+esc(m==='v3d'?'3D':m==='ai'?'Amén.':m.toUpperCase())+'</span>';}).join('');
       if(nonUr.length>1)tags+='<span class="tag t-multi">×'+nonUr.length+'</span>';
       if(ms.indexOf('ur')>=0)tags+='<span class="tag t-ur">URG</span>';
+      if(card.cont)tags='<span class="tag t-cont">⚠ Contentieux</span>'+tags;
       if(card.prop)tags+='<span class="tag t-prop">Prop.✓</span>';
       var prg=p.t>0?'<div class="prog-row"><span class="prog-steps">'+p.d+'/'+p.t+' étapes</span><span class="prog-pct">'+p.pct+'%</span></div><div class="prog-track"><div style="height:100%;border-radius:3px;'+stripColor(card)+';width:'+p.pct+'%"></div></div>':'';
       var due=dueStatus(card.due);var dueBadge=due?'<div class="due '+due.cls+'">'+due.txt+'</div>':'';
       var ns=card.col!=='termines'?nextStep(card):null;var nsLbl=ns?'<div class="next-step"><b>Suite</b>'+esc(ns.s)+'</div>':'';
+      var insLbl='',lim=limitePieces(card);
+      if(card.col==='instruction'){
+        if(card.pcDem&&!card.pcEnvDate)tags='<span class="tag t-pcd">📎 Pièces demandées</span>'+tags;
+        else if(card.pcDem&&card.pcEnvDate)tags='<span class="tag t-pce">Pièces transmises</span>'+tags;
+        var de=decisionEstimee(card);
+        insLbl='<div class="ins-lbl">'+(card.depotDate?'<b>DÉPÔT</b>'+fmtD(card.depotDate)+' · J+'+daysFrom(card.depotDate):'<b>DÉPÔT</b>date à saisir')+
+          (lim?'<br><span class="warn"><b style="color:#ffb040">PIÈCES</b>avant le '+lim.toLocaleDateString('fr-FR')+' ('+(daysTo(lim)>=0?daysTo(lim)+' j':'dépassé')+')</span>':'')+
+          (de&&!lim?'<br><b>DÉCISION</b>≈ '+de.toLocaleDateString('fr-FR'):'')+'</div>';
+      }
+      var contLbl=card.cont&&card.contMotif?'<div class="cont-lbl"><b>MOTIF</b>'+esc(card.contMotif)+'</div>':'';
       var staleLbl=stale?'<div class="stale-lbl">Stagnant · '+daysSince(card.upd)+' j</div>':'';
       var foot=(card.date||card.hono)?'<div class="card-foot">'+(card.date?'<span>'+card.date+'</span>':'')+(card.hono?'<span>'+Math.round(parseFloat(card.hono)).toLocaleString('fr-FR')+'€ HT</span>':'')+'</div>':'';
       var el=document.createElement('div');
-      el.className='card '+cc+(stale?' stale':'');el.dataset.id=card.id;
+      el.className='card '+cc+(stale?' stale':'')+(card.cont?' cont':'');el.dataset.id=card.id;
       el.innerHTML='<div class="card-stripe" style="'+stripColor(card)+'"></div>'+
         '<div class="card-in">'+(card.ref?'<div class="card-ref">'+esc(card.ref)+'</div>':'')+
         '<div class="card-name">'+esc(card.nom)+'</div>'+
         (card.addr?'<div class="card-addr">'+esc(card.addr)+'</div>':'')+
-        '<div class="card-tags">'+tags+'</div>'+prg+nsLbl+dueBadge+staleLbl+'</div>'+foot;
+        '<div class="card-tags">'+tags+'</div>'+prg+insLbl+contLbl+nsLbl+dueBadge+staleLbl+'</div>'+foot;
       el.onclick=function(){openDet(card.id);};
       body.appendChild(el);
     });
@@ -792,6 +843,7 @@ function openDet(id){
   document.getElementById('d-hono-e').value=act.hono||'';
   document.getElementById('d-due-e').value=act.due||'';
   document.getElementById('d-prop-e').checked=!!act.prop;
+  renderCont();renderIns();
   renderTelLink();
   var sel=document.getElementById('d-col-sel');sel.innerHTML='';
   COLS.forEach(function(col){var o=document.createElement('option');o.value=col.id;o.textContent=col.name;if(col.id===act.col)o.selected=true;sel.appendChild(o);});
@@ -870,7 +922,8 @@ function renderActions(){
   if(col==='prospects')    h='<button class="act-btn ab-or" onclick="qa(\'prop\')">→ Proposition envoyée</button>';
   else if(col==='propositions') h='<button class="act-btn ab-bl" onclick="qa(\'accept\')">→ Client accepte · démarrer</button>';
   else if(col==='afaire')  h='<button class="act-btn ab-bl" onclick="qa(\'start\')">→ Démarrer le dossier</button>';
-  else if(col==='encours') h='<button class="act-btn ab-am" onclick="qa(\'wait\')">⏸ Mettre en attente</button><button class="act-btn ab-gr" onclick="qa(\'done\')" style="margin-top:4px">✓ Marquer terminé</button>';
+  else if(col==='instruction') h='<button class="act-btn ab-bl" onclick="qa(\'accordSuite\')">✓ Autorisation obtenue · suite de mission</button><button class="act-btn ab-gr" onclick="qa(\'accordFin\')" style="margin-top:4px">✓ Autorisation obtenue · terminé</button><button class="act-btn ab-am" onclick="qa(\'wait\')" style="margin-top:4px">⏸ Mettre en attente</button>';
+  else if(col==='encours') h='<button class="act-btn" style="background:rgba(122,79,192,.35);border-color:#7a4fc0;color:#e0d4ff" onclick="qa(\'depot\')">📨 Dossier déposé en mairie</button><button class="act-btn ab-am" onclick="qa(\'wait\')" style="margin-top:4px">⏸ Mettre en attente</button><button class="act-btn ab-gr" onclick="qa(\'done\')" style="margin-top:4px">✓ Marquer terminé</button>';
   else if(col==='attente') h='<button class="act-btn ab-bl" onclick="qa(\'resume\')">▶ Reprendre le dossier</button><button class="act-btn ab-gr" onclick="qa(\'done\')" style="margin-top:4px">✓ Marquer terminé</button>';
   else h='<div style="font-size:9px;color:var(--txt3);font-style:italic;padding:4px 0">Dossier terminé</div>';
   el.innerHTML=h;
@@ -878,15 +931,17 @@ function renderActions(){
 
 function qa(type){
   if(!act)return;
-  var dest={prop:'propositions',accept:'afaire',start:'encours',wait:'attente',resume:'encours',done:'termines'}[type];
-  var msg={prop:'Proposition envoyée',accept:'Démarrage en À faire',start:'Dossier en cours',wait:'Mis en attente',resume:'Repris',done:'Dossier terminé !'}[type];
+  var dest={prop:'propositions',accept:'afaire',start:'encours',wait:'attente',resume:'encours',done:'termines',depot:'instruction',accordSuite:'encours',accordFin:'termines'}[type];
+  var msg={prop:'Proposition envoyée',accept:'Démarrage en À faire',start:'Dossier en cours',wait:'Mis en attente',resume:'Repris',done:'Dossier terminé !',depot:'Dossier déposé — en instruction',accordSuite:'Autorisation obtenue !',accordFin:'Autorisation obtenue — dossier terminé'}[type];
+  if(type==='depot')onEnterInstruction(act);
+  if(type==='accordSuite'||type==='accordFin'){onAccord(act);act.accordDate=new Date().toISOString().split('T')[0];}
   if(type==='prop')act.prop=true;
   act.col=dest;act.upd=Date.now();
   document.getElementById('d-col-sel').value=dest;
   var ci=COLS.findIndex(function(c){return c.id===act.col;});
   document.getElementById('btn-prev').disabled=ci<=0;
   document.getElementById('btn-next').disabled=ci>=COLS.length-1;
-  renderActions();sv();render();toast(msg);
+  renderActions();sv();render();renderIns();renderMs();toast(msg);
 }
 
 function toggleMs(m){
@@ -910,10 +965,75 @@ function tck(m,i,v){
   act.upd=Date.now();sv();render();renderMs();
 }
 
+// ── INSTRUCTION EN MAIRIE ───────────────────────────────
+function addMonths(iso,n){var d=new Date(iso);if(isNaN(d))return null;d.setMonth(d.getMonth()+n);return d;}
+function daysTo(d){return Math.ceil((d-new Date(new Date().toDateString()))/864e5);}
+function daysFrom(iso){return Math.floor((new Date(new Date().toDateString())-new Date(iso))/864e5);}
+// Délai d'instruction de droit commun : PC maison individuelle 2 mois, DP 1 mois (à partir du dossier complet)
+function decisionEstimee(c){
+  var base=(c.pcDem?c.pcEnvDate:c.depotDate);
+  if(!base)return null;
+  return addMonths(base,(c.ms||[]).indexOf('pc')>=0?2:1);
+}
+// Délai pour fournir les pièces : 3 mois après la demande
+function limitePieces(c){return c.pcDem&&c.pcDemDate&&!c.pcEnvDate?addMonths(c.pcDemDate,3):null;}
+function onEnterInstruction(c){
+  if(!c.depotDate)c.depotDate=new Date().toISOString().split('T')[0];
+  // un dossier déposé implique que les étapes précédentes sont faites
+  if(c.cl&&c.cl.pc&&(c.ms||[]).indexOf('pc')>=0){for(var i=0;i<=4;i++)c.cl.pc[i]=1;}
+  if(c.cl&&c.cl.dt&&(c.ms||[]).indexOf('dt')>=0){for(var k=0;k<=3;k++)c.cl.dt[k]=1;}
+}
+function onAccord(c){
+  if(c.cl&&c.cl.pc&&(c.ms||[]).indexOf('pc')>=0){for(var i=0;i<=5;i++)c.cl.pc[i]=1;}
+  if(c.cl&&c.cl.dt&&(c.ms||[]).indexOf('dt')>=0){for(var k=0;k<=4;k++)c.cl.dt[k]=1;}
+}
+function renderIns(){
+  if(!act)return;
+  var show=act.col==='instruction'||!!act.depotDate;
+  document.getElementById('d-ins-box').style.display=show?'block':'none';
+  if(!show)return;
+  document.getElementById('d-depot-e').value=act.depotDate||'';
+  document.getElementById('d-ndos-e').value=act.nDossier||'';
+  document.getElementById('d-pcd-e').checked=!!act.pcDem;
+  document.getElementById('d-pcd-det').style.display=act.pcDem?'block':'none';
+  document.getElementById('d-pcdd-e').value=act.pcDemDate||'';
+  document.getElementById('d-pcl-e').value=act.pcListe||'';
+  document.getElementById('d-pce-e').value=act.pcEnvDate||'';
+  var h='';
+  if(act.depotDate)h+='Déposé depuis <b>'+daysFrom(act.depotDate)+' j</b><br>';
+  var lim=limitePieces(act);
+  if(lim){var r=daysTo(lim);h+='<span style="color:#ffb040">Pièces à fournir avant le <b>'+lim.toLocaleDateString('fr-FR')+'</b> ('+(r>=0?'reste '+r+' j':'dépassé de '+(-r)+' j')+')</span><br>';}
+  var de=decisionEstimee(act);
+  if(de)h+='Décision attendue vers le <b>'+de.toLocaleDateString('fr-FR')+'</b> <span style="color:var(--txt3)">(estimation : '+((act.ms||[]).indexOf('pc')>=0?'2 mois PC':'1 mois DP')+')</span>';
+  document.getElementById('d-ins-info').innerHTML=h;
+}
+function setPcDem(on){
+  if(!act)return;
+  act.pcDem=!!on;
+  if(on&&!act.pcDemDate)act.pcDemDate=new Date().toISOString().split('T')[0];
+  act.upd=Date.now();sv();render();renderIns();
+  toast(on?'Demande de pièces complémentaires notée':'Demande de pièces retirée');
+}
+
+function renderCont(){
+  if(!act)return;
+  document.getElementById('d-cont-e').checked=!!act.cont;
+  document.getElementById('d-cont-det').style.display=act.cont?'block':'none';
+  document.getElementById('d-contm-e').value=act.contMotif||'';
+  document.getElementById('d-contd').textContent=act.contDate?'Depuis le '+fmtD(act.contDate):'';
+}
+function setCont(on){
+  if(!act)return;
+  act.cont=!!on;
+  if(on&&!act.contDate)act.contDate=new Date().toISOString().split('T')[0];
+  if(!on){act.contDate='';}
+  act.upd=Date.now();sv();render();renderCont();
+  toast(on?'Dossier passé en contentieux':'Contentieux levé');
+}
 function sf(k,v){if(!act)return;act[k]=v;act.upd=Date.now();sv();render();}
 
-function moveTo(colId){if(!act)return;act.col=colId;act.upd=Date.now();sv();render();openDet(act.id);}
-function moveC(d){if(!act)return;var i=COLS.findIndex(function(c){return c.id===act.col;});var ni=i+d;if(ni<0||ni>=COLS.length)return;act.col=COLS[ni].id;act.upd=Date.now();sv();render();openDet(act.id);}
+function moveTo(colId){if(!act)return;if(colId==='instruction')onEnterInstruction(act);act.col=colId;act.upd=Date.now();sv();render();openDet(act.id);}
+function moveC(d){if(!act)return;var i=COLS.findIndex(function(c){return c.id===act.col;});var ni=i+d;if(ni<0||ni>=COLS.length)return;if(COLS[ni].id==='instruction')onEnterInstruction(act);act.col=COLS[ni].id;act.upd=Date.now();sv();render();openDet(act.id);}
 
 function dupC(){
   if(!act)return;
@@ -1029,13 +1149,18 @@ function clientRows(c){
 function projetRows(c,full){
   var ms=(c.ms||[]).filter(function(m){return m!=='ur';}).map(function(m){return MSL[m];}).join(', ');
   var r=[['Nature du projet',esc(c.nat)],['Adresse du chantier',esc(c.addr)],['Parcelle cadastrale',esc(c.cad)],
-    ['Surface',c.surf?esc(c.surf)+' m²':''],['Missions',esc(ms)],['Statut',colName(c.col)],['Échéance',fmtD(c.due)],
+    ['Surface',c.surf?esc(c.surf)+' m²':''],['Missions',esc(ms)],['Statut',colName(c.col)],['Dépôt en mairie',fmtD(c.depotDate)],['N° de dossier',esc(c.nDossier)],
+    ['Pièces complémentaires',c.pcDem?('Demandées'+(c.pcDemDate?' le '+fmtD(c.pcDemDate):'')+(c.pcEnvDate?' — transmises le '+fmtD(c.pcEnvDate):' — à fournir')+(c.pcListe?'<br><span style="font-weight:400">'+nl2br(c.pcListe)+'</span>':'')):''],
+    ['Décision attendue vers',c.col==='instruction'&&decisionEstimee(c)?decisionEstimee(c).toLocaleDateString('fr-FR')+' <span style="font-weight:400;color:#888;font-size:10px">(estimation)</span>':''],['Échéance',fmtD(c.due)],
     ['Honoraires',c.hono?eur(c.hono)+' <span style="font-weight:400;color:#888;font-size:10px">— TVA non applicable, art. 293 B du CGI</span>':'']];
+  if(!(c.col==='instruction'||c.depotDate)){var skip=['Dépôt en mairie','N° de dossier','Pièces complémentaires','Décision attendue vers'];r=r.filter(function(x){return skip.indexOf(x[0])<0;});}
+  else if(!c.pcDem){r=r.filter(function(x){return x[0]!=='Pièces complémentaires';});}
   if(full){
     var j=Math.floor((Date.now()-(c.created||c.upd||Date.now()))/864e5);
     r.push(['Proposition envoyée',c.prop?'Oui':'Non']);
     r.push(['Dossier ouvert depuis',j+' jour'+(j>1?'s':'')]);
     if((c.ms||[]).indexOf('ur')>=0)r.push(['Priorité','<span style="color:#c02828">URGENT</span>']);
+    if(c.cont)r.push(['Contentieux','<span style="color:#b00000">OUI</span>'+(c.contDate?' — depuis le '+fmtD(c.contDate):'')+(c.contMotif?'<br><span style="font-weight:400">'+esc(c.contMotif)+'</span>':'')]);
   }
   return r;
 }
