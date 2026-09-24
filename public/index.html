@@ -117,6 +117,7 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
 .due-ok  {background:rgba(42,200,100,0.1);color:#3aee7a;border:1px solid rgba(42,200,100,0.3)}
 .due-soon{background:rgba(220,140,40,0.12);color:#f0b040;border:1px solid rgba(220,140,40,0.35)}
 .due-late{background:rgba(220,40,40,0.14);color:#ff5555;border:1px solid rgba(220,40,40,0.4);animation:urg 1.5s infinite}
+.next-step{font-size:9px;color:var(--txt2);margin-top:5px;line-height:1.35}.next-step b{color:var(--or);font-weight:800;letter-spacing:.08em;text-transform:uppercase;font-size:7px;margin-right:4px}
 .stale-lbl{font-size:7px;font-weight:700;color:#ff5555;margin-top:3px}
 .add-zone{border:1px dashed rgba(212,118,42,0.15);border-radius:3px;padding:8px;text-align:center;font-size:7px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--txt3);cursor:pointer;transition:all .15s;flex-shrink:0}
 .add-zone:hover{border-color:var(--or);color:var(--or);background:rgba(212,118,42,0.04)}
@@ -168,11 +169,13 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
 .ck-cnt{font-size:9px;font-weight:700;color:var(--txt3)}
 .ck-prog{height:2px;background:rgba(255,255,255,.05);border-radius:1px;overflow:hidden;margin-bottom:12px}
 .ck-fill{height:100%;border-radius:1px;transition:width .3s}
-.ck-item{display:flex;align-items:center;gap:8px;padding:4px 5px;border-radius:2px;cursor:pointer}
+.ck-item{display:flex;align-items:center;gap:10px;padding:8px 8px;border-radius:3px;cursor:pointer;user-select:none}
 .ck-item:hover{background:rgba(255,255,255,.03)}
-.ck-item.locked{opacity:.35;pointer-events:none}
-.ck-item input{width:13px;height:13px;flex-shrink:0;cursor:pointer;accent-color:var(--or)}
-.ck-lbl{font-size:11px;font-weight:500;color:var(--txt2);line-height:1.4}
+.ck-item.next{background:rgba(212,118,42,.08);outline:1px solid rgba(212,118,42,.35)}
+.ck-item.next .ck-lbl{color:var(--txt);font-weight:700}
+.ck-hint{font-size:8px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--or);margin-left:auto;white-space:nowrap}
+.ck-item input{width:16px;height:16px;pointer-events:none;flex-shrink:0;cursor:pointer;accent-color:var(--or)}
+.ck-lbl{font-size:12px;font-weight:500;color:var(--txt2);line-height:1.4}
 .ck-lbl.done{text-decoration:line-through;color:var(--txt3)}
 .ck-empty{padding:14px;text-align:center;color:var(--txt3);font-size:10px;font-style:italic;border:1px dashed var(--brd);border-radius:3px;line-height:1.6}
 .notes-box{background:rgba(255,255,255,.02);border:1px solid rgba(212,118,42,0.1);border-radius:3px;padding:10px;font-size:11px;color:var(--txt3);font-style:italic;line-height:1.6;min-height:44px;cursor:pointer;margin-top:4px}
@@ -186,6 +189,8 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
 .iv{font-size:11px;font-weight:500;color:var(--txt2)}
 .sd-inp{width:100%;background:rgba(28,22,10,0.9);border:1px solid var(--brd2);border-radius:2px;padding:6px 9px;font-family:'Montserrat',sans-serif;font-size:11px;color:var(--txt);outline:none;margin-bottom:3px}
 .sd-inp:focus{border-color:var(--or)}
+.pj-grid{display:grid;grid-template-columns:2fr 1fr;gap:6px;margin-bottom:6px}
+.pj-area{width:100%;min-height:64px;resize:vertical;line-height:1.5;font-size:12px}
 .sd-chk{display:flex;align-items:center;gap:7px;cursor:pointer;padding:2px 0}
 .sd-chk input{accent-color:var(--or);width:13px;height:13px;cursor:pointer}
 .sd-chk label{font-size:10px;font-weight:600;color:var(--txt2);cursor:pointer}
@@ -256,7 +261,7 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
     <div><img class="hdr-logo" src="data:image/svg+xml,%3Csvg xmlns=&#39;http://www.w3.org/2000/svg&#39; width=&#39;120&#39; height=&#39;60&#39; viewBox=&#39;0 0 120 60&#39;%3E%3Crect width=&#39;120&#39; height=&#39;60&#39; fill=&#39;%23d4762a&#39; rx=&#39;4&#39;/%3E%3Ctext x=&#39;60&#39; y=&#39;42&#39; font-family=&#39;Arial Black,sans-serif&#39; font-size=&#39;36&#39; font-weight=&#39;900&#39; fill=&#39;%230a0806&#39; text-anchor=&#39;middle&#39;%3EM%3C/text%3E%3C/svg%3E" alt="M1"></div>
     <div class="hdr-mid"><div class="hdr-sub">Suivi de projets</div><div class="hdr-title">Atelier 2M</div></div>
     <div class="hdr-right">
-      <div class="hstats" id="hstats"><div class="hstat"><div class="hsv">2</div><div class="hsl">Prospects</div></div><div class="hstat"><div class="hsv">4</div><div class="hsl">En cours</div></div><div class="hstat"><div class="hsv">0</div><div class="hsl">Attente</div></div><div class="hstat"><div class="hsv">1</div><div class="hsl">Terminés</div></div><div class="hdr-sep"></div><div class="hstat"><div class="hsv" style="font-size:15px;color:var(--or-l)">8 300€</div><div class="hsl">CA potentiel</div></div><div class="hstat"><div class="hsv-gr">1 800€</div><div class="hsl">CA réalisé</div></div></div>
+      <div class="hstats" id="hstats"></div>
       <button class="btn-new" onclick="openNew()">+ Nouveau projet</button>
     </div>
   </div>
@@ -289,7 +294,7 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
       <button class="tb-btn" onclick="showParams()">⚙ Paramètres</button>
     </div>
   </div>
-  <div class="board-wrap"><div class="board" id="board"><div class="col"><div class="col-head"><div class="col-acc" style="background:#4a4238"></div><div class="col-lbl">Prospects</div><div class="col-num lit">02</div></div><div class="col-body"><div class="card c-none" data-id="1776330374357"><div class="card-stripe" style="background:#4a4238"></div><div class="card-in"><div class="card-ref">RZH-04-2026</div><div class="card-name">rzhtzht</div><div class="card-tags"><span class="tag t-prop">Prop.✓</span></div></div></div><div class="card c-pc" data-id="1776256807201"><div class="card-stripe" style="background:#2ac870"></div><div class="card-in"><div class="card-ref">006-04-2026</div><div class="card-name">FRAYSSE Frédéric</div><div class="card-addr">8 chemin de Tillot  19270 Sadroc</div><div class="card-tags"><span class="tag t-pc">PC</span></div><div class="prog-row"><span class="prog-steps">0/16 étapes</span><span class="prog-pct">0%</span></div><div class="prog-track"><div style="height:100%;border-radius:3px;background:#2ac870;width:0%"></div></div></div><div class="card-foot"><span>2026-04-13</span></div></div><div class="add-zone">+ Ajouter un projet</div></div></div><div class="col"><div class="col-head"><div class="col-acc" style="background:#a85a1a"></div><div class="col-lbl">Propositions</div><div class="col-num">00</div></div><div class="col-body"><div class="add-zone">+ Ajouter un projet</div></div></div><div class="col"><div class="col-head"><div class="col-acc" style="background:#d4762a"></div><div class="col-lbl">À faire</div><div class="col-num lit">02</div></div><div class="col-body"><div class="card c-pc" data-id="2"><div class="card-stripe" style="background:#2ac870"></div><div class="card-in"><div class="card-ref">002-02-2026</div><div class="card-name">SOULHOL Sébastien</div><div class="card-tags"><span class="tag t-pc">PC</span><span class="tag t-prop">Prop.✓</span></div><div class="prog-row"><span class="prog-steps">2/16 étapes</span><span class="prog-pct">13%</span></div><div class="prog-track"><div style="height:100%;border-radius:3px;background:#2ac870;width:13%"></div></div><div class="due due-ok">30/04/2026</div></div><div class="card-foot"><span>2026-01-15</span><span>2 800€ HT</span></div></div><div class="card c-pc stale" data-id="1"><div class="card-stripe" style="background:#2ac870"></div><div class="card-in"><div class="card-ref">001-02-2026</div><div class="card-name">CHANET</div><div class="card-addr">Brive-la-Gaillarde</div><div class="card-tags"><span class="tag t-pc">PC</span></div><div class="prog-row"><span class="prog-steps">0/16 étapes</span><span class="prog-pct">0%</span></div><div class="prog-track"><div style="height:100%;border-radius:3px;background:#2ac870;width:0%"></div></div><div class="stale-lbl">Stagnant · 17 j</div></div><div class="card-foot"><span>2026-02-19</span></div></div><div class="add-zone">+ Ajouter un projet</div></div></div><div class="col"><div class="col-head"><div class="col-acc" style="background:#2460a8"></div><div class="col-lbl">En cours</div><div class="col-num lit">02</div></div><div class="col-body"><div class="card c-multi" data-id="4"><div class="card-stripe" style=""></div><div class="card-in"><div class="card-ref">004-02-2026</div><div class="card-name">COSSE Pascal</div><div class="card-tags"><span class="tag t-pc">PC</span><span class="tag t-amo">AMO</span><span class="tag t-v3d">3D</span><span class="tag t-multi">×3</span><span class="tag t-prop">Prop.✓</span></div><div class="prog-row"><span class="prog-steps">10/38 étapes</span><span class="prog-pct">26%</span></div><div class="prog-track"><div style="height:100%;border-radius:3px;;width:26%"></div></div><div class="due due-ok">15/05/2026</div></div><div class="card-foot"><span>2026-02-19</span><span>5 500€ HT</span></div></div><div class="card c-pc" data-id="3"><div class="card-stripe" style="background:#2ac870"></div><div class="card-in"><div class="card-ref">003-02-2026</div><div class="card-name">SOULEYMANE</div><div class="card-tags"><span class="tag t-pc">PC</span></div><div class="prog-row"><span class="prog-steps">4/16 étapes</span><span class="prog-pct">25%</span></div><div class="prog-track"><div style="height:100%;border-radius:3px;background:#2ac870;width:25%"></div></div></div></div><div class="add-zone">+ Ajouter un projet</div></div></div><div class="col"><div class="col-head"><div class="col-acc" style="background:#c47020"></div><div class="col-lbl">En attente</div><div class="col-num">00</div></div><div class="col-body"><div class="add-zone">+ Ajouter un projet</div></div></div><div class="col"><div class="col-head"><div class="col-acc" style="background:#2a8a5a"></div><div class="col-lbl">Terminés</div><div class="col-num lit">01</div></div><div class="col-body"><div class="card c-multi" data-id="5"><div class="card-stripe" style=""></div><div class="card-in"><div class="card-ref">005-02-2026</div><div class="card-name">RUBELLIN</div><div class="card-tags"><span class="tag t-v3d">3D</span><span class="tag t-ai">Amén.</span><span class="tag t-multi">×2</span><span class="tag t-prop">Prop.✓</span></div><div class="prog-row"><span class="prog-steps">23/23 étapes</span><span class="prog-pct">100%</span></div><div class="prog-track"><div style="height:100%;border-radius:3px;;width:100%"></div></div></div><div class="card-foot"><span>1 800€ HT</span></div></div><div class="add-zone">+ Ajouter un projet</div></div></div></div></div>
+  <div class="board-wrap"><div class="board" id="board"></div></div>
 </div>
 
 <div class="legend">
@@ -310,7 +315,14 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
     <div class="md-main">
       <div class="md-ref" id="d-ref"></div>
       <div class="md-name" id="d-name"></div>
-      <div class="sec-lbl">Missions</div>
+      <div class="sec-lbl">Projet</div>
+      <div class="pj-grid">
+        <input class="sd-inp" id="d-nat-e" placeholder="Nature du projet (ex : extension 40 m², maison neuve…)" onchange="sf('nat',this.value)">
+        <input class="sd-inp" id="d-surf-e" placeholder="Surface (m²)" onchange="sf('surf',this.value)">
+      </div>
+      <input class="sd-inp" id="d-cad-e" placeholder="Parcelle cadastrale (ex : BL 41)" onchange="sf('cad',this.value)">
+      <textarea class="sd-inp pj-area" id="d-res-e" placeholder="Résumé du projet envisagé / en cours…" onchange="sf('resume',this.value)"></textarea>
+      <div class="sec-lbl" style="margin-top:14px">Missions</div>
       <div class="ms-grid" id="ms-grid"></div>
       <div id="d-chk"></div>
       <div class="sec-lbl" style="margin-top:14px">Notes</div>
@@ -320,6 +332,7 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
       <div>
         <div class="sec-lbl">Client</div>
         <input class="sd-inp" id="d-nom-e" placeholder="Nom client" onchange="sf(&#39;nom&#39;,this.value);document.getElementById(&#39;d-name&#39;).textContent=this.value">
+        <input class="sd-inp" id="d-cadr-e" placeholder="Adresse du client" onchange="sf('cadr',this.value)">
         <input class="sd-inp" id="d-tel-e" placeholder="Téléphone" onchange="sf(&#39;tel&#39;,this.value);renderTelLink()">
         <div id="d-tel-link"></div>
         <input class="sd-inp" id="d-mail-e" placeholder="Email" style="font-size:10px" onchange="sf(&#39;mail&#39;,this.value)">
@@ -327,7 +340,7 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
       </div>
       <div>
         <div class="sec-lbl">Chantier</div>
-        <input class="sd-inp" id="d-addr-e" placeholder="Adresse" onchange="sf(&#39;addr&#39;,this.value)">
+        <input class="sd-inp" id="d-addr-e" placeholder="Adresse du chantier" onchange="sf(&#39;addr&#39;,this.value)">
       </div>
       <div>
         <div class="sec-lbl">Honoraires €HT</div>
@@ -370,7 +383,14 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
         <div class="fld"><label>Email</label><input id="n-mail" placeholder="client@email.com"></div>
         <div class="fld"><label>Prise de contact</label><input id="n-date" type="date"></div>
       </div>
+      <div class="fld"><label>Adresse du client</label><input id="n-cadr" placeholder="5 place de la Mairie, 19100 Brive"></div>
       <div class="fld"><label>Adresse du chantier</label><input id="n-addr" placeholder="12 rue du Moulin, Brive"></div>
+      <div class="fg">
+        <div class="fld"><label>Nature du projet</label><input id="n-nat" placeholder="Extension, maison neuve…"></div>
+        <div class="fld"><label>Surface (m²)</label><input id="n-surf" placeholder="40"></div>
+      </div>
+      <div class="fld"><label>Parcelle cadastrale</label><input id="n-cad" placeholder="BL 41"></div>
+      <div class="fld"><label>Résumé du projet</label><textarea id="n-res" placeholder="Ce que le client envisage…"></textarea></div>
       <div class="fld"><label>Missions</label>
         <div class="chk-grp">
           <label class="chk-it"><input type="checkbox" id="n-pc">  Permis de construire</label>
@@ -425,7 +445,7 @@ html,body{height:100%;font-family:'Montserrat',sans-serif;background:var(--bg);c
       <div style="border-top:1px solid var(--brd);margin-top:14px;padding-top:14px">
         <div style="font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--txt3);margin-bottom:8px">Réinitialisation</div>
         <button onclick="resetData()" style="width:100%;background:none;border:1px solid rgba(220,40,40,.35);border-radius:2px;padding:9px;font-family:&#39;Montserrat&#39;,sans-serif;font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#c02828;cursor:pointer">Vider le cache et recharger</button>
-        <div style="font-size:9px;color:var(--txt3);margin-top:6px;line-height:1.5">Recharge les 5 projets de démonstration. Utile après une mise à jour du fichier.</div>
+        <div style="font-size:9px;color:var(--txt3);margin-top:6px;line-height:1.5">Recharge vos dossiers depuis le serveur (Google Sheets). Aucune donnée supprimée.</div>
       </div>
       <div class="mbtns">
         <button class="mb-c" onclick="closeM()">Annuler</button>
@@ -452,91 +472,87 @@ var CKCLS={pc:'ck-pc',dt:'ck-dt',ai:'ck-ai',v3d:'ck-v3d',amo:'ck-amo',dce:'ck-dc
 var MSL={pc:'Permis de construire',dt:'Déclaration de travaux',ai:'Aménagement intérieur',v3d:'Vues 3D',amo:'AMO',dce:'DCE',ur:'URGENT'};
 var MS_ORDER=['pc','dt','ai','v3d','amo','dce','ur'];
 
+// Checklists simplifiées (v2) : jalons clés uniquement, plus de verrouillage.
+// "from" = indices des anciennes étapes (v1) regroupées dans ce jalon (pour migrer les dossiers existants).
 var CK={
   pc:[
-    {s:'Brief client — programme et contraintes',req:true},
-    {s:'Relevés terrain / plans existants',req:true},
-    {s:'Analyse PLU et règles urbanisme',req:true},
-    {s:'Esquisse validée par le client',req:true},
-    {s:'Plans PC — situation et masse',req:false},
-    {s:'Plans PC — niveaux, coupes, façades',req:false},
-    {s:'Notice descriptive',req:false},
-    {s:'Insertion paysagère',req:false},
-    {s:'CERFA PC complété et signé',req:true},
-    {s:'Vérification complétude dossier',req:true},
-    {s:'Dépôt en mairie + accusé réception',req:true},
-    {s:'Pièces complémentaires si demandées',req:false},
-    {s:'PC accordé',req:true},
-    {s:'Affichage réglementaire',req:false},
-    {s:'Délai de recours purgé 2 mois',req:false},
-    {s:'DOC — Déclaration ouverture chantier',req:false}
+    {s:'Brief, relevés et analyse PLU',from:[0,1,2]},
+    {s:'Esquisse validée par le client',from:[3]},
+    {s:'Pièces graphiques (plans, coupes, façades, insertion)',from:[4,5,7]},
+    {s:'Notice + CERFA signé',from:[6,8]},
+    {s:'Dépôt en mairie (récépissé)',from:[9,10]},
+    {s:'PC accordé',from:[12]},
+    {s:'Affichage + recours purgé',from:[13,14]},
+    {s:'DOC — ouverture de chantier',from:[15]}
   ],
   dt:[
-    {s:'Brief client — vérification seuils DT',req:true},
-    {s:'Analyse PLU / secteur ABF',req:true},
-    {s:'Plan de situation 1/25000',req:false},
-    {s:'Plan de masse coté',req:false},
-    {s:'Plan des façades si modification',req:false},
-    {s:'Notice descriptive simplifiée',req:false},
-    {s:'CERFA DP complété et signé',req:true},
-    {s:'Vérification complétude dossier',req:true},
-    {s:'Dépôt en mairie + accusé réception',req:true},
-    {s:'Pièces complémentaires si demandées',req:false},
-    {s:'DT accordée non-opposition',req:true},
-    {s:'Affichage réglementaire',req:false}
+    {s:'Brief + analyse PLU / ABF',from:[0,1]},
+    {s:'Plans (situation, masse, façades)',from:[2,3,4]},
+    {s:'Notice + CERFA signé',from:[5,6]},
+    {s:'Dépôt en mairie (récépissé)',from:[7,8]},
+    {s:'Non-opposition obtenue',from:[10]},
+    {s:'Affichage réglementaire',from:[11]}
   ],
   ai:[
-    {s:'Premier contact — brief et programme',req:true},
-    {s:'Analyse besoins et budget client',req:true},
-    {s:'Relevés existants / plans fournis',req:true},
-    {s:'Proposition implantation 1 ou 2 options',req:true},
-    {s:'Chiffrage estimatif travaux',req:false},
-    {s:'Ajustements et validation client',req:true},
-    {s:'Plans aménagement cotés validés',req:false},
-    {s:'Détails techniques mobilier cloisons',req:false},
-    {s:'Choix matériaux et ambiances',req:false},
-    {s:'Rendus 3D',req:false},
-    {s:'Dossier final transmis au client',req:true},
-    {s:'Coordination entreprises si AMO',req:false},
-    {s:'Réception chantier',req:false}
+    {s:'Brief, besoins et budget',from:[0,1]},
+    {s:'Relevés / plans existants',from:[2]},
+    {s:'Proposition d\'implantation + estimation',from:[3,4]},
+    {s:'Validation client',from:[5]},
+    {s:'Plans cotés, détails, matériaux',from:[6,7,8]},
+    {s:'Dossier final transmis',from:[10]}
   ],
   v3d:[
-    {s:'Réception plans et fichiers de base',req:true},
-    {s:'Brief client ambiance et références',req:true},
-    {s:'Cadrage nombre de vues et angles',req:true},
-    {s:'Modélisation 3D',req:true},
-    {s:'Matériaux et textures',req:false},
-    {s:'Premiers rendus envoyés pour validation',req:true},
-    {s:'Validation caméras et cadrages',req:true},
-    {s:'Retours client',req:false},
-    {s:'Ajustements',req:false},
-    {s:'Livraison HD impression web formats',req:false}
+    {s:'Plans reçus + brief ambiance',from:[0,1]},
+    {s:'Cadrage des vues',from:[2]},
+    {s:'Modélisation + matériaux',from:[3,4]},
+    {s:'Premiers rendus validés',from:[5,6]},
+    {s:'Ajustements + livraison HD',from:[8,9]}
   ],
   amo:[
-    {s:'Cadrage mission et contrat signé',req:true},
-    {s:'Plans EXE finalisés et validés',req:true},
-    {s:'Rédaction CCTP tous corps état',req:true},
-    {s:'Quantitatif DQE établi',req:false},
-    {s:'Envoi consultations aux entreprises',req:true},
-    {s:'Réception des offres',req:true},
-    {s:'Tableau comparatif offres',req:true},
-    {s:'Choix entreprises avec le client',req:true},
-    {s:'Marchés et ordres de service signés',req:true},
-    {s:'Réunions de chantier et CR diffusés',req:false},
-    {s:'OPR liste des réserves',req:true},
-    {s:'Levée des réserves',req:false}
+    {s:'Contrat de mission signé',from:[0]},
+    {s:'Dossier de consultation (EXE, CCTP, DQE)',from:[1,2,3]},
+    {s:'Consultation + comparatif des offres',from:[4,5,6]},
+    {s:'Entreprises choisies, marchés signés',from:[7,8]},
+    {s:'Suivi de chantier (réunions + CR)',from:[9]},
+    {s:'Réception (OPR + levée des réserves)',from:[10,11]}
   ],
   dce:[
-    {s:'Plans EXE finalisés',req:true},
-    {s:'Rédaction CCTP tous corps état',req:true},
-    {s:'Quantitatif DQE établi',req:false},
-    {s:'Envoi aux entreprises consultées',req:true},
-    {s:'Réception des offres',req:true},
-    {s:'Tableau comparatif',req:true},
-    {s:'Rapport analyse et recommandation',req:false},
-    {s:'Remise dossier au client',req:false}
+    {s:'Plans EXE + CCTP + DQE',from:[0,1,2]},
+    {s:'Consultation des entreprises',from:[3,4]},
+    {s:'Analyse des offres',from:[5,6]},
+    {s:'Remise du dossier au client',from:[7]}
   ]
 };
+var CK_VERSION=2;
+
+// Convertit les coches d'un dossier créé avec les anciennes checklists (v1).
+// Un jalon est coché si toutes les anciennes étapes qu'il regroupe l'étaient.
+function migrateCard(c){
+  if(!c||c.ckv===CK_VERSION)return false;
+  c.cl=c.cl||{};
+  Object.keys(c.cl).forEach(function(m){
+    var old=c.cl[m]||[];
+    if(!CK[m])return;
+    c.cl[m]=CK[m].map(function(step){
+      return step.from.every(function(i){return !!old[i];})?1:0;
+    });
+  });
+  c.ckv=CK_VERSION;
+  return true;
+}
+function migrateDB(){
+  var changed=false;
+  (DB.cards||[]).concat(DB.archived||[]).forEach(function(c){if(migrateCard(c))changed=true;});
+  return changed;
+}
+function nextStep(c){
+  var ms=(c.ms||[]).filter(function(m){return m!=='ur'&&CK[m];});
+  for(var k=0;k<ms.length;k++){
+    var vals=(c.cl&&c.cl[ms[k]])||[];
+    for(var i=0;i<CK[ms[k]].length;i++){if(!vals[i])return{m:ms[k],s:CK[ms[k]][i].s};}
+  }
+  return null;
+}
 
 var INIT=[
   {id:1,ref:'001-02-2026',nom:'CHANET',tel:'',mail:'',date:'2026-02-19',addr:'Brive-la-Gaillarde',ms:['pc'],notes:'Pièces complémentaires, repartir de zéro',col:'afaire',cl:{pc:[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},prop:false,hono:0,due:'',upd:Date.now()-16*864e5,created:Date.now()-20*864e5},
@@ -547,34 +563,49 @@ var INIT=[
 ];
 
 var DB={cards:[],archived:[]},act=null,filt='all',sortMode='date_desc',staledays=14;
+var API='https://script.google.com/macros/s/AKfycbwxVUyfGvkvcram5HyJauvavs9Yr3tc5PjtTOXoABrZHdaYrtJoSlOQjvUOzr5He70hig/exec';
+var remoteReady=false,pushTimer=null;
 
 function sv(){
+  DB.savedAt=Date.now();
   try{localStorage.setItem('a2m_kanban',JSON.stringify(DB));}catch(e){}
-  if(window.location.protocol!=='file:'){
-    fetch('https://script.google.com/macros/s/AKfycbwxVUyfGvkvcram5HyJauvavs9Yr3tc5PjtTOXoABrZHdaYrtJoSlOQjvUOzr5He70hig/exec',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(DB)}).catch(function(){});
-  }
+  // On n'envoie jamais vers Google Sheets tant que la copie du serveur n'a pas été lue :
+  // évite d'écraser les vrais dossiers avec des données locales vides ou de démonstration.
+  if(!remoteReady)return;
+  clearTimeout(pushTimer);
+  pushTimer=setTimeout(pushRemote,800); // regroupe les clics rapides en un seul envoi
+}
+function pushRemote(){
+  fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(DB)})
+    .catch(function(){toast('Hors ligne — sauvegardé sur cet appareil');});
 }
 
+function setDB(p){DB=p;if(!DB.cards)DB.cards=[];if(!DB.archived)DB.archived=[];}
+
 function load(){
-  DB={cards:JSON.parse(JSON.stringify(INIT)),archived:[]};
-  try{
-    var ls=localStorage.getItem('a2m_kanban');
-    if(ls){var p=JSON.parse(ls);if(p&&p.cards&&p.cards.length>0){DB=p;if(!DB.archived)DB.archived=[];}}
-  }catch(e){}
+  setDB({cards:[],archived:[]});
+  try{var ls=localStorage.getItem('a2m_kanban');if(ls){var p=JSON.parse(ls);if(p&&p.cards)setDB(p);}}catch(e){}
+  if(migrateDB()){try{localStorage.setItem('a2m_kanban',JSON.stringify(DB));}catch(e){}}
   render();
-  if(window.location.protocol!=='file:'){
-    fetch('https://script.google.com/macros/s/AKfycbwxVUyfGvkvcram5HyJauvavs9Yr3tc5PjtTOXoABrZHdaYrtJoSlOQjvUOzr5He70hig/exec')
-      .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-      .then(function(p){if(p&&p.cards&&p.cards.length>0){DB=p;if(!DB.archived)DB.archived=[];sv();render();}})
-      .catch(function(e){console.log('Mode local:',e.message);});
-  }
+  if(window.location.protocol==='file:')return;
+  fetch(API)
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+    .then(function(p){
+      remoteReady=true;
+      var local=DB;
+      var remoteHas=p&&p.cards&&p.cards.length>0;
+      // Garde la copie la plus récente (serveur ou appareil)
+      if(remoteHas&&(p.savedAt||0)>=(local.savedAt||0)){setDB(p);migrateDB();try{localStorage.setItem('a2m_kanban',JSON.stringify(DB));}catch(e){}}
+      if(!remoteHas||migrateDB()||(local.savedAt||0)>(p.savedAt||0)){if(DB.cards.length)sv();}
+      render();
+    })
+    .catch(function(e){console.log('Mode local:',e.message);toast('Serveur injoignable — mode local');});
 }
 
 function resetData(){
-  if(!confirm('Recharger les projets de démonstration ?\nTous vos projets actuels seront remplacés.'))return;
+  if(!confirm('Vider le cache de cet appareil et recharger les dossiers depuis le serveur ?'))return;
   try{localStorage.removeItem('a2m_kanban');}catch(e){}
-  DB={cards:JSON.parse(JSON.stringify(INIT)),archived:[]};
-  sv();closeM();render();toast('Données réinitialisées !');
+  location.reload();
 }
 
 function genRef(nom){
@@ -638,7 +669,7 @@ function applyF(){
     var c=DB.cards.find(function(x){return x.id===id;});
     if(!c){el.classList.add('hidden');return;}
     var mOk=filt==='all'||(c.ms||[]).indexOf(filt)>=0;
-    var sOk=!q||(c.nom||'').toLowerCase().indexOf(q)>=0||(c.addr||'').toLowerCase().indexOf(q)>=0;
+    var sOk=!q||[c.nom,c.addr,c.cadr,c.ref,c.tel,c.mail,c.nat].join(' ').toLowerCase().indexOf(q)>=0;
     el.classList.toggle('hidden',!(mOk&&sOk));
   });
 }
@@ -685,6 +716,7 @@ function render(){
       if(card.prop)tags+='<span class="tag t-prop">Prop.✓</span>';
       var prg=p.t>0?'<div class="prog-row"><span class="prog-steps">'+p.d+'/'+p.t+' étapes</span><span class="prog-pct">'+p.pct+'%</span></div><div class="prog-track"><div style="height:100%;border-radius:3px;'+stripColor(card)+';width:'+p.pct+'%"></div></div>':'';
       var due=dueStatus(card.due);var dueBadge=due?'<div class="due '+due.cls+'">'+due.txt+'</div>':'';
+      var ns=card.col!=='termines'?nextStep(card):null;var nsLbl=ns?'<div class="next-step"><b>Suite</b>'+esc(ns.s)+'</div>':'';
       var staleLbl=stale?'<div class="stale-lbl">Stagnant · '+daysSince(card.upd)+' j</div>':'';
       var foot=(card.date||card.hono)?'<div class="card-foot">'+(card.date?'<span>'+card.date+'</span>':'')+(card.hono?'<span>'+Math.round(parseFloat(card.hono)).toLocaleString('fr-FR')+'€ HT</span>':'')+'</div>':'';
       var el=document.createElement('div');
@@ -693,7 +725,7 @@ function render(){
         '<div class="card-in">'+(card.ref?'<div class="card-ref">'+esc(card.ref)+'</div>':'')+
         '<div class="card-name">'+esc(card.nom)+'</div>'+
         (card.addr?'<div class="card-addr">'+esc(card.addr)+'</div>':'')+
-        '<div class="card-tags">'+tags+'</div>'+prg+dueBadge+staleLbl+'</div>'+foot;
+        '<div class="card-tags">'+tags+'</div>'+prg+nsLbl+dueBadge+staleLbl+'</div>'+foot;
       el.onclick=function(){openDet(card.id);};
       body.appendChild(el);
     });
@@ -718,6 +750,8 @@ function openDet(id){
   document.getElementById('d-mail-e').value=act.mail||'';
   document.getElementById('d-date-e').value=act.date||'';
   document.getElementById('d-addr-e').value=act.addr||'';
+  ['cadr','nat','surf','cad'].forEach(function(k){document.getElementById('d-'+k+'-e').value=act[k]||'';});
+  document.getElementById('d-res-e').value=act.resume||'';
   document.getElementById('d-hono-e').value=act.hono||'';
   document.getElementById('d-due-e').value=act.due||'';
   document.getElementById('d-prop-e').checked=!!act.prop;
@@ -757,6 +791,7 @@ function renderMs(){
     var vals=act.cl[m]||[];
     // S'assurer que le tableau vals est assez long
     while(vals.length<steps.length)vals.push(0);
+    if(vals.length>steps.length)vals.length=steps.length;
     act.cl[m]=vals;
 
     var done=vals.filter(Boolean).length;
@@ -765,21 +800,14 @@ function renderMs(){
     var bl=document.createElement('div');
     bl.className='ck-block '+(CKCLS[m]||'');
 
-    var itemsHtml='';
+    var itemsHtml='',nextI=vals.indexOf(0);
     steps.forEach(function(step,i){
-      var label=step.s;
-      var isReq=step.req;
-      var checked=vals[i]?'checked':'';
-      // Bloqué si l'étape précédente est requise et non cochée
-      var locked=false;
-      if(i>0&&steps[i-1].req&&!vals[i-1])locked=true;
-      itemsHtml+='<div class="ck-item'+(locked?' locked':'')+'">'
-        +'<input type="checkbox" '+(checked)+' '+(locked?'disabled':'')
-        +' onchange="tck(\''+m+'\','+i+',this.checked)">'
-        +'<span class="ck-lbl'+(vals[i]?' done':'')+'">'
-        +esc(label)+(isReq&&!vals[i]&&!locked?'<span style="font-size:7px;color:var(--or-d);margin-left:5px;font-weight:800">REQUIS</span>':'')
-        +(locked?' 🔒':'')
-        +'</span></div>';
+      var isNext=(i===nextI);
+      itemsHtml+='<div class="ck-item'+(isNext?' next':'')+'" onclick="tck(\''+m+'\','+i+','+(vals[i]?0:1)+')">'
+        +'<input type="checkbox" tabindex="-1" '+(vals[i]?'checked':'')+'>'
+        +'<span class="ck-lbl'+(vals[i]?' done':'')+'">'+esc(step.s)+'</span>'
+        +(isNext?'<span class="ck-hint">Prochaine</span>':'')
+        +'</div>';
     });
 
     bl.innerHTML='<div class="ck-head"><span class="ck-ttl" style="color:'+col+'">'+esc(MSL[m]||m)+'</span><span class="ck-cnt">'+done+'/'+steps.length+' — '+pct+'%</span></div>'+
@@ -904,76 +932,125 @@ function saveNew(){
     mail:document.getElementById('n-mail').value.trim(),
     date:document.getElementById('n-date').value,
     addr:document.getElementById('n-addr').value.trim(),
+    cadr:document.getElementById('n-cadr').value.trim(),nat:document.getElementById('n-nat').value.trim(),
+    surf:document.getElementById('n-surf').value.trim(),cad:document.getElementById('n-cad').value.trim(),
+    resume:document.getElementById('n-res').value.trim(),
     ms:ms,notes:document.getElementById('n-notes').value.trim(),
     col:document.getElementById('n-col').value,cl:cl,prop:false,
     hono:parseFloat(document.getElementById('n-hono').value)||0,
     due:document.getElementById('n-due').value,
-    upd:Date.now(),created:Date.now()
+    upd:Date.now(),created:Date.now(),ckv:CK_VERSION
   });
-  ['n-nom','n-tel','n-mail','n-addr','n-notes'].forEach(function(i){document.getElementById(i).value='';});
+  ['n-nom','n-tel','n-mail','n-addr','n-notes','n-cadr','n-nat','n-surf','n-cad','n-res'].forEach(function(i){document.getElementById(i).value='';});
   ['n-date','n-due'].forEach(function(i){document.getElementById(i).value='';});
   document.getElementById('n-hono').value='';
   ['n-pc','n-dt','n-ai','n-v3d','n-amo','n-dce','n-ur'].forEach(function(i){document.getElementById(i).checked=false;});
   closeM();sv();render();toast('Projet créé !');
 }
 
-function expFicheClient(){
-  if(!act)return;
-  var p=prog(act);
-  var ms=(act.ms||[]).filter(function(m){return m!=='ur';});
-  var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:32px;max-width:720px;margin:0 auto}.top{height:5px;background:linear-gradient(90deg,#7a3e10,#d4762a,#e8943e)}.hdr{display:flex;justify-content:space-between;padding:20px 0;border-bottom:2px solid #d4762a;margin-bottom:20px}.ref{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#a85a1a}.nom{font-size:22px;font-weight:800}.band{background:#1a1814;color:#fff;padding:20px 24px;margin-bottom:20px;border-radius:4px}.band-lbl{font-size:8px;letter-spacing:.2em;color:rgba(212,118,42,.7);margin-bottom:6px}.band-nom{font-size:24px;font-weight:900}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px}.cell{background:#faf8f5;padding:10px 14px;border-radius:4px;border-left:3px solid #e8e0d0}.cell.or{border-left-color:#d4762a}.ck{font-size:7px;letter-spacing:.14em;text-transform:uppercase;color:#bbb;margin-bottom:3px}.cv{font-size:13px;font-weight:600}.cv.big{font-size:17px;font-weight:800;color:#d4762a}.bar{background:#e8e0d0;height:6px;border-radius:3px;margin:6px 0 3px}.bar-f{height:100%;background:#d4762a;border-radius:3px}.pct{font-size:11px;font-weight:700;color:#d4762a}.ms-tag{display:inline-block;padding:3px 10px;border-radius:2px;font-size:10px;font-weight:700;margin:3px;text-transform:uppercase}.foot{border-top:1px solid #eee;padding-top:12px;margin-top:20px;font-size:9px;color:#bbb;text-align:center}@media print{body{padding:16px}}</style></head><body>');
-  w.document.write('<div class="top"></div>');
-  w.document.write('<div class="hdr"><div><div class="ref">Dossier N&#176; '+(act.ref||'')+'</div><div class="nom">'+esc(act.nom)+'</div></div><div style="text-align:right;font-size:10px;color:#888">M1 Dessin<br>Atelier 2M<br>'+new Date().toLocaleDateString('fr-FR')+'</div></div>');
-  w.document.write('<div class="band"><div class="band-lbl">Client</div><div class="band-nom">'+esc(act.nom)+'</div><div style="font-size:10px;color:#b8b8c0;margin-top:4px">Dossier N&#176; '+(act.ref||'')+'</div></div>');
-  w.document.write('<div class="grid">');
-  if(act.tel)w.document.write('<div class="cell or"><div class="ck">Telephone</div><div class="cv">'+esc(act.tel)+'</div></div>');
-  if(act.mail)w.document.write('<div class="cell"><div class="ck">Email</div><div class="cv" style="font-size:11px">'+esc(act.mail)+'</div></div>');
-  if(act.date)w.document.write('<div class="cell"><div class="ck">Contact</div><div class="cv">'+act.date+'</div></div>');
-  if(act.addr)w.document.write('<div class="cell or"><div class="ck">Chantier</div><div class="cv">'+esc(act.addr)+'</div></div>');
-  if(act.hono)w.document.write('<div class="cell or"><div class="ck">Honoraires</div><div class="cv big">'+Math.round(parseFloat(act.hono)).toLocaleString('fr-FR')+' EUR HT</div></div>');
-  if(act.due)w.document.write('<div class="cell"><div class="ck">Echeance</div><div class="cv">'+new Date(act.due).toLocaleDateString('fr-FR')+'</div></div>');
-  w.document.write('</div>');
-  w.document.write('<div><div class="ck" style="margin-bottom:4px">Avancement global</div><div class="bar"><div class="bar-f" style="width:'+p.pct+'%"></div></div><div class="pct">'+p.d+' / '+p.t+' etapes - '+p.pct+'%</div></div>');
-  if(act.notes)w.document.write('<div style="margin-top:18px;background:#fffdf9;border:1px solid #e8e0d0;border-left:3px solid #d4762a;padding:12px;border-radius:4px"><div class="ck" style="margin-bottom:6px">Notes</div><div style="font-size:12px;color:#555;line-height:1.7">'+esc(act.notes)+'</div></div>');
-  w.document.write('<div class="foot">M1 Dessin - Atelier 2M - Document genere le '+new Date().toLocaleDateString('fr-FR')+'</div>');
-  w.document.write('</body></html>');
-  w.document.close();w.onload=function(){w.print();};
-  toast('Fiche client generee');
+// ── FICHES IMPRIMABLES ───────────────────────────────────────────────────────
+var A2M={nom:'Atelier 2M',act:'Dessin d\'Architecture',adr:'29 Avenue Thiers, 19100 Brive-la-Gaillarde',
+  tel:'06 59 98 68 81',mail:'contact@atelier2m.com',web:'www.atelier2m.com',siret:'484 070 065 00038'};
+
+function fmtD(d){if(!d)return'';var x=new Date(d);return isNaN(x)?d:x.toLocaleDateString('fr-FR');}
+function eur(v){return v?Math.round(parseFloat(v)).toLocaleString('fr-FR')+' € HT':'';}
+function colName(id){var c=COLS.find(function(x){return x.id===id;});return c?c.name:'';}
+function nl2br(t){return esc(t).replace(/\n/g,'<br>');}
+
+var FICHE_CSS='*{box-sizing:border-box}body{font-family:Montserrat,Arial,sans-serif;color:#222;padding:28px;max-width:760px;margin:0 auto;font-size:12px}'+
+ '.top{height:5px;background:linear-gradient(90deg,#7a3e10,#d4762a,#e8943e);margin-bottom:16px}'+
+ '.hdr{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:14px;border-bottom:2px solid #d4762a;margin-bottom:18px}'+
+ '.brand{font-size:18px;font-weight:900}.brand small{display:block;font-size:9px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#a85a1a}'+
+ '.coord{text-align:right;font-size:9.5px;color:#666;line-height:1.55}'+
+ '.ttl{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:16px}.ttl h1{margin:0;font-size:22px;font-weight:900}'+
+ '.kind{font-size:9px;letter-spacing:.2em;text-transform:uppercase;color:#a85a1a;font-weight:700}'+
+ '.badge{background:#1a1814;color:#e8943e;padding:5px 12px;border-radius:3px;font-weight:800;font-size:12px}'+
+ 'h2{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#a85a1a;border-bottom:1px solid #eadfce;padding-bottom:4px;margin:20px 0 8px}'+
+ 'table.kv{width:100%;border-collapse:collapse}table.kv td{padding:5px 8px;border-bottom:1px solid #f1ebe2;vertical-align:top}'+
+ 'table.kv td.k{width:32%;color:#888;font-size:10px;text-transform:uppercase;letter-spacing:.06em}table.kv td.v{font-weight:600}'+
+ '.miss{color:#c9b9a3;font-weight:400;font-style:italic}'+
+ '.box{background:#fcf9f5;border-left:3px solid #d4762a;padding:10px 12px;line-height:1.6;border-radius:3px}'+
+ '.next{background:#fff3e6;border:1px solid #e8943e;padding:10px 12px;border-radius:4px;font-weight:700}.next span{display:block;font-size:9px;letter-spacing:.16em;text-transform:uppercase;color:#a85a1a;margin-bottom:3px}'+
+ '.ms{margin-bottom:12px}.ms-hd{display:flex;justify-content:space-between;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em}'+
+ '.bar{height:5px;background:#eee4d6;border-radius:3px;margin:4px 0 6px}.bar i{display:block;height:100%;border-radius:3px}'+
+ '.st{display:flex;gap:8px;padding:3px 4px;font-size:11px}.st b{width:14px;display:inline-block;text-align:center}.st.done{color:#999;text-decoration:line-through}'+
+ '.lines div{border-bottom:1px solid #ddd;height:26px}'+
+ '.foot{border-top:1px solid #eee;margin-top:24px;padding-top:10px;font-size:8.5px;color:#999;display:flex;justify-content:space-between}'+
+ '@media print{body{padding:0}h2{break-after:avoid}.ms,.box{break-inside:avoid}}';
+
+function kv(rows,showEmpty){
+  var h='';rows.forEach(function(r){
+    if(!r[1]&&!showEmpty)return;
+    h+='<tr><td class="k">'+r[0]+'</td><td class="v">'+(r[1]?r[1]:'<span class="miss">non renseigné</span>')+'</td></tr>';
+  });
+  return h?'<table class="kv">'+h+'</table>':'';
+}
+function clientRows(c){
+  return[['Nom',esc(c.nom)],['Adresse',esc(c.cadr)],
+    ['Téléphone',esc(c.tel)],['Email',esc(c.mail)],['Premier contact',fmtD(c.date)]];
+}
+function projetRows(c,full){
+  var ms=(c.ms||[]).filter(function(m){return m!=='ur';}).map(function(m){return MSL[m];}).join(', ');
+  var r=[['Nature du projet',esc(c.nat)],['Adresse du chantier',esc(c.addr)],['Parcelle cadastrale',esc(c.cad)],
+    ['Surface',c.surf?esc(c.surf)+' m²':''],['Missions',esc(ms)],['Statut',colName(c.col)],['Échéance',fmtD(c.due)],
+    ['Honoraires',c.hono?eur(c.hono)+' <span style="font-weight:400;color:#888;font-size:10px">— TVA non applicable, art. 293 B du CGI</span>':'']];
+  if(full){
+    var j=Math.floor((Date.now()-(c.created||c.upd||Date.now()))/864e5);
+    r.push(['Proposition envoyée',c.prop?'Oui':'Non']);
+    r.push(['Dossier ouvert depuis',j+' jour'+(j>1?'s':'')]);
+    if((c.ms||[]).indexOf('ur')>=0)r.push(['Priorité','<span style="color:#c02828">URGENT</span>']);
+  }
+  return r;
+}
+function missionsHtml(c){
+  var h='';
+  (c.ms||[]).filter(function(m){return m!=='ur'&&CK[m];}).forEach(function(m){
+    var steps=CK[m],vals=(c.cl&&c.cl[m])||[],done=steps.filter(function(x,i){return vals[i];}).length;
+    var pct=Math.round(100*done/steps.length),col=CKC[m]||'#d4762a';
+    h+='<div class="ms"><div class="ms-hd"><span style="color:'+col+'">'+esc(MSL[m])+'</span><span>'+done+'/'+steps.length+' · '+pct+'%</span></div>'+
+       '<div class="bar"><i style="width:'+pct+'%;background:'+col+'"></i></div>';
+    steps.forEach(function(st,i){h+='<div class="st'+(vals[i]?' done':'')+'"><b>'+(vals[i]?'✓':'○')+'</b>'+esc(st.s)+'</div>';});
+    h+='</div>';
+  });
+  return h||'<div class="miss">Aucune mission sélectionnée</div>';
+}
+function openFiche(kind,body){
+  var c=act,w=window.open('','_blank');
+  if(!w){toast('Autorisez les fenêtres pop-up pour imprimer');return;}
+  var today=new Date().toLocaleDateString('fr-FR');
+  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+kind+' — '+esc(c.nom)+'</title>'+
+    '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&display=swap" rel="stylesheet">'+
+    '<style>'+FICHE_CSS+'</style></head><body><div class="top"></div>'+
+    '<div class="hdr"><div class="brand">'+A2M.nom+'<small>'+A2M.act+'</small></div>'+
+    '<div class="coord">'+A2M.adr+'<br>'+A2M.tel+' · '+A2M.mail+'<br>'+A2M.web+'</div></div>'+
+    '<div class="ttl"><div><div class="kind">'+kind+'</div><h1>'+esc(c.nom)+'</h1></div>'+
+    '<div class="badge">'+(c.ref?'N° '+esc(c.ref):'')+'</div></div>'+body+
+    '<div class="foot"><span>'+A2M.nom+' — SIRET '+A2M.siret+'</span><span>Édité le '+today+'</span></div></body></html>');
+  w.document.close();
+  w.onload=function(){setTimeout(function(){w.print();},300);};
 }
 
+// Fiche client : document présentable, remis au client (sans les notes internes)
+function expFicheClient(){
+  if(!act)return;var c=act,p=prog(c);
+  var b='<h2>Client</h2>'+kv(clientRows(c),false)+
+    '<h2>Projet</h2>'+kv(projetRows(c,false),false)+
+    (c.resume?'<h2>Résumé du projet</h2><div class="box">'+nl2br(c.resume)+'</div>':'')+
+    '<h2>Avancement — '+p.pct+'%</h2>'+missionsHtml(c);
+  openFiche('Fiche client',b);toast('Fiche client générée');
+}
+
+// Fiche de travail : usage interne, tout est affiché (champs vides signalés)
 function expFicheTravail(){
-  if(!act)return;
-  var p=prog(act);
-  var ms=(act.ms||[]).filter(function(m){return m!=='ur';});
-  var w=window.open('','_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{font-family:Arial,sans-serif;padding:32px;max-width:720px;margin:0 auto}.top{height:5px;background:linear-gradient(90deg,#2460a8,#5ab4ff,#d4762a)}.hdr{display:flex;justify-content:space-between;align-items:center;padding:16px 0;border-bottom:1px solid #e8e0d0;margin-bottom:16px}.doc-type{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:#2460a8}.doc-nom{font-size:18px;font-weight:800}.ref-badge{background:#1a1814;color:#e8943e;padding:4px 12px;border-radius:3px;font-size:11px;font-weight:700}.strip{background:#f0ede8;padding:10px 16px;display:flex;gap:24px;border-bottom:1px solid #e0d8cc;margin-bottom:14px}.si{display:flex;flex-direction:column;gap:2px}.sk{font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:#bbb}.sv{font-size:11px;font-weight:600}.pg-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid #e8e0d0;margin-bottom:16px}.pg-lbl{font-size:10px;font-weight:700;color:#999;white-space:nowrap}.pg-track{flex:1;height:5px;background:#e8e0d0;border-radius:3px}.pg-fill{height:100%;background:#d4762a;border-radius:3px}.pg-pct{font-size:15px;font-weight:900;color:#d4762a;white-space:nowrap}.ck-sec{margin-bottom:22px}.ck-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;padding-bottom:6px}.ck-ttl{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.ck-cnt{font-size:11px;font-weight:700;color:#999}.ck-bar{height:3px;border-radius:2px;margin-bottom:10px}.ck-item{display:flex;align-items:flex-start;gap:8px;padding:6px 6px;border-radius:3px;margin-bottom:2px}.ck-box{width:14px;height:14px;border-radius:3px;border:2px solid;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center}.ck-lbl{font-size:11px;font-weight:500;line-height:1.4}.foot{border-top:1px solid #eee;padding-top:12px;margin-top:18px;display:flex;justify-content:space-between;font-size:9px;color:#bbb}@media print{body{padding:16px}}</style></head><body>');
-  w.document.write('<div class="top"></div>');
-  w.document.write('<div class="hdr"><div><div class="doc-type">Fiche de travail</div><div class="doc-nom">'+esc(act.nom)+'</div></div><div class="ref-badge">'+(act.ref||'')+'</div></div>');
-  w.document.write('<div class="strip">');
-  if(act.tel)w.document.write('<div class="si"><div class="sk">Tel</div><div class="sv">'+esc(act.tel)+'</div></div>');
-  if(act.addr)w.document.write('<div class="si"><div class="sk">Chantier</div><div class="sv">'+esc(act.addr)+'</div></div>');
-  if(act.due)w.document.write('<div class="si"><div class="sk">Echeance</div><div class="sv">'+new Date(act.due).toLocaleDateString('fr-FR')+'</div></div>');
-  w.document.write('<div class="si"><div class="sk">Date</div><div class="sv">'+new Date().toLocaleDateString('fr-FR')+'</div></div>');
-  w.document.write('</div>');
-  w.document.write('<div class="pg-row"><span class="pg-lbl">Avancement</span><div class="pg-track"><div class="pg-fill" style="width:'+p.pct+'%"></div></div><span class="pg-pct">'+p.pct+'%</span></div>');
-  ms.forEach(function(m){
-    var steps=CK[m]||[],vals=act.cl[m]||[],done=vals.filter(Boolean).length,pct=steps.length?Math.round(100*done/steps.length):0;
-    var col=CKC[m]||'#d4762a';
-    w.document.write('<div class="ck-sec"><div class="ck-hd" style="border-bottom:2px solid '+col+'20"><span class="ck-ttl" style="color:'+col+'">'+esc(MSL[m]||m)+'</span><span class="ck-cnt">'+done+'/'+steps.length+' - '+pct+'%</span></div>');
-    w.document.write('<div class="ck-bar" style="width:'+pct+'%;background:'+col+'"></div>');
-    steps.forEach(function(step,i){
-      var s=typeof step==='object'?step.s:step;
-      var done_item=vals[i]?true:false;
-      w.document.write('<div class="ck-item" style="background:'+(done_item?'#f0f9f4':'#fafaf8')+'"><div class="ck-box" style="border-color:'+(done_item?col:'#ccc')+';background:'+(done_item?col:'transparent')+'">'+(done_item?'<svg width="8" height="6" viewBox="0 0 8 6"><path d="M1 3L3 5L7 1" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>':'')+'</div><div class="ck-lbl" style="color:'+(done_item?'#888':'#222')+';text-decoration:'+(done_item?'line-through':'none')+'">'+esc(s)+'</div></div>');
-    });
-    w.document.write('</div>');
-  });
-  if(act.notes)w.document.write('<div style="margin-top:14px;background:#fffdf9;border:1px solid #e8e0d0;border-left:3px solid #d4762a;padding:12px;border-radius:4px"><div class="sk" style="margin-bottom:6px;font-size:7px;letter-spacing:.16em;text-transform:uppercase;color:#d4762a">Notes</div><div style="font-size:11px;color:#555;line-height:1.7">'+esc(act.notes)+'</div></div>');
-  w.document.write('<div class="foot"><span>M1 Dessin - Atelier 2M</span><span>Dossier '+esc(act.ref||'')+' - '+new Date().toLocaleDateString('fr-FR')+'</span></div>');
-  w.document.write('</body></html>');
-  w.document.close();w.onload=function(){w.print();};
-  toast('Fiche de travail generee');
+  if(!act)return;var c=act,p=prog(c),ns=nextStep(c);
+  var b=(ns&&c.col!=='termines'?'<div class="next"><span>Prochaine étape · '+esc(MSL[ns.m])+'</span>'+esc(ns.s)+'</div>':'')+
+    '<h2>Client</h2>'+kv(clientRows(c),true)+
+    '<h2>Projet</h2>'+kv(projetRows(c,true),true)+
+    '<h2>Résumé du projet</h2>'+(c.resume?'<div class="box">'+nl2br(c.resume)+'</div>':'<div class="miss">Non renseigné</div>')+
+    '<h2>Checklists — '+p.d+'/'+p.t+' étapes · '+p.pct+'%</h2>'+missionsHtml(c)+
+    (c.notes?'<h2>Notes</h2><div class="box">'+nl2br(c.notes)+'</div>':'')+
+    '<h2>Notes de terrain</h2><div class="lines">'+new Array(7).join('<div></div>')+'</div>';
+  openFiche('Fiche de travail',b);toast('Fiche de travail générée');
 }
 
 function showM(id){document.getElementById(id).classList.add('open');}
@@ -983,4 +1060,4 @@ load();
 </script>
 
 
-</body></html>
+</body></html>
