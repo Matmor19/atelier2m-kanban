@@ -567,7 +567,7 @@ var INIT=[
 ];
 
 var DB={cards:[],archived:[]},act=null,filt='all',sortMode='date_desc',staledays=14;
-var API='https://script.google.com/macros/s/AKfycbwxVUyfGvkvcram5HyJauvavs9Yr3tc5PjtTOXoABrZHdaYrtJoSlOQjvUOzr5He70hig/exec';
+var API='https://script.google.com/macros/s/AKfycbz7RvskxhCGT2oR8yHBJYFoLb_uyd8ISc4HWXqZHF_oRsH6r5YLCbAESNAmSiiD7B0xog/exec';
 var remoteReady=false,pushTimer=null;
 
 function sv(){
@@ -580,9 +580,20 @@ function sv(){
   pushTimer=setTimeout(pushRemote,800); // regroupe les clics rapides en un seul envoi
 }
 function pushRemote(){
-  fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(DB)})
+  clearTimeout(pushTimer);pushTimer=null;
+  // text/plain : accepté directement par Google Apps Script (pas de blocage CORS)
+  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(DB)})
+    .then(function(r){return r.json();})
+    .then(function(res){if(!res||!res.ok)toast('Sauvegarde Google refusée : '+((res&&res.erreur)||'erreur'));})
     .catch(function(){toast('Hors ligne — sauvegardé sur cet appareil');});
 }
+// Si on ferme la page juste après une modification, l'envoi part quand même
+window.addEventListener('pagehide',function(){
+  if(pushTimer&&remoteReady&&navigator.sendBeacon){
+    clearTimeout(pushTimer);pushTimer=null;
+    navigator.sendBeacon(API,new Blob([JSON.stringify(DB)],{type:'text/plain;charset=utf-8'}));
+  }
+});
 
 function setDB(p){DB=p;if(!DB.cards)DB.cards=[];if(!DB.archived)DB.archived=[];}
 
