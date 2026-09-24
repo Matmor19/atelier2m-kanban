@@ -4,6 +4,13 @@
 
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Kanban — Atelier 2M</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#d4762a">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Kanban 2M">
 <link href="./index_files/css2" rel="stylesheet">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
@@ -1219,7 +1226,13 @@ function keyDates(c){
     L.push({k:'depot',i:'📨',t:'Dépôt du '+T+' en mairie',d:new Date(c.depotDate)});
     if(!c.accordDate){
       if(!c.pcDem)L.push({k:'complet',i:'📋',t:'Fin du délai de demande de pièces (sans courrier, le dossier est complet)',d:addMonths(c.depotDate,1)});
-      if((d=limitePieces(c)))L.push({k:'pieces',i:'📎',t:'Date limite pour fournir les pièces complémentaires',d:d});
+      if(c.pcDem&&c.pcDemDate)L.push({k:'pcdem',i:'📩',t:'Demande de pièces complémentaires reçue de la mairie',d:new Date(c.pcDemDate)});
+      if((d=limitePieces(c))){
+        var rap=new Date(d);rap.setDate(rap.getDate()-15);
+        L.push({k:'pieces_rappel',i:'⚠️',t:'Rappel : plus que 15 jours pour fournir les pièces complémentaires',d:rap});
+        L.push({k:'pieces',i:'📎',t:'Date limite pour fournir les pièces complémentaires',d:d});
+      }
+      if(c.pcDem&&c.pcEnvDate)L.push({k:'pcenv',i:'📤',t:'Pièces complémentaires transmises à la mairie',d:new Date(c.pcEnvDate)});
       if((d=decisionEstimee(c)))L.push({k:'decision',i:'🏛️',t:'Décision attendue du '+T+' (estimation, '+delaiMois(c)+' mois)',d:d});
     }
   }
