@@ -316,6 +316,25 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .ar-btn:hover{background:color-mix(in srgb,var(--or) 10%,transparent)}
 .ar-empty{color:var(--txt3);font-size:12px;font-style:italic;padding:20px 0;text-align:center}
 
+/* MA SEMAINE */
+.wk-btn{position:relative}
+.wk-cnt{display:inline-block;min-width:17px;height:17px;line-height:17px;border-radius:9px;background:var(--red);color:#fff;font-size:9.5px;font-weight:800;text-align:center;padding:0 5px;margin-left:5px}
+.wk-cnt:empty{display:none}
+.wk-sub{font-size:10.5px;font-weight:600;color:var(--txt3);margin-top:3px}
+.wk-grp{--c:var(--txt3);margin:12px 0 6px;display:flex;align-items:center;gap:8px;font-size:9.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--c)}
+.wk-grp:first-child{margin-top:2px}
+.wk-grp span{font-size:10px;font-weight:800;background:color-mix(in srgb,var(--c) 14%,var(--surface));border:1px solid color-mix(in srgb,var(--c) 35%,transparent);border-radius:10px;padding:1px 7px;letter-spacing:0}
+.wk-row{--c:var(--txt3);display:flex;align-items:center;gap:10px;padding:9px 10px;margin-bottom:5px;border-radius:10px;cursor:pointer;background:var(--surface2);border:1px solid var(--brd);border-left:4px solid var(--c);transition:border-color .15s,transform .12s}
+.wk-row:hover{border-color:var(--or);border-left-color:var(--c);transform:translateX(2px)}
+.wk-ico{font-size:17px;width:24px;text-align:center;flex-shrink:0}
+.wk-txt{flex:1;min-width:0}
+.wk-t{font-size:12px;font-weight:700;color:var(--txt);line-height:1.35}
+.wk-d{font-size:10.5px;color:var(--txt3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wk-d b{color:var(--txt2)}
+.wk-when{font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent)}
+.wk-late{--c:var(--red)}.wk-week{--c:var(--amber)}.wk-next{--c:var(--m-v3d)}
+@media (min-width:761px) and (max-width:1400px){.wk-lbl{display:none}.tb-srch{flex-basis:160px}}
+
 /* TÉLÉPHONE */
 @media (max-width:760px){
   .hdr{grid-template-columns:auto 1fr auto;height:auto;padding:8px 12px;gap:10px}
@@ -373,6 +392,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
     </select>
     <div class="tb-right">
       <button class="tb-btn theme-btn" id="theme-btn" onclick="toggleTheme()" title="Mode clair / sombre">🌙</button>
+      <button class="tb-btn wk-btn" onclick="showWeek()" title="Les choses à faire, triées par urgence">📋<span class="wk-lbl"> Ma semaine</span><span class="wk-cnt" id="wk-cnt"></span></button>
       <button class="tb-btn" onclick="showArch()">Archives</button>
       <button class="tb-btn" onclick="showParams()">⚙ Paramètres</button>
     </div>
@@ -568,6 +588,15 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
     <button class="mx" onclick="closeM()">×</button>
     <div class="ma-hd">Projets archivés</div>
     <div class="ma-body" id="arch-body"></div>
+  </div>
+</div>
+
+<!-- MODAL MA SEMAINE -->
+<div class="mov" id="m-week">
+  <div class="ma" style="max-width:640px">
+    <button class="mx" onclick="closeM()">×</button>
+    <div class="ma-hd">📋 Ma semaine<div class="wk-sub" id="wk-sub"></div></div>
+    <div class="ma-body" id="wk-body"></div>
   </div>
 </div>
 
@@ -1020,6 +1049,7 @@ function render(){
     body.appendChild(az);colEl.appendChild(body);board.appendChild(colEl);
   });
   applyF();
+  updWeekBtn();
 }
 
 var MS_ICO={pc:'🏠',dt:'📝',ai:'🛋️',v3d:'🧊',amo:'👷',dce:'📦'};
@@ -1514,6 +1544,72 @@ function showArch(){
 }
 
 function restoreArch(i){var c=DB.archived.splice(i,1)[0];c.calSig='[]';DB.cards.push(c);sv();render();closeM();toast('Restauré : '+c.nom);}
+
+// ── MA SEMAINE ──────────────────────────────────────────
+// Liste des choses à faire, calculée à partir des dossiers et regroupée par urgence.
+// days = nombre de jours avant la date (négatif = dépassé) ; s = clé de tri.
+function dLocal(iso){return /^\d{4}-\d{2}-\d{2}$/.test(iso||'')?new Date(iso+'T00:00'):new Date(iso);}
+function weekItems(){
+  var L=[];
+  DB.cards.forEach(function(c){
+    if(c.col==='termines')return;
+    var ns=nextStep(c),nsTxt=ns?'Suite : '+ns.s:'',hasDue=false,d,n;
+    if(c.due&&!isNaN(d=dLocal(c.due))&&(n=daysTo(d))<=7){
+      hasDue=true;
+      L.push({c:c,ico:'⏱',t:n<0?'Échéance dépassée':'Échéance du dossier',x:nsTxt,days:n,s:n});
+    }
+    if((d=limitePieces(c))){
+      n=daysTo(d);
+      L.push({c:c,ico:'📎',t:n<0?'Délai des pièces complémentaires dépassé':'Pièces complémentaires à fournir',x:c.pcListe||'',days:n,s:n});
+    }
+    if(c.depotDate&&!c.accordDate&&(d=decisionEstimee(c))){
+      n=daysTo(d);
+      L.push({c:c,ico:'🏛️',t:n<0?'Décision de la mairie attendue : relancer la mairie':'Décision de la mairie attendue',x:(c.nDossier?'N° '+c.nDossier+' · ':'')+'estimation '+delaiMois(c)+' mois',days:n,s:n});
+    }
+    if(isStale(c)){
+      n=daysSince(c.upd);
+      L.push({c:c,ico:'💤',t:'Sans activité depuis '+n+' jours',x:nsTxt||'Faire le point sur ce dossier',days:null,grp:'week',when:n+' j',s:.5-n/1000});
+    }
+    if(ns&&!hasDue&&(c.col==='afaire'||c.col==='encours')){
+      var ur=(c.ms||[]).indexOf('ur')>=0;
+      L.push({c:c,ico:MS_ICO[ns.m]||'▶',t:'Prochaine étape : '+ns.s,x:(MS_SHORT[ns.m]||'')+(ur?' · ⚡ Urgent':''),days:null,grp:ur?'week':'next',when:ur?'Urgent':'',s:ur?.9:1000+(c.due?daysTo(dLocal(c.due)):500)});
+    }
+  });
+  L.forEach(function(it){if(!it.grp)it.grp=it.days<0?'late':it.days<=7?'week':'next';});
+  return L.sort(function(a,b){return a.s-b.s||(a.c.nom||'').localeCompare(b.c.nom||'');});
+}
+function weekWhen(it){
+  if(it.when!==undefined)return it.when;
+  var n=it.days;
+  if(n<0)return 'Il y a '+(-n)+' j';
+  if(n===0)return 'Aujourd\'hui';
+  if(n===1)return 'Demain';
+  if(n<=7)return 'Dans '+n+' j';
+  var d=new Date();d.setDate(d.getDate()+n);
+  return d.toLocaleDateString('fr-FR',{day:'numeric',month:'short'});
+}
+function updWeekBtn(){
+  var n=weekItems().filter(function(it){return it.grp!=='next';}).length;
+  var el=document.getElementById('wk-cnt');if(el)el.textContent=n||'';
+}
+function showWeek(){
+  var items=weekItems(),G=[{id:'late',l:'En retard',cls:'wk-late'},{id:'week',l:'Cette semaine',cls:'wk-week'},{id:'next',l:'À venir',cls:'wk-next'}];
+  var h=G.map(function(g){
+    var rows=items.filter(function(it){return it.grp===g.id;});
+    if(!rows.length)return '';
+    return '<div class="wk-grp '+g.cls+'">'+g.l+'<span>'+rows.length+'</span></div>'+rows.map(function(it){
+      var c=it.c,w=weekWhen(it);
+      return '<div class="wk-row '+g.cls+'" onclick="closeM();openDet('+c.id+')">'+
+        '<div class="wk-ico">'+it.ico+'</div>'+
+        '<div class="wk-txt"><div class="wk-t">'+esc(it.t)+'</div>'+
+        '<div class="wk-d"><b>'+esc(c.nom)+'</b>'+(c.ref?' · '+esc(c.ref):'')+(it.x?' · '+esc(it.x):'')+'</div></div>'+
+        (w?'<div class="wk-when">'+esc(w)+'</div>':'')+'</div>';
+    }).join('');
+  }).join('');
+  document.getElementById('wk-body').innerHTML=h||'<div class="ar-empty">Rien à signaler : aucune échéance ni tâche en attente 🎉</div>';
+  document.getElementById('wk-sub').textContent='Aujourd\'hui : '+new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' · cliquez sur une ligne pour ouvrir le dossier';
+  showM('m-week');
+}
 
 function showParams(){document.getElementById('p-stale').value=staledays;document.getElementById('p-cal').checked=!DB.calOff;showM('m-params');}
 function saveParams(){staledays=parseInt(document.getElementById('p-stale').value)||14;var off=!document.getElementById('p-cal').checked;if(off!==!!DB.calOff){DB.calOff=off;sv();}closeM();render();toast('Paramètres enregistrés');}
