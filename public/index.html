@@ -332,7 +332,12 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .wk-d{font-size:10.5px;color:var(--txt3);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wk-d b{color:var(--txt2)}
 .wk-when{font-size:10px;font-weight:800;padding:3px 8px;border-radius:20px;white-space:nowrap;flex-shrink:0;color:var(--c);background:color-mix(in srgb,var(--c) 13%,transparent)}
-.wk-late{--c:var(--red)}.wk-week{--c:var(--amber)}.wk-next{--c:var(--m-v3d)}
+.wk-late{--c:var(--red)}.wk-week{--c:var(--amber)}.wk-next{--c:var(--m-v3d)}.wk-rel{--c:var(--or)}
+.wk-rel-btn{flex-shrink:0;background:var(--or);color:#fff;border:none;border-radius:20px;padding:6px 12px;font-family:'Montserrat',sans-serif;font-size:10.5px;font-weight:800;cursor:pointer;text-decoration:none;white-space:nowrap}
+.wk-rel-btn:hover{background:var(--or-l)}
+.wk-rel-btn.off{background:var(--surface);color:var(--txt3);border:1px dashed var(--brd2)}
+@media (max-width:760px){.wk-row{flex-wrap:wrap}.wk-rel-btn{flex-basis:100%;text-align:center;padding:8px}}
+.rel-note{font-size:9.5px;color:var(--txt3);line-height:1.4;margin-top:-1px}
 @media (min-width:761px) and (max-width:1400px){.wk-lbl{display:none}.tb-srch{flex-basis:160px}}
 
 /* TÉLÉPHONE */
@@ -474,8 +479,13 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
         <div class="sec-lbl">Échéance</div>
         <input class="sd-inp" id="d-due-e" type="date" onchange="sf(&#39;due&#39;,this.value)">
       </div>
+      <div>
+        <div class="sec-lbl">Dernière relance</div>
+        <input class="sd-inp" id="d-rel-e" type="date" onchange="sf('relanceDate',this.value)">
+        <div class="rel-note">Remplie automatiquement par le bouton « Relancer » de Ma semaine. Un dossier relancé il y a moins de 15 jours n'y est pas reproposé.</div>
+      </div>
       <div id="d-age-box"></div>
-      <label class="sd-chk"><input type="checkbox" id="d-prop-e" onchange="sf(&#39;prop&#39;,this.checked)"><label for="d-prop-e">Proposition envoyée</label></label>
+      <label class="sd-chk"><input type="checkbox" id="d-prop-e" onchange="if(this.checked&&act&&!act.propDate)act.propDate=isoOf(new Date());sf(&#39;prop&#39;,this.checked)"><label for="d-prop-e">Proposition envoyée</label></label>
       <div class="ins-box" id="d-ins-box" style="display:none">
         <div class="sec-lbl" style="margin-bottom:4px">Instruction en mairie</div>
         <div class="sd-lbl">Date de dépôt</div>
@@ -1167,6 +1177,7 @@ function openDet(id){
   document.getElementById('d-res-e').value=act.resume||'';
   renderHono();
   document.getElementById('d-due-e').value=act.due||'';
+  document.getElementById('d-rel-e').value=act.relanceDate||'';
   document.getElementById('d-prop-e').checked=!!act.prop;
   renderCont();renderIns();renderDocs();
   renderTelLink();
@@ -1260,7 +1271,7 @@ function qa(type){
   var msg={prop:'Proposition envoyée',accept:'Démarrage en À faire',start:'Dossier en cours',wait:'Mis en attente',resume:'Repris',done:'Dossier terminé !',depot:'Dossier déposé — en instruction',accordSuite:'Autorisation obtenue !',accordFin:'Autorisation obtenue — dossier terminé'}[type];
   if(type==='depot')onEnterInstruction(act);
   if(type==='accordSuite'||type==='accordFin'){onAccord(act);act.accordDate=new Date().toISOString().split('T')[0];}
-  if(type==='prop')act.prop=true;
+  if(type==='prop'){act.prop=true;act.propDate=isoOf(new Date());}
   act.col=dest;act.upd=Date.now();
   document.getElementById('d-col-sel').value=dest;
   var ci=COLS.findIndex(function(c){return c.id===act.col;});
@@ -1552,6 +1563,8 @@ function dLocal(iso){return /^\d{4}-\d{2}-\d{2}$/.test(iso||'')?new Date(iso+'T0
 function weekItems(){
   var L=[];
   DB.cards.forEach(function(c){
+    var rel=relanceFor(c);
+    if(rel)L.push(rel);
     if(c.col==='termines')return;
     var ns=nextStep(c),nsTxt=ns?'Suite : '+ns.s:'',hasDue=false,d,n;
     if(c.due&&!isNaN(d=dLocal(c.due))&&(n=daysTo(d))<=7){
@@ -1566,7 +1579,8 @@ function weekItems(){
       n=daysTo(d);
       L.push({c:c,ico:'🏛️',t:n<0?'Décision de la mairie attendue : relancer la mairie':'Décision de la mairie attendue',x:(c.nDossier?'N° '+c.nDossier+' · ':'')+'estimation '+delaiMois(c)+' mois',days:n,s:n});
     }
-    if(isStale(c)){
+    // prospects et propositions : la relance (15 j) remplace l'alerte « sans activité »
+    if(isStale(c)&&!rel&&c.col!=='prospects'&&c.col!=='propositions'){
       n=daysSince(c.upd);
       L.push({c:c,ico:'💤',t:'Sans activité depuis '+n+' jours',x:nsTxt||'Faire le point sur ce dossier',days:null,grp:'week',when:n+' j',s:.5-n/1000});
     }
@@ -1577,6 +1591,58 @@ function weekItems(){
   });
   L.forEach(function(it){if(!it.grp)it.grp=it.days<0?'late':it.days<=7?'week':'next';});
   return L.sort(function(a,b){return a.s-b.s||(a.c.nom||'').localeCompare(b.c.nom||'');});
+}
+// ── RELANCES ────────────────────────────────────────────
+// Propositions sans réponse, prospects sans activité (15 j) et honoraires restant à encaisser.
+// Un dossier relancé il y a moins de 15 jours n'est pas reproposé.
+var RELANCE_JOURS=15;
+function daysSinceIso(iso){var d=dLocal(iso);return isNaN(d)?999:Math.floor((new Date(new Date().toDateString())-d)/864e5);}
+function relanceFor(c){
+  var relJ=c.relanceDate?daysSinceIso(c.relanceDate):999;
+  if(relJ<RELANCE_JOURS)return null;
+  var n,reste=Math.max(0,honoTotal(c)-encTotal(c)),last=c.relanceDate?' · dernière relance le '+fmtD(c.relanceDate):'';
+  if(c.col==='propositions'||(c.col==='prospects'&&c.prop)){
+    n=Math.min(c.propDate?daysSinceIso(c.propDate):daysSince(c.upd),relJ);
+    if(n>=RELANCE_JOURS)return {c:c,rel:'prop',ico:'📨',t:'Proposition sans réponse',x:(c.propDate?'envoyée le '+fmtD(c.propDate):'proposition envoyée')+last,grp:'rel',when:n+' j',s:-n};
+  }else if(c.col==='prospects'){
+    n=Math.min(daysSince(c.upd),relJ);
+    if(n>=RELANCE_JOURS)return {c:c,rel:'prospect',ico:'👤',t:'Prospect sans nouvelles',x:(c.date?'premier contact le '+fmtD(c.date):'aucune activité récente')+last,grp:'rel',when:n+' j',s:-n};
+  }else if((c.accordDate||c.col==='termines')&&honoTotal(c)>encTotal(c)+0.5){
+    return {c:c,rel:'paie',ico:'💶',t:'Honoraires à encaisser : '+eu(reste)+' HT',x:'encaissé '+eu(encTotal(c))+' sur '+eu(honoTotal(c))+last,grp:'rel',when:c.col==='termines'?'Terminé':'Autorisé',s:-reste/1e6};
+  }
+  return null;
+}
+function relanceMailto(c,type){
+  var ref=c.ref?' (réf. '+c.ref+')':'',proj='votre projet'+(c.nat?' ('+c.nat+')':'')+(c.addr?' situé '+c.addr:'');
+  var sujet,corps;
+  if(type==='prop'){
+    sujet='Votre projet'+ref+' : suite à notre proposition';
+    corps='Je me permets de revenir vers vous au sujet de la proposition que je vous ai adressée'+(c.propDate?' le '+fmtD(c.propDate):'')+' pour '+proj+'.\n\n'+
+      'Avez-vous pu en prendre connaissance ? Je reste à votre disposition pour en discuter, répondre à vos questions ou l\'ajuster selon vos besoins.\n\n'+
+      'Dans l\'attente de votre retour,';
+  }else if(type==='prospect'){
+    sujet='Votre projet'+ref+' : prenons des nouvelles';
+    corps='Suite à notre échange'+(c.date?' du '+fmtD(c.date):'')+' concernant '+proj+', je me permets de revenir vers vous.\n\n'+
+      'Votre projet est-il toujours d\'actualité ? Ce serait un plaisir de vous accompagner et de vous adresser une proposition adaptée. N\'hésitez pas à me faire part de vos disponibilités pour en parler.\n\n'+
+      'Dans l\'attente de votre retour,';
+  }else{
+    var t=honoTotal(c),e=encTotal(c);
+    sujet='Votre dossier'+ref+' : règlement des honoraires';
+    corps='Je me permets de revenir vers vous concernant '+proj+(c.accordDate?', pour lequel l\'autorisation a été obtenue le '+fmtD(c.accordDate):'')+'.\n\n'+
+      'Sauf erreur de ma part, il reste '+eu(t-e)+' HT à régler sur un montant total d\'honoraires de '+eu(t)+' HT'+(e>0?' (déjà réglé : '+eu(e)+' HT)':'')+'.\n\n'+
+      'Je vous remercie par avance de bien vouloir procéder au règlement. Si celui-ci a été effectué entre-temps, merci de ne pas tenir compte de ce message.\n\n'+
+      'Je reste à votre disposition pour toute question,';
+  }
+  var body='Bonjour,\n\n'+corps+'\n\nBien cordialement,\n\nAtelier 2M\nDessin d\'architecture';
+  var to=(c.mail||'').replace(/[\s"<>]/g,'');
+  return 'mailto:'+to+'?subject='+encodeURIComponent(sujet)+'&body='+encodeURIComponent(body.replace(/\n/g,'\r\n'));
+}
+// Clic sur « Relancer » : l'e-mail s'ouvre et la date de relance est notée
+function markRelance(id){
+  var c=DB.cards.find(function(x){return x.id===id;});if(!c)return;
+  c.relanceDate=isoOf(new Date());c.upd=Date.now();sv();render();
+  toast('Relance notée au '+fmtD(c.relanceDate)+' — pensez à envoyer l\'e-mail');
+  setTimeout(function(){if(document.getElementById('m-week').classList.contains('open'))showWeek();},400);
 }
 function weekWhen(it){
   if(it.when!==undefined)return it.when;
@@ -1593,7 +1659,7 @@ function updWeekBtn(){
   var el=document.getElementById('wk-cnt');if(el)el.textContent=n||'';
 }
 function showWeek(){
-  var items=weekItems(),G=[{id:'late',l:'En retard',cls:'wk-late'},{id:'week',l:'Cette semaine',cls:'wk-week'},{id:'next',l:'À venir',cls:'wk-next'}];
+  var items=weekItems(),G=[{id:'late',l:'En retard',cls:'wk-late'},{id:'week',l:'Cette semaine',cls:'wk-week'},{id:'rel',l:'À relancer',cls:'wk-rel'},{id:'next',l:'À venir',cls:'wk-next'}];
   var h=G.map(function(g){
     var rows=items.filter(function(it){return it.grp===g.id;});
     if(!rows.length)return '';
@@ -1603,7 +1669,9 @@ function showWeek(){
         '<div class="wk-ico">'+it.ico+'</div>'+
         '<div class="wk-txt"><div class="wk-t">'+esc(it.t)+'</div>'+
         '<div class="wk-d"><b>'+esc(c.nom)+'</b>'+(c.ref?' · '+esc(c.ref):'')+(it.x?' · '+esc(it.x):'')+'</div></div>'+
-        (w?'<div class="wk-when">'+esc(w)+'</div>':'')+'</div>';
+        (w?'<div class="wk-when">'+esc(w)+'</div>':'')+
+        (it.rel?(c.mail?'<a class="wk-rel-btn" href="'+esc(relanceMailto(c,it.rel))+'" onclick="event.stopPropagation();markRelance('+c.id+')">✉ Relancer</a>'
+          :'<button class="wk-rel-btn off" title="Aucune adresse e-mail dans la fiche" onclick="event.stopPropagation();closeM();openDet('+c.id+');toast(\'Ajoutez l\\\'e-mail du client pour pouvoir le relancer\');document.getElementById(\'d-mail-e\').focus()">✉ E-mail ?</button>'):'')+'</div>';
     }).join('');
   }).join('');
   document.getElementById('wk-body').innerHTML=h||'<div class="ar-empty">Rien à signaler : aucune échéance ni tâche en attente 🎉</div>';
