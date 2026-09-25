@@ -1,0 +1,10 @@
+{
+  "name": "a2m-modeles",
+  "private": true,
+  "description": "Outil de fabrication des modèles Word (public/modeles). Non utilisé par le site.",
+  "dependencies": {
+    "docx": "^9.7.2",
+    "docxtemplater": "^3.71.0",
+    "pizzip": "^3.3.0"
+  }
+}

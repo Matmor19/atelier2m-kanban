@@ -25,6 +25,25 @@ L'adresse du script est dans la variable `API` de `public/index.html`
 
 Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès aux données.
 
+## Contrats, documents Word et numérotation
+
+- Un dossier (carte) peut contenir plusieurs **contrats** (`c.contrats`) : types `A` (mission complète),
+  `PC`, `SUIVI` (suivi de chantier) et `LIBRE`. Chaque contrat a son montant, son échéancier (`ech`),
+  ses textes (`tx`) et ses versions de proposition (`versions`). L'estimatif (`c.est`) et l'annexe PLU
+  (`c.plu`) sont communs au dossier. Paramètres bancaires et échéanciers par défaut : `DB.reglages`.
+- **Argent en centimes entiers** (jamais de nombres à virgule) ; pourcentages en centièmes de %
+  (6,2 % = 620). Fonctions : `cts()` (saisie → centimes), `fmtE()` (affichage), `echCalc()`.
+- Modèles Word : `public/modeles/*.docx`, remplis dans le navigateur par docxtemplater (CDN jsdelivr).
+  Ils sont **fabriqués** par `outils/modeles/generer.js` (`cd outils/modeles && npm install && node generer.js`) :
+  modifier le générateur puis relancer, ne pas éditer les .docx à la main. `essai.js` les remplit avec
+  un client fictif pour vérification (sortie dans `outils/modeles/essais/`, non versionnée).
+- **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
+  uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
+  Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le
+  propriétaire doit le recopier dans Google Apps Script et publier une nouvelle version.
+- **Confidentialité** : ne jamais enregistrer dans le dépôt de documents ou données de vrais clients
+  (le dossier `public/` est en ligne). Pour les essais, utiliser des clients fictifs.
+
 ## Anciennes copies : NE PAS MODIFIER
 
 Ces fichiers et dossiers sont d'anciennes copies inutilisées :

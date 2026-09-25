@@ -340,8 +340,37 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .rel-note{font-size:9.5px;color:var(--txt3);line-height:1.4;margin-top:-1px}
 @media (min-width:761px) and (max-width:1400px){.wk-lbl{display:none}.tb-srch{flex-basis:160px}}
 
+/* CONTRATS ET DOCUMENTS */
+.ctr-it{display:flex;align-items:center;gap:9px;padding:9px 11px;margin-bottom:6px;border-radius:10px;background:var(--surface2);border:1px solid var(--brd);border-left:4px solid var(--or);cursor:pointer;transition:border-color .15s}
+.ctr-it:hover{border-color:var(--or)}.ctr-it.off{opacity:.5}
+.ctr-ico{font-size:18px}.ctr-nm{flex:1;min-width:0;display:flex;flex-direction:column}.ctr-nm b{font-size:12.5px;color:var(--txt)}.ctr-nm i{font-size:10px;color:var(--txt3);font-style:normal}
+.ctr-mt{font-size:12px;font-weight:800;color:var(--txt);white-space:nowrap}
+.ctr-st{font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap;background:color-mix(in srgb,var(--txt3) 14%,transparent);color:var(--txt2)}
+.st-propose{background:color-mix(in srgb,var(--or) 15%,transparent);color:var(--or)}.st-signe{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}.st-abandonne{text-decoration:line-through}
+.ctr-bar{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.ctr-infos,.ctr-tx{margin-top:8px;border:1px solid var(--brd);border-radius:10px;padding:8px 10px;background:var(--surface2)}
+.ctr-infos summary,.ctr-tx summary{cursor:pointer;font-size:11px;font-weight:800;color:var(--txt2)}
+.ctr-infos[open] summary,.ctr-tx[open] summary{margin-bottom:8px}
+.ctr-total{margin:8px 0;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--or) 8%,var(--surface));font-size:12px;color:var(--txt2)}.ctr-total b{color:var(--txt)}.ctr-total span{font-size:10px;color:var(--txt3)}
+.ech-t{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:6px}.ech-t th{text-align:left;font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);padding:4px}
+.ech-t td{padding:2px 3px;vertical-align:middle}.ech-t input,.ech-t select{width:100%;background:var(--inp);border:1px solid var(--brd2);border-radius:6px;padding:5px 6px;font-family:'Montserrat',sans-serif;font-size:11px;color:var(--txt);outline:none}
+.ech-t .num,.gen-t .num{text-align:right;white-space:nowrap}.ech-t input.num{width:70px}
+.ech-t .rm,.plu-sec .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:0 3px}.ech-t .rm:hover,.plu-sec .rm:hover{color:var(--red)}
+.ech-sum{font-size:11px;font-weight:700;color:var(--txt2);margin-top:4px}.ech-sum.ok{color:var(--green)}.ech-sum.ko{color:var(--red)}
+.ver-l{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--txt2)}.ver-l>div{background:var(--surface2);border:1px solid var(--brd);border-radius:8px;padding:6px 8px}.ver-l i{color:var(--txt3);font-size:10px}
+.lnk{font-size:10px;color:var(--or);cursor:pointer;text-decoration:underline}
+.gen-docs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}.gen-docs .off{opacity:.5}
+.gen-num{font-size:12px;color:var(--txt2);margin:6px 0}.gen-al{font-size:11.5px;color:var(--amber);background:color-mix(in srgb,var(--amber) 10%,transparent);border-radius:8px;padding:8px 10px;margin:6px 0;line-height:1.5}
+.gen-t{width:100%;border-collapse:collapse;font-size:11px;margin:4px 0 6px}.gen-t td{padding:4px 6px;border-bottom:1px solid var(--brd);color:var(--txt);vertical-align:top}.gen-t td:first-child{color:var(--txt3);width:38%}
+.gen-t tr.vide td{color:var(--red);font-weight:700;background:color-mix(in srgb,var(--red) 6%,transparent)}
+.plu-sec{border:1px solid var(--brd);border-radius:10px;padding:8px;margin-bottom:8px;overflow:hidden}
+.mn.large{max-width:900px}
+.inf-l{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);margin:4px 0 2px}
+#m-ctr,#m-est,#m-plu,#m-gen,#m-echdef,#m-rep{z-index:210} /* au-dessus de la fiche et des Paramètres */
+
 /* TÉLÉPHONE */
 @media (max-width:760px){
+  .ech-w{overflow-x:auto;-webkit-overflow-scrolling:touch}.ech-w .ech-t{min-width:620px}
   .hdr{grid-template-columns:auto 1fr auto;height:auto;padding:8px 12px;gap:10px}
   .hdr-logo{height:42px}.hdr-title{font-size:18px}.hdr-sub{font-size:8px}
   .hdr-right{grid-column:1/-1;justify-content:space-between;overflow-x:auto}
@@ -430,8 +459,10 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
         <input class="sd-inp" id="d-nat-e" placeholder="Nature du projet (ex : extension 40 m², maison neuve…)" onchange="sf('nat',this.value)">
         <input class="sd-inp" id="d-surf-e" placeholder="Surface (m²)" onchange="sf('surf',this.value)">
       </div>
-      <input class="sd-inp" id="d-cad-e" placeholder="Parcelle cadastrale (ex : BL 41)" onchange="sf('cad',this.value)">
+      <input class="sd-inp" id="d-cad-e" placeholder="Parcelle cadastrale (ex : Section AB n°12)" onchange="sf('cad',this.value)">
       <textarea class="sd-inp pj-area" id="d-res-e" placeholder="Résumé du projet envisagé / en cours…" onchange="sf('resume',this.value)"></textarea>
+      <div class="sec-lbl" style="margin-top:14px">Contrats et documents Word</div>
+      <div id="d-ctrs"></div>
       <div class="sec-lbl" style="margin-top:14px">Documents</div>
       <div class="doc-drop" id="doc-drop" onclick="document.getElementById('doc-in').click()">📎 <b>Ajouter un document</b> — cliquez ou glissez vos fichiers ici<br><span style="font-size:9px;color:var(--txt3)">PDF, images, plans… rangés dans votre Google Drive, dossier du client</span></div>
       <input type="file" id="doc-in" multiple style="display:none" onchange="uploadDocs(this.files);this.value=''">
@@ -460,9 +491,12 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
       <div>
         <div class="sec-lbl">Honoraires € HT</div>
         <div class="hono-box">
+          <div id="d-hono-rows">
           <div class="hono-row"><label for="d-hl-e">Mission libre</label><input class="sd-inp" id="d-hl-e" type="number" min="0" step="10" placeholder="0" onchange="setHono('honoLibre',this.value)"></div>
           <div class="hono-row"><label for="d-hp-e">🏠 Permis de construire</label><input class="sd-inp" id="d-hp-e" type="number" min="0" step="10" placeholder="0" onchange="setHono('honoPC',this.value)"></div>
           <div class="hono-row"><label for="d-ha-e">👷 AMO</label><input class="sd-inp" id="d-ha-e" type="number" min="0" step="10" placeholder="0" onchange="setHono('honoAMO',this.value)"></div>
+          </div>
+          <div id="d-hono-ctr"></div>
           <div class="hono-tot"><span>Total</span><b id="d-htot">0 €</b></div>
           <div class="enc-bar"><i id="d-encbar" style="width:0"></i></div>
           <div class="enc-sum"><span>Encaissé <b id="d-encd">0 €</b></span><span>Reste <b id="d-encr">0 €</b></span></div>
@@ -610,9 +644,17 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
   </div>
 </div>
 
+<!-- MODALES CONTRATS -->
+<div class="mov" id="m-ctr"><div class="mn large"><button class="mx" onclick="closeSub('m-ctr')">×</button><div class="mn-in" id="ctr-body"></div></div></div>
+<div class="mov" id="m-est"><div class="mn large"><button class="mx" onclick="closeSub('m-est')">×</button><div class="mn-in" id="est-body"></div></div></div>
+<div class="mov" id="m-plu"><div class="mn large"><button class="mx" onclick="closeSub('m-plu')">×</button><div class="mn-in" id="plu-body"></div></div></div>
+<div class="mov" id="m-gen"><div class="mn" style="max-width:640px"><button class="mx" onclick="closeSub('m-gen')">×</button><div class="mn-in" id="gen-body"></div></div></div>
+<div class="mov" id="m-echdef"><div class="mn large"><button class="mx" onclick="closeSub('m-echdef')">×</button><div class="mn-in" id="echdef-body"></div></div></div>
+<div class="mov" id="m-rep"><div class="mn" style="max-width:640px"><button class="mx" onclick="closeSub('m-rep')">×</button><div class="mn-in" id="rep-body"></div></div></div>
+
 <!-- MODAL PARAMS -->
 <div class="mov" id="m-params">
-  <div class="mn" style="max-width:380px">
+  <div class="mn" style="max-width:600px">
     <button class="mx" onclick="closeM()">×</button>
     <div class="mn-in">
       <div class="mn-ttl" style="color:var(--sl)">Paramètres</div>
@@ -622,6 +664,10 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
       </div>
       <div class="fld">
         <label class="sd-chk" style="text-transform:none;letter-spacing:0"><input type="checkbox" id="p-cal"> <span style="font-size:12px;color:var(--txt2);font-weight:600">Ajouter les dates importantes dans Google Agenda</span></label>
+      </div>
+      <div style="border-top:1px solid var(--brd);margin-top:14px;padding-top:14px">
+        <div style="font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--txt3);margin-bottom:8px">Contrats et documents</div>
+        <div id="p-reg"></div>
       </div>
       <div style="border-top:1px solid var(--brd);margin-top:14px;padding-top:14px">
         <div style="font-size:8px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--txt3);margin-bottom:8px">Sauvegarde des dossiers</div>
@@ -740,7 +786,12 @@ function migrateHono(c){
   }
   return true;
 }
-function honoTotal(c){return (parseFloat(c.honoLibre)||0)+(parseFloat(c.honoPC)||0)+(parseFloat(c.honoAMO)||0);}
+// Honoraires du dossier en euros : somme des contrats (hors abandonnés) s'il y en a, sinon anciens champs libre / PC / AMO
+function honoTotal(c){
+  var k=(c.contrats||[]).filter(function(x){return x.statut!=='abandonne';});
+  if(k.length)return k.reduce(function(a,x){return a+ctrMontant(x);},0)/100;
+  return (parseFloat(c.honoLibre)||0)+(parseFloat(c.honoPC)||0)+(parseFloat(c.honoAMO)||0);
+}
 function encTotal(c){return (c.enc||[]).reduce(function(s,e){return s+(parseFloat(e.montant)||0);},0);}
 function eu(v){return Math.round(v).toLocaleString('fr-FR')+' €';}
 function migrateDB(){
@@ -1165,6 +1216,7 @@ function renderTelLink(){
 }
 
 function openDet(id){
+  infosOuvert=null;
   act=DB.cards.find(function(c){return c.id===id;});if(!act)return;
   document.getElementById('d-ref').textContent=act.ref||'';
   document.getElementById('d-name').textContent=act.nom;
@@ -1179,7 +1231,7 @@ function openDet(id){
   document.getElementById('d-due-e').value=act.due||'';
   document.getElementById('d-rel-e').value=act.relanceDate||'';
   document.getElementById('d-prop-e').checked=!!act.prop;
-  renderCont();renderIns();renderDocs();
+  renderCont();renderIns();renderDocs();renderCtrs();
   renderTelLink();
   var sel=document.getElementById('d-col-sel');sel.innerHTML='';
   COLS.forEach(function(col){var o=document.createElement('option');o.value=col.id;o.textContent=col.name;if(col.id===act.col)o.selected=true;sel.appendChild(o);});
@@ -1467,6 +1519,9 @@ window.addEventListener('drop',function(e){e.preventDefault();});
 function renderHono(){
   if(!act)return;
   migrateHono(act);
+  var kk=(act.contrats||[]).filter(function(x){return x.statut!=='abandonne';});
+  document.getElementById('d-hono-rows').style.display=kk.length?'none':'';
+  document.getElementById('d-hono-ctr').innerHTML=kk.map(function(x){return '<div class="hono-row"><label>'+CTR_ICO[x.type]+' '+esc(x.intitule)+'</label><span style="text-align:right;font-size:12px;font-weight:700">'+fmtE(ctrMontant(x))+' €</span></div>';}).join('');
   document.getElementById('d-hl-e').value=act.honoLibre||'';
   document.getElementById('d-hp-e').value=act.honoPC||'';
   document.getElementById('d-ha-e').value=act.honoAMO||'';
@@ -1679,8 +1734,635 @@ function showWeek(){
   showM('m-week');
 }
 
-function showParams(){document.getElementById('p-stale').value=staledays;document.getElementById('p-cal').checked=!DB.calOff;showM('m-params');}
-function saveParams(){staledays=parseInt(document.getElementById('p-stale').value)||14;var off=!document.getElementById('p-cal').checked;if(off!==!!DB.calOff){DB.calOff=off;sv();}closeM();render();toast('Paramètres enregistrés');}
+// ════════════════════════════════════════════════════════════
+// CONTRATS, ÉCHÉANCIERS ET DOCUMENTS WORD
+// Un dossier contient un ou plusieurs contrats (c.contrats). Tous les montants sont en
+// CENTIMES entiers (jamais de nombres à virgule) ; les pourcentages en centièmes de % (6,2 % = 620).
+// ════════════════════════════════════════════════════════════
+function cts(s){ // « 1 234,56 » → 123456 (null si vide ou illisible)
+  s=String(s===undefined||s===null?'':s).replace(/[\s  €%]/g,'').replace(',','.');
+  if(!s||s==='-'||!/^-?\d*(\.\d*)?$/.test(s))return null;
+  var neg=s.charAt(0)==='-';if(neg)s=s.slice(1);
+  var p=s.split('.'),c=parseInt(p[0]||'0',10)*100+parseInt(((p[1]||'')+'00').slice(0,2),10);
+  return neg?-c:c;
+}
+function fmtE(c){ // 123456 → « 1 234,56 » ; 123400 → « 1 234 » (espaces insécables)
+  c=Math.round(c||0);var neg=c<0;c=Math.abs(c);
+  var e=String(Math.floor(c/100)).replace(/\B(?=(\d{3})+(?!\d))/g,' '),d=c%100;
+  return (neg?'-':'')+e+(d?','+(d<10?'0':'')+d:'');
+}
+function pctStr(bp){return bp===null||bp===undefined?'':String(bp/100).replace('.',',');}
+function partPct(x,total){return (Math.round(x*1000/total)/10).toFixed(1).replace('.',',');} // part d'un lot, une décimale
+function euroRond(c){return Math.round(c/100)*100;}
+function partDe(total,bp){return euroRond(total*bp/10000);}
+function escA(s){return esc(s).replace(/"/g,'&quot;');}
+function isoAuj(){return isoOf(new Date());}
+function dateFr(iso){var p=String(iso||'').split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:'';}
+function lignes(t){return String(t||'').split(/\r?\n/).map(function(x){return x.trim();}).filter(Boolean);}
+function paras(t){return String(t||'').split(/\r?\n\s*\r?\n/).map(function(x){return x.replace(/\s*\r?\n\s*/g,' ').trim();}).filter(Boolean);}
+function majuscule(s){s=String(s||'');return s.charAt(0).toUpperCase()+s.slice(1);}
+
+// Montant en lettres : 406400 → « quatre mille soixante-quatre euros »
+var U_=['zéro','un','deux','trois','quatre','cinq','six','sept','huit','neuf','dix','onze','douze','treize','quatorze','quinze','seize'];
+var D_=['','','vingt','trente','quarante','cinquante','soixante'];
+function l100(n){
+  if(n<17)return U_[n];
+  if(n<20)return 'dix-'+U_[n-10];
+  var d=Math.floor(n/10),u=n%10;
+  if(d===7)return n===71?'soixante et onze':'soixante-'+l100(n-60);
+  if(d===9)return 'quatre-vingt-'+l100(n-80);
+  if(d===8)return u?'quatre-vingt-'+U_[u]:'quatre-vingts';
+  return u===0?D_[d]:u===1?D_[d]+' et un':D_[d]+'-'+U_[u];
+}
+function l1000(n){
+  var c=Math.floor(n/100),r=n%100;
+  if(!c)return l100(r);
+  return (c===1?'cent':U_[c]+' cent'+(r?'':'s'))+(r?' '+l100(r):'');
+}
+function lettres(cents){
+  var n=Math.floor(Math.abs(cents)/100),ct=Math.abs(cents)%100,m=Math.floor(n/1e6),k=Math.floor(n%1e6/1000),r=n%1000,w=[];
+  if(m)w.push(m===1?'un million':l1000(m)+' millions');
+  if(k)w.push(k===1?'mille':l1000(k).replace(/(cent|vingt)s$/,'$1')+' mille');
+  if(r||!w.length)w.push(l1000(r));
+  var t=w.join(' ')+(m&&!k&&!r?' d\'euros':' euro'+(n>1?'s':''));
+  if(ct)t+=' et '+l100(ct)+' centime'+(ct>1?'s':'');
+  return t;
+}
+
+// ── Types de contrats, textes et échéanciers par défaut ──
+var DECL={signature:'Signature',esq:'Esquisse validée',aps:'APS remis',apd:'APD remis',depot:'Dépôt en mairie',obtention:'Obtention de l\'autorisation',dce:'DCE / analyse des offres',chantier:'Avancement du chantier',reception:'Réception des travaux',fin:'Fin de mission',manuel:'Manuel'};
+var CTR_TYPES={A:'Mission complète',PC:'Mission Permis de Construire',SUIVI:'Mission suivi de chantier',LIBRE:'Mission libre'};
+var CTR_ICO={A:'🏗️',PC:'🏠',SUIVI:'👷',LIBRE:'✏️'};
+var ECH_DEF={
+  A:[['Acompte à la signature','signature','Signature de la lettre de mission',500],['Diagnostic, relevé & analyse PLU','signature','Signature de la lettre de mission — étude déjà réalisée',500],['Esquisse (ESQ)','esq','Validation du parti retenu par le maître d\'ouvrage',700],['Avant-Projet Sommaire (APS)','aps','Remise des plans et de l\'estimatif actualisé',900],['Avant-Projet Détaillé (APD)','apd','Remise du dossier APD et de l\'estimatif détaillé',1200],['Dossier de Permis de Construire','depot','Dépôt du dossier en mairie de [commune]',700],['Suivi de l\'instruction','obtention','Obtention du permis de construire',500],['DCE / Consultation des entreprises','dce','Remise du dossier de consultation et analyse des offres',1000],['Direction et suivi de chantier (DET)','chantier','Facturé mensuellement sur la durée du chantier',3500],['Assistance aux Opérations de Réception (AOR)','reception','Réception des travaux',500]],
+  PC:[['Acompte à la signature','signature','Signature de la proposition',1000],['Diagnostic, relevé & analyse réglementaire','signature','Signature de la proposition',1000],['Esquisse (ESQ)','esq','Validation du parti retenu',1400],['Avant-Projet Sommaire (APS)','aps','Remise des plans et de l\'estimatif actualisé',1800],['Avant-Projet Détaillé (APD)','apd','Remise du dossier APD',2400],['Dossier de Permis de Construire','depot','Dépôt du dossier en mairie de [commune]',1400],['Suivi de l\'instruction','obtention','Obtention du permis de construire',1000]],
+  SUIVI:[['Acompte à la signature','signature','Signature de la proposition',1000],['DCE / Consultation des entreprises','dce','Remise du dossier de consultation et analyse des offres',2000],['Direction et suivi de chantier (DET)','chantier','Facturé mensuellement sur la durée du chantier',6000],['Assistance aux Opérations de Réception (AOR)','reception','Réception des travaux',1000]],
+  LIBRE:[['Acompte à la signature','signature','Signature de la proposition',3000],['Solde à la remise des documents','fin','Fin de mission',7000]]
+};
+var NC_ETUDES='Études techniques spécifiques (structure, thermique réglementaire RE2020, étude de sol G2, réseaux)';
+var TX_DEF={
+  A:{sous_titre_prop:'Mission complète — Conception à réception des travaux',sous_titre_lm:'Maîtrise d\'œuvre — Construction d\'une maison individuelle',
+    intro:'Dans le cadre de votre projet de [projet], je vous adresse la présente proposition d\'honoraires. Ce document détaille le périmètre de ma mission, le montant proposé ainsi que les modalités de règlement.',
+    objet_intro:'Il s\'agit d\'une mission complète, de la conception à la réception des travaux, comprenant :',
+    objet:'Relevé de la parcelle, diagnostic et analyse réglementaire préalable (PLU, zonage)\nEsquisse (ESQ) et étude de faisabilité\nAvant-Projet Sommaire (APS) puis Avant-Projet Détaillé (APD)\nÉlaboration, dépôt et suivi de l\'instruction du dossier de Permis de Construire\nDossier de Consultation des Entreprises (DCE) et analyse des offres\nDirection de l\'Exécution des Travaux (DET) : suivi de chantier, réunions de chantier\nAssistance aux Opérations de Réception (AOR)\nCoordination des bureaux d\'études techniques nécessaires au projet (structure, thermique)',
+    nc_intro:'Ne sont pas comprises dans la présente proposition, et pourront faire l\'objet d\'une mission ou d\'une consultation distincte :',
+    non_compris:'Étude de sol G2, étude de filière d\'assainissement autonome, relevé géomètre\nDiagnostics réglementaires avant travaux et bureaux d\'études techniques spécialisés (structure, fluides)\nTaxe d\'aménagement, frais de raccordement définitifs aux réseaux, assurance dommages-ouvrage\nAménagement mobilier et décoration intérieure',
+    taux_lib:'Taux d\'honoraires — mission complète (conception à réception des travaux)',
+    ech_intro:'Les honoraires sont répartis selon l\'avancement de la mission, chaque phase étant facturée à son achèvement. Le poste « Direction et suivi de chantier » est facturé mensuellement sur la durée effective du chantier.',
+    phases:'Études préliminaires : relevé, diagnostic et analyse réglementaire (PLU, zonage)\nEsquisse (ESQ) et étude de faisabilité\nAvant-Projet Sommaire (APS) puis Avant-Projet Détaillé (APD)\nÉlaboration et dépôt du dossier de Permis de Construire, suivi de l\'instruction\nDossier de Consultation des Entreprises (DCE) et analyse des offres\nDirection de l\'Exécution des Travaux (DET) et Assistance aux Opérations de Réception (AOR)',
+    limites:'Les études techniques spécifiques (structure, thermique réglementaire RE2020, étude de sol G2, réseaux) — voir annexe 1\nLes diagnostics réglementaires avant travaux (amiante, plomb) le cas échéant\nLa taxe d\'aménagement, les frais de raccordement définitifs aux réseaux, l\'assurance dommages-ouvrage\nL\'aménagement mobilier et la décoration intérieure',
+    lm_intro:'La présente lettre de mission définit les conditions dans lesquelles ATELIER 2M est chargé de réaliser les études et prestations de maîtrise d\'œuvre nécessaires à la conception, à l\'obtention du permis de construire et à la réalisation de la construction décrite ci-dessus, conformément aux dispositions du Code de l\'urbanisme et du Code civil applicables à la maîtrise d\'œuvre.',
+    lm_fin:'La mission s\'achève à la réception des travaux et à la levée des éventuelles réserves.',
+    lm_role:'ATELIER 2M intervient dans le cadre d\'une mission de conception, de constitution du dossier administratif et de direction de l\'exécution des travaux. Il n\'intervient pas comme entreprise exécutante : la réalisation matérielle des travaux relève exclusivement des entreprises retenues à l\'issue de la consultation.',
+    acompte_texte:'Ce montant inclut le diagnostic, relevé et l\'analyse du PLU, déjà réalisés par ATELIER 2M en amont de la présente proposition (voir annexe 1) et facturés intégralement dès la signature, sans attendre la remise d\'un livrable complémentaire.',
+    lm_acompte_lib:'Acompte à la signature (diagnostic PLU inclus — étude déjà réalisée)'},
+  PC:{sous_titre_prop:'Mission Permis de Construire — Conception et obtention du dossier administratif',sous_titre_lm:'Permis de Construire — Conception et obtention du dossier administratif',
+    intro:'Dans le cadre de votre projet de [projet], je vous adresse la présente proposition d\'honoraires pour la mission de conception et d\'obtention du permis de construire. Ce document détaille le périmètre de la mission, le montant proposé ainsi que les modalités de règlement.',
+    objet_intro:'',
+    objet:'Relevé de la parcelle, diagnostic et analyse réglementaire préalable (document d\'urbanisme applicable)\nEsquisse (ESQ) et étude de faisabilité\nAvant-Projet Sommaire (APS) puis Avant-Projet Détaillé (APD)\nÉlaboration, dépôt et suivi de l\'instruction du dossier de Permis de Construire',
+    nc_intro:'Ne sont pas comprises dans la présente proposition, et font l\'objet de la mission distincte « Maîtrise d\'Œuvre » (suivi de la réalisation des travaux) ou d\'une consultation séparée :',
+    non_compris:'Dossier de Consultation des Entreprises (DCE) et analyse des offres\nDirection de l\'Exécution des Travaux (DET) et Assistance aux Opérations de Réception (AOR)\n'+NC_ETUDES+'\nDiagnostics réglementaires avant travaux, taxe d\'aménagement, raccordements définitifs aux réseaux, assurance dommages-ouvrage\nAménagement mobilier et décoration intérieure',
+    taux_lib:'Taux d\'honoraires — mission Permis de Construire',
+    ech_intro:'Les honoraires sont répartis selon l\'avancement de la mission, chaque phase étant facturée à son achèvement.',
+    phases:'Relevé de la parcelle, diagnostic et analyse réglementaire préalable\nEsquisse (ESQ) et étude de faisabilité\nAvant-Projet Sommaire (APS) puis Avant-Projet Détaillé (APD)\nÉlaboration et dépôt du dossier de Permis de Construire, suivi de l\'instruction',
+    limites:'Le Dossier de Consultation des Entreprises (DCE), la Direction de l\'Exécution des Travaux (DET) et l\'Assistance aux Opérations de Réception (AOR) — objet d\'une mission distincte « Maîtrise d\'Œuvre »[voir autre]\nLes études techniques spécifiques (structure, thermique réglementaire RE2020, étude de sol G2, réseaux)\nLes diagnostics réglementaires avant travaux (amiante, plomb) le cas échéant\nLa taxe d\'aménagement, les frais de raccordement définitifs aux réseaux, l\'assurance dommages-ouvrage\nL\'aménagement mobilier et la décoration intérieure',
+    lm_intro:'La présente lettre de mission définit les conditions dans lesquelles ATELIER 2M est chargé de réaliser les études et prestations nécessaires à la conception et à l\'obtention du permis de construire du projet décrit ci-dessus, conformément aux dispositions du Code de l\'urbanisme applicables.',
+    lm_fin:'La mission s\'achève à l\'obtention du permis de construire (ou à l\'expiration des voies de recours des tiers).',
+    lm_role:'ATELIER 2M intervient dans le cadre d\'une mission de conception et de constitution du dossier administratif. Il n\'intervient pas comme entreprise exécutante.',
+    acompte_texte:'',lm_acompte_lib:'Acompte à la signature'},
+  SUIVI:{sous_titre_prop:'Mission de Maîtrise d\'Œuvre — Suivi de la réalisation des travaux',sous_titre_lm:'Maîtrise d\'Œuvre — Suivi de la réalisation des travaux',
+    intro:'Faisant suite à l\'obtention du permis de construire, je vous adresse la présente proposition d\'honoraires pour la mission de maîtrise d\'œuvre d\'exécution (mise en concurrence des entreprises, direction de chantier et assistance à la réception), relative à votre projet de [projet].',
+    objet_intro:'',
+    objet:'Dossier de Consultation des Entreprises (DCE) et analyse comparative des offres\nDirection de l\'Exécution des Travaux (DET) : suivi et réunions de chantier\nAssistance aux Opérations de Réception (AOR) et levée des réserves',
+    nc_intro:'Ne sont pas comprises dans la présente proposition, et ont fait l\'objet de la mission distincte « Permis de Construire » :',
+    non_compris:'Relevé, diagnostic et analyse réglementaire, esquisse, avant-projet sommaire et détaillé\nÉlaboration et dépôt du dossier de Permis de Construire\n'+NC_ETUDES+'\nDiagnostics réglementaires avant travaux, taxe d\'aménagement, raccordements définitifs aux réseaux, assurance dommages-ouvrage\nAménagement mobilier et décoration intérieure',
+    taux_lib:'Taux d\'honoraires — mission Maîtrise d\'Œuvre',
+    ech_intro:'Les honoraires sont répartis selon l\'avancement de la mission. Le poste « Direction et suivi de chantier » est facturé mensuellement sur la durée effective du chantier.',
+    phases:'Dossier de Consultation des Entreprises (DCE) et analyse des offres\nDirection de l\'Exécution des Travaux (DET) et réunions de chantier\nAssistance aux Opérations de Réception (AOR)',
+    limites:'La conception, l\'esquisse, l\'avant-projet et le dossier de permis de construire — objet de la mission distincte « Permis de Construire »[voir autre], déjà réalisée\nLes études techniques spécifiques (structure, thermique réglementaire RE2020, étude de sol G2, réseaux)\nLes diagnostics réglementaires avant travaux (amiante, plomb) le cas échéant\nLa taxe d\'aménagement, les frais de raccordement définitifs aux réseaux, l\'assurance dommages-ouvrage\nL\'aménagement mobilier et la décoration intérieure',
+    lm_intro:'La présente lettre de mission définit les conditions dans lesquelles ATELIER 2M est chargé de réaliser les prestations de maîtrise d\'œuvre d\'exécution nécessaires à la réalisation de la construction décrite ci-dessus, faisant suite à l\'obtention du permis de construire, conformément aux dispositions du Code civil applicables à la maîtrise d\'œuvre.',
+    lm_fin:'La mission s\'achève à la réception des travaux et à la levée des éventuelles réserves.',
+    lm_role:'ATELIER 2M intervient dans le cadre d\'une mission de direction de l\'exécution des travaux. Il n\'intervient pas comme entreprise exécutante : la réalisation matérielle des travaux relève exclusivement des entreprises retenues à l\'issue de la consultation.',
+    acompte_texte:'',lm_acompte_lib:'Acompte à la signature'},
+  LIBRE:{sous_titre_prop:'[intitule]',sous_titre_lm:'[intitule]',
+    intro:'Dans le cadre de votre projet de [projet], je vous adresse la présente proposition d\'honoraires pour la mission « [intitule] ». Ce document détaille le périmètre de la mission, le montant proposé ainsi que les modalités de règlement.',
+    objet_intro:'',objet:'',
+    nc_intro:'Ne sont pas comprises dans la présente proposition, et pourront faire l\'objet d\'une mission ou d\'une consultation distincte :',
+    non_compris:NC_ETUDES+'\nAménagement mobilier et décoration intérieure',
+    taux_lib:'Taux d\'honoraires — [intitule]',
+    ech_intro:'Les honoraires sont répartis selon l\'avancement de la mission, chaque phase étant facturée à son achèvement.',
+    phases:'',
+    limites:'Les études techniques spécifiques (structure, thermique réglementaire RE2020, étude de sol G2, réseaux)\nL\'aménagement mobilier et la décoration intérieure',
+    lm_intro:'La présente lettre de mission définit les conditions dans lesquelles ATELIER 2M est chargé de réaliser la mission « [intitule] » relative au projet décrit ci-dessus.',
+    lm_fin:'La mission s\'achève à la remise des documents décrits ci-dessus.',
+    lm_role:'ATELIER 2M intervient dans le cadre de la mission décrite ci-dessus. Il n\'intervient pas comme entreprise exécutante.',
+    acompte_texte:'',lm_acompte_lib:'Acompte à la signature'}
+};
+var TX_LIB=[['sous_titre_prop','Sous-titre de la proposition',1],['sous_titre_lm','Sous-titre de la lettre de mission',1],['intro','Introduction de la proposition',3],['objet_intro','Phrase avant « Objet de la mission » (facultatif)',2],['objet','Objet de la mission — une ligne par puce',6],['nc_intro','Phrase avant « Prestations non comprises »',2],['non_compris','Prestations non comprises — une ligne par puce',5],['taux_lib','Libellé du taux',1],['ech_intro','Texte avant l\'échéancier',2],['phases','Lettre de mission, art. 1 : phases — une ligne par puce (vide = objet de la mission)',5],['lm_intro','Lettre de mission, art. 1 : premier paragraphe',4],['lm_fin','Lettre de mission, art. 1 : fin de la mission',2],['limites','Lettre de mission, art. 2 : limites — une ligne par puce',5],['lm_role','Lettre de mission, art. 2 : rôle d\'Atelier 2M',3],['acompte_texte','Lettre de mission, art. 4 : phrase complémentaire sur l\'acompte (facultatif)',3],['lm_acompte_lib','Lettre de mission « mission complète » : libellé de la ligne d\'acompte',1]];
+var TX_AIDE='Mots remplacés automatiquement : [projet] = description du projet, [commune], [intitule] = intitulé du contrat, [voir autre] = « (voir proposition d\'honoraires n°…) » de l\'autre mission du dossier.';
+
+function reglages(){DB.reglages=DB.reglages||{};var r=DB.reglages;if(!r.delai)r.delai=15;r.echDef=r.echDef||{};return r;}
+function echDefaut(type){
+  var d=reglages().echDef[type];
+  if(d&&d.length)return JSON.parse(JSON.stringify(d));
+  return ECH_DEF[type].map(function(x){return {lib:x[0],dec:x[1],decl:x[2],pct:x[3],mt:null};});
+}
+function nouvelId(){return Date.now()+Math.floor(Math.random()*1000);}
+function nouveauContrat(type,intitule){
+  var tx=JSON.parse(JSON.stringify(TX_DEF[type]));
+  return {id:nouvelId(),type:type,docs:type==='LIBRE'?'B':'',intitule:intitule||CTR_TYPES[type],statut:'brouillon',
+    calc:type==='LIBRE'?'forfait':'taux',travaux:null,taux:null,forfait:null,ech:echDefaut(type),plafond:0,tx:tx,versions:[],cree:isoAuj()};
+}
+function ctrMontant(k){
+  if(k.calc==='taux')return (k.travaux>0&&k.taux>0)?partDe(k.travaux,k.taux):0;
+  return k.forfait>0?k.forfait:0;
+}
+// Montant de chaque tranche : % arrondi à l'euro ; la dernière tranche en % absorbe l'écart pour tomber juste
+function echCalc(k,total){
+  var T=total===undefined?ctrMontant(k):total,ech=k.ech||[],m=[],dernier=-1,pct=0;
+  ech.forEach(function(l,i){
+    if(l.mt!==null&&l.mt!==undefined&&(l.pct===null||l.pct===undefined)){m.push(l.mt);}
+    else{m.push(partDe(T,l.pct||0));dernier=i;pct+=l.pct||0;}
+  });
+  var somme=m.reduce(function(a,b){return a+b;},0);
+  if(dernier>=0&&T>0){m[dernier]+=T-somme;somme=T;}
+  return {mt:m,somme:somme,total:T,pct:pct,ok:T>0&&somme===T&&m.every(function(x){return x>=0;})};
+}
+function ctrStatut(k){
+  if(k.statut==='abandonne')return 'Abandonné';
+  if(k.statut==='signe')return k.repris?'Signé (repris)':'Signé';
+  if(k.statut==='propose'){var v=(k.versions||[]).length;return 'Proposé'+(v>1?' V'+v:'');}
+  return 'Brouillon';
+}
+function ctrNumero(k){var v=(k.versions||[]);return v.length?v[v.length-1].num:'';}
+
+// ── Section « Contrats » de la fiche ──
+function renderCtrs(){
+  var el=document.getElementById('d-ctrs');if(!el||!act)return;
+  var L=(act.contrats||[]).map(function(k){
+    var t=ctrMontant(k),n=ctrNumero(k);
+    return '<div class="ctr-it'+(k.statut==='abandonne'?' off':'')+'" onclick="openCtr('+k.id+')"><span class="ctr-ico">'+CTR_ICO[k.type]+'</span>'+
+      '<span class="ctr-nm"><b>'+esc(k.intitule||CTR_TYPES[k.type])+'</b><i>'+esc(CTR_TYPES[k.type])+(n?' · '+esc(n):'')+'</i></span>'+
+      '<span class="ctr-st st-'+k.statut+'">'+ctrStatut(k)+'</span><span class="ctr-mt">'+(t?fmtE(t)+' €':'—')+'</span></div>';
+  }).join('');
+  el.innerHTML=(L||'<div class="ck-empty" style="padding:8px">Aucun contrat. Créez-en un pour générer la proposition et la lettre de mission.</div>')+
+    '<div class="ctr-bar"><select class="sd-inp" id="ctr-new-type" style="margin:0;flex:1"><option value="">+ Nouveau contrat…</option>'+
+    Object.keys(CTR_TYPES).map(function(t){return '<option value="'+t+'">'+CTR_ICO[t]+' '+CTR_TYPES[t]+'</option>';}).join('')+'</select>'+
+    '<button class="sml-btn" style="width:auto;margin:0" onclick="openEst()">📊 Estimatif</button><button class="sml-btn" style="width:auto;margin:0" onclick="openPlu()">🗺️ Annexe PLU</button></div>'+
+    '<details class="ctr-infos"'+((infosOuvert===null?infosManquantes(act).length&&(act.contrats||[]).length:infosOuvert)?' open':'')+' ontoggle="infosOuvert=this.open"><summary>Informations pour les documents'+(infosManquantes(act).length?' <span style="color:var(--red)">('+infosManquantes(act).length+' à compléter)</span>':' ✓')+'</summary>'+infosHtml(act)+'</details>';
+  document.getElementById('ctr-new-type').onchange=function(){var t=this.value;this.value='';if(t)creerContrat(t);};
+}
+var infosOuvert=null; // bloc « Informations pour les documents » : reste tel que l'utilisateur l'a laissé
+var INFOS=[['desig','Désignation complète du client','ex : Monsieur Jean DUPONT et Madame Marie DURAND'],['soc','Société (SCI…) — facultatif','ex : SCI DUPONT ; vide pour un particulier'],['signataire','Signataire','ex : M. Dupont et Mme Durand'],['projet','Description du projet (reprise dans les documents)','ex : construction d\'une maison individuelle de plain-pied…',3],['commune','Commune du projet','ex : Brive-la-Gaillarde'],['contenance','Contenance du terrain','ex : 1 500 m²'],['lot','Lot — facultatif','ex : Lot n° 1 du plan de division']];
+function infosHtml(c){
+  return '<div class="inf-l">Désignation dans les documents</div><select class="sd-inp" onchange="sf(\'moLabel\',this.value)"><option'+(c.moLabel!=='Maîtres d\'ouvrage'?' selected':'')+'>Maître d\'ouvrage</option><option'+(c.moLabel==='Maîtres d\'ouvrage'?' selected':'')+'>Maîtres d\'ouvrage</option></select>'+
+    INFOS.map(function(f){
+      var v=escA(c[f[0]]||'');
+      return '<div class="inf-l">'+esc(f[1])+'</div>'+(f[3]?'<textarea class="sd-inp pj-area" placeholder="'+escA(f[2])+'" onchange="sf(\''+f[0]+'\',this.value);renderCtrs()">'+esc(c[f[0]]||'')+'</textarea>'
+        :'<input class="sd-inp" placeholder="'+escA(f[2])+'" value="'+v+'" onchange="sf(\''+f[0]+'\',this.value);renderCtrs()">');
+    }).join('')+'<div class="rel-note">Adresse du client, adresse du chantier et parcelle : champs de la fiche (colonne de droite et « Projet »).</div>';
+}
+function infosManquantes(c){
+  var m=[];
+  if(!(c.desig||c.nom))m.push('désignation du client');
+  if(!c.cadr)m.push('adresse du client');
+  if(!c.addr)m.push('adresse du chantier');
+  if(!c.projet)m.push('description du projet');
+  return m;
+}
+function creerContrat(type){
+  if(!act)return;
+  var intitule='';
+  if(type==='LIBRE'){intitule=prompt('Intitulé de la mission libre (ex : Vues 3D, Relevé et plans existants) :','');if(!intitule)return;}
+  var k=nouveauContrat(type,intitule);
+  if(type==='LIBRE')k.docs=confirm('Documents « comme la mission complète » (proposition + lettre de mission détaillées) ?\nOK = comme la mission complète · Annuler = comme les missions séparées (PC / suivi)')?'A':'B';
+  act.contrats=act.contrats||[];act.contrats.push(k);act.upd=Date.now();sv();render();renderCtrs();renderHono();openCtr(k.id);
+}
+
+// ── Éditeur de contrat ──
+var actK=null;
+function ctrDe(id){return (act&&act.contrats||[]).find(function(k){return k.id===id;});}
+function openCtr(id){actK=ctrDe(id);if(!actK)return;renderCtr();showM('m-ctr');}
+function closeSub(id){document.getElementById(id).classList.remove('open');if(act){renderCtrs();renderHono();}}
+function ctrSave(){if(!act)return;act.upd=Date.now();sv();render();}
+function ctrSet(champ,v){
+  if(!actK)return;
+  if(champ==='travaux'||champ==='forfait')actK[champ]=cts(v);
+  else if(champ==='taux'||champ==='plafond')actK[champ]=cts(v)||0;
+  else actK[champ]=v;
+  ctrSave();renderCtr();
+}
+function txSet(champ,v){if(!actK)return;actK.tx[champ]=v;ctrSave();}
+function echHtml(ech,calc,prefixe){
+  var total=calc?calc.total:0;
+  return '<div class="ech-w"><table class="ech-t"><tr><th>Étape (libellé)</th><th>Étape déclenchante</th><th>Texte « Déclencheur » du document</th><th>%</th><th>ou montant €</th>'+(calc?'<th>Montant</th>':'')+'<th></th></tr>'+
+    ech.map(function(l,i){
+      var h='onchange="'+prefixe+'('+i+',\'';
+      return '<tr><td><input value="'+escA(l.lib)+'" '+h+'lib\',this.value)"></td>'+
+        '<td><select '+h+'dec\',this.value)">'+Object.keys(DECL).map(function(d){return '<option value="'+d+'"'+(l.dec===d?' selected':'')+'>'+DECL[d]+'</option>';}).join('')+'</select></td>'+
+        '<td><input value="'+escA(l.decl||'')+'" '+h+'decl\',this.value)"></td>'+
+        '<td><input class="num" value="'+pctStr(l.pct)+'" '+h+'pct\',this.value)"></td>'+
+        '<td><input class="num" value="'+(l.mt!==null&&l.mt!==undefined&&(l.pct===null||l.pct===undefined)?fmtE(l.mt):'')+'" '+h+'mt\',this.value)"></td>'+
+        (calc?'<td class="num">'+fmtE(calc.mt[i])+' €</td>':'')+
+        '<td><button class="rm" title="Supprimer la ligne" onclick="'+prefixe+'('+i+',\'suppr\')">×</button></td></tr>';
+    }).join('')+'</table></div><button class="sml-btn" style="width:auto" onclick="'+prefixe+'(-1,\'ajout\')">＋ Ajouter une tranche</button>'+
+    (calc?'<div class="ech-sum '+(calc.ok?'ok':'ko')+'">Total de l\'échéancier : '+fmtE(calc.somme)+' € sur '+fmtE(total)+' € '+(calc.ok?'✓':'— à corriger')+(calc.pct&&calc.pct!==10000&&calc.mt.length?' · les % totalisent '+pctStr(calc.pct)+' %':'')+'</div>':
+      '<div class="ech-sum">Total des % : '+pctStr(ech.reduce(function(a,l){return a+(l.pct||0);},0))+' %</div>');
+}
+function echModif(ech,i,champ,v){
+  if(champ==='ajout'){ech.push({lib:'Nouvelle tranche',dec:'manuel',decl:'',pct:0,mt:null});return;}
+  if(champ==='suppr'){ech.splice(i,1);return;}
+  var l=ech[i];if(!l)return;
+  if(champ==='pct'){l.pct=cts(v);if(l.pct!==null)l.mt=null;}
+  else if(champ==='mt'){l.mt=cts(v);if(l.mt!==null)l.pct=null;}
+  else l[champ]=v;
+}
+function echSet(i,champ,v){if(!actK)return;echModif(actK.ech,i,champ,v);ctrSave();renderCtr();}
+function renderCtr(){
+  var k=actK;if(!k)return;
+  var t=ctrMontant(k),calc=echCalc(k),verrou=k.statut==='signe';
+  var h='<div class="mn-ttl">'+CTR_ICO[k.type]+' '+esc(k.intitule||CTR_TYPES[k.type])+' <span class="ctr-st st-'+k.statut+'">'+ctrStatut(k)+'</span></div>'+
+    '<div class="fg"><div class="fld"><label>Intitulé du contrat</label><input value="'+escA(k.intitule)+'" onchange="ctrSet(\'intitule\',this.value)"></div>'+
+    (k.type==='LIBRE'?'<div class="fld"><label>Jeu de documents</label><select onchange="ctrSet(\'docs\',this.value)"><option value="A"'+(k.docs==='A'?' selected':'')+'>Comme la mission complète</option><option value="B"'+(k.docs!=='A'?' selected':'')+'>Comme les missions séparées</option></select></div>':'<div class="fld"><label>Type</label><input value="'+escA(CTR_TYPES[k.type])+'" disabled></div>')+'</div>'+
+    '<div class="sec-lbl" style="margin-top:6px">Montant du contrat</div>'+
+    '<div class="fg" style="grid-template-columns:auto 1fr 1fr"><div class="fld"><label>Calcul</label><select onchange="ctrSet(\'calc\',this.value)"'+(verrou?' disabled':'')+'><option value="taux"'+(k.calc==='taux'?' selected':'')+'>Travaux × taux</option><option value="forfait"'+(k.calc!=='taux'?' selected':'')+'>Forfait</option></select></div>'+
+    (k.calc==='taux'?'<div class="fld"><label>Montant des travaux HT (€)</label><input value="'+(k.travaux?fmtE(k.travaux):'')+'" onchange="ctrSet(\'travaux\',this.value)"'+(verrou?' disabled':'')+'>'+(estTotaux(act).ht&&!verrou?'<a class="lnk" onclick="ctrSet(\'travaux\',fmtE(estTotaux(act).ht))">= estimatif : '+fmtE(estTotaux(act).ht)+' €</a>':'')+'</div><div class="fld"><label>Taux d\'honoraires (%)</label><input value="'+pctStr(k.taux)+'" onchange="ctrSet(\'taux\',this.value)"'+(verrou?' disabled':'')+'></div>'
+      :'<div class="fld"><label>Montant forfaitaire HT (€)</label><input value="'+(k.forfait?fmtE(k.forfait):'')+'" onchange="ctrSet(\'forfait\',this.value)"'+(verrou?' disabled':'')+'></div><div></div>')+'</div>'+
+    '<div class="ctr-total">Montant du contrat : <b>'+(t?fmtE(t)+' € HT':'à renseigner')+'</b>'+(k.calc==='taux'&&t?' <span>(arrondi à l\'euro)</span>':'')+'</div>'+
+    '<div class="sec-lbl" style="margin-top:12px">Échéancier prévu</div>'+echHtml(k.ech,calc,'echSet')+
+    '<div class="fld" style="margin-top:8px;max-width:420px"><label>Plafond de facturation jusqu\'au dépôt du PC (% — vide si aucun)</label><input value="'+(k.plafond?pctStr(k.plafond):'')+'" onchange="ctrSet(\'plafond\',this.value)"></div>'+
+    '<details class="ctr-tx"><summary>Textes des documents (objet de la mission, exclusions, phases…)</summary><div class="rel-note" style="margin:6px 0">'+TX_AIDE+'</div>'+
+    TX_LIB.map(function(f){return '<div class="fld"><label>'+f[1]+'</label>'+(f[2]>1?'<textarea rows="'+f[2]+'" onchange="txSet(\''+f[0]+'\',this.value)">'+esc(k.tx[f[0]]||'')+'</textarea>':'<input value="'+escA(k.tx[f[0]]||'')+'" onchange="txSet(\''+f[0]+'\',this.value)">')+'</div>';}).join('')+
+    '<button class="sml-btn" onclick="txDefaut()">Remettre les textes par défaut de ce type de contrat</button></details>'+
+    ((k.versions||[]).length?'<div class="sec-lbl" style="margin-top:12px">Historique des propositions</div><div class="ver-l">'+k.versions.map(function(v){return '<div><b>V'+v.v+'</b> · '+esc(v.num)+' · '+dateFr(v.date)+' · '+fmtE(v.montant)+' € HT<br><i>'+esc((v.docs||[]).join(', '))+'</i></div>';}).join('')+'</div>':'')+
+    '<div class="mbtns"><button class="del-btn" style="flex:1;margin:0" onclick="supprCtr()">'+((k.versions||[]).length?'Abandonner':'Supprimer')+'</button><button class="mb-c" onclick="closeSub(\'m-ctr\')">Fermer</button><button class="mb-s" onclick="openGen()">📄 Générer les documents (Word)</button></div>';
+  document.getElementById('ctr-body').innerHTML=h;
+}
+function txDefaut(){if(!actK||!confirm('Remplacer tous les textes de ce contrat par les textes par défaut ?'))return;actK.tx=JSON.parse(JSON.stringify(TX_DEF[actK.type]));ctrSave();renderCtr();}
+function supprCtr(){
+  var k=actK;if(!k||!act)return;
+  if((k.versions||[]).length){
+    if(!confirm('Ce contrat a déjà une proposition numérotée ('+ctrNumero(k)+').\nIl sera marqué « abandonné » et restera dans l\'historique. Continuer ?'))return;
+    k.statut='abandonne';
+  }else{
+    if(!confirm('Supprimer ce contrat (brouillon) ?'))return;
+    act.contrats=act.contrats.filter(function(x){return x.id!==k.id;});
+  }
+  ctrSave();closeSub('m-ctr');
+}
+
+// ── Estimatif des travaux (commun aux contrats du dossier) ──
+var LOTS_TYPES=['Terrassement / VRD / Fondations','Gros œuvre (maçonnerie + dalle + planchers)','Charpente','Couverture','Zinguerie / Étanchéité','Isolation thermique','Menuiseries extérieures','Plâtrerie / Doublages / Cloisons / Faux-plafonds','Électricité (NF C 15-100)','Plomberie / Chauffage / VMC / Sanitaires','Carrelage / Faïence','Parquet / Revêtements de sol','Peinture','Menuiseries intérieures','Cuisine équipée (forfait)'];
+function estDefaut(c){
+  var mise=(c.contrats||[]).some(function(k){return k.type==='A'||(k.type==='LIBRE'&&k.docs==='A');})?'A':'B';
+  return {mise:mise,titre:'PROJET DE CONSTRUCTION D\'UNE MAISON INDIVIDUELLE',sous_titre:'',presentation:'',
+    objet_intro:'La mission confiée porte sur l\'ensemble du projet, de la conception jusqu\'à la réception des travaux :',objet:'',
+    surf:c.surf||'',ratio_note:'(hors garage, terrasses et piscine)',
+    hypothese:'Cette estimation, détaillée par postes de travaux dans le tableau ci-dessous, constitue une hypothèse de travail établie à partir du programme transmis par le maître d\'ouvrage et de ratios de marché observés sur des opérations comparables ('+new Date().getFullYear()+'). Elle sera affinée et actualisée à l\'issue de la phase APD, sur la base d\'un estimatif détaillé par lots (DPGF).',
+    tva:2000,lots:[],alea_lib:'Aléas / imprévus de chantier',alea:500,
+    annexes_intro:'Au-delà du montant des travaux, un projet de construction comprend un certain nombre de postes annexes (taxes, raccordements, études réglementaires). Ce tableau récapitule l\'ensemble du budget prévisionnel pour une vision complète.',
+    annexes:[['Étude thermique réglementaire RE2020 (calcul complet)',25000,'Estimation, tarif de marché courant'],['Attestation RE2020 (PCMI 14-1)',18500,'Estimation, tarif de marché courant'],['Taxe d\'aménagement',null,'Estimation indicative — à confirmer auprès du service urbanisme'],['Raccordement eau potable',160000,'Estimation, tarif de marché courant'],['Raccordement électricité (Enedis)',95000,'Estimation, tarif de marché courant'],['Raccordement télécom / fibre',15000,'Estimation, tarif de marché courant'],['Assainissement',null,'']].map(function(x){return {lib:x[0],mt:x[1],obs:x[2],hp:false};}),
+    prov_lib:'Provision pour aléas / imprévus',prov:600,budget_note:'travaux + annexes — hors honoraires de maîtrise d\'œuvre',vigilance:'',
+    nature:'L\'estimation présentée constitue une évaluation prévisionnelle basée sur le programme transmis par le maître d\'ouvrage et des prix moyens de marché constatés en '+new Date().getFullYear()+' pour des opérations de construction neuve comparables. Elle pourra évoluer en fonction des relevés complémentaires, des choix techniques définitifs et des résultats de l\'étude de sol.'};
+}
+function surfNum(s){var v=parseFloat(String(s||'').replace(/\s/g,'').replace(',','.'));return v>0?v:0;}
+function estTotaux(c){
+  var e=c&&c.est;if(!e||!(e.lots||[]).length)return {ht:0};
+  var base=e.lots.reduce(function(a,l){return a+(l.ht||0);},0),alea=e.alea?partDe(base,e.alea):0,ht=base+alea;
+  var tva=partDe(ht,e.tva||0),ttc=ht+tva;
+  var pb=(e.annexes||[]).reduce(function(a,x){return a+(x.hp?0:(x.mt||0));},0),prov=e.prov?partDe(pb,e.prov):0;
+  var ann=(e.annexes||[]).reduce(function(a,x){return a+(x.mt||0);},0)+prov;
+  return {base:base,alea:alea,ht:ht,tva:tva,ttc:ttc,prov:prov,annexes:ann,budget:ttc+ann};
+}
+function openEst(){if(!act)return;if(!act.est){act.est=estDefaut(act);ctrSave();}renderEst();showM('m-est');}
+function estSet(champ,v){
+  var e=act&&act.est;if(!e)return;
+  if(champ==='tva'||champ==='alea'||champ==='prov')e[champ]=cts(v)||0;else e[champ]=v;
+  ctrSave();renderEst();
+}
+function estLigne(liste,i,champ,v){
+  var e=act&&act.est;if(!e)return;var L=e[liste];
+  if(champ==='ajout')L.push(liste==='lots'?{lib:'',ht:null}:{lib:'',mt:null,obs:'',hp:false});
+  else if(champ==='suppr')L.splice(i,1);
+  else if(champ==='haut'&&i>0)L.splice(i-1,0,L.splice(i,1)[0]);
+  else if(champ==='ht'||champ==='mt')L[i][champ]=cts(v);
+  else if(champ==='hp')L[i].hp=!!v;
+  else L[i][champ]=v;
+  ctrSave();renderEst();
+}
+function lotsTypes(){var e=act&&act.est;if(!e)return;LOTS_TYPES.forEach(function(n){e.lots.push({lib:n,ht:null});});ctrSave();renderEst();}
+function renderEst(){
+  var e=act.est,t=estTotaux(act),s=surfNum(e.surf);
+  var inp=function(ch,lib,o){o=o||{};return '<div class="fld"'+(o.st?' style="'+o.st+'"':'')+'><label>'+lib+'</label>'+(o.ta?'<textarea rows="'+o.ta+'" onchange="estSet(\''+ch+'\',this.value)">'+esc(e[ch]||'')+'</textarea>':'<input value="'+escA(o.v!==undefined?o.v:(e[ch]||''))+'" onchange="estSet(\''+ch+'\',this.value)">')+'</div>';};
+  var h='<div class="mn-ttl">📊 Estimatif des travaux</div>'+
+    '<div class="fg"><div class="fld"><label>Mise en page</label><select onchange="estSet(\'mise\',this.value)"><option value="A"'+(e.mise==='A'?' selected':'')+'>Comme la mission complète (colonne € / m²)</option><option value="B"'+(e.mise!=='A'?' selected':'')+'>Comme les missions séparées (colonne Observation)</option></select></div>'+inp('surf','Surface habitable (m²)')+'</div>'+
+    inp('titre','Titre')+inp('sous_titre','Sous-titre (ex : Maison contemporaine plain-pied — 150 m² avec piscine)')+
+    inp('presentation','Présentation du projet (laisser une ligne vide entre deux paragraphes)',{ta:5})+
+    (e.mise==='A'?inp('objet_intro','Objet de la mission : phrase d\'introduction')+inp('objet','Objet de la mission — une ligne par puce (vide = section absente)',{ta:4}):'')+
+    inp('ratio_note','Précision après le ratio € / m² (ex : (hors garage, cave et piscine))')+inp('hypothese','Paragraphe d\'hypothèse',{ta:3})+
+    '<div class="sec-lbl" style="margin-top:10px">Lots de travaux (montants HT)</div><div class="ech-w"><table class="ech-t"><tr><th>N°</th><th>Poste de travaux</th><th>Montant HT €</th><th>Part</th><th>TTC</th><th></th></tr>'+
+    e.lots.map(function(l,i){var ttc=(l.ht||0)+partDe(l.ht||0,e.tva||0);return '<tr><td class="num">'+(i+1)+'</td><td><input value="'+escA(l.lib)+'" onchange="estLigne(\'lots\','+i+',\'lib\',this.value)"></td><td><input class="num" value="'+(l.ht!==null&&l.ht!==undefined?fmtE(l.ht):'')+'" onchange="estLigne(\'lots\','+i+',\'ht\',this.value)"></td><td class="num">'+(t.ht?partPct(l.ht||0,t.ht)+' %':'')+'</td><td class="num">'+fmtE(ttc)+' €</td><td><button class="rm" onclick="estLigne(\'lots\','+i+',\'haut\')" title="Monter">↑</button><button class="rm" onclick="estLigne(\'lots\','+i+',\'suppr\')" title="Supprimer">×</button></td></tr>';}).join('')+
+    '</table></div><div class="ctr-bar"><button class="sml-btn" style="width:auto;margin:0" onclick="estLigne(\'lots\',0,\'ajout\')">＋ Ajouter un lot</button>'+(e.lots.length?'':'<button class="sml-btn" style="width:auto;margin:0" onclick="lotsTypes()">Insérer les lots types (sans montants)</button>')+'</div>'+
+    '<div class="fg" style="grid-template-columns:2fr 1fr 1fr">'+inp('alea_lib','Ligne d\'aléas (libellé)')+inp('alea','Aléas (% des lots)',{v:pctStr(e.alea)})+inp('tva','TVA (%)',{v:pctStr(e.tva)})+'</div>'+
+    '<div class="ctr-total">Travaux : <b>'+fmtE(t.ht||0)+' € HT</b> · TVA '+fmtE(t.tva||0)+' € · <b>'+fmtE(t.ttc||0)+' € TTC</b>'+(s&&t.ttc?' · ratio '+fmtE(Math.round(t.ttc/100/s)*100)+' € TTC / m²':'')+'</div>'+
+    inp('annexes_intro','Budget global : texte d\'introduction',{ta:2})+
+    '<div class="ech-w"><table class="ech-t"><tr><th>Poste annexe (hors travaux)</th><th>Montant TTC €</th><th>Observation</th><th title="Exclu de la base de la provision (terrain, agence, notaire…)">Hors prov.</th><th></th></tr>'+
+    e.annexes.map(function(x,i){return '<tr><td><input value="'+escA(x.lib)+'" onchange="estLigne(\'annexes\','+i+',\'lib\',this.value)"></td><td><input class="num" value="'+(x.mt!==null&&x.mt!==undefined?fmtE(x.mt):'')+'" onchange="estLigne(\'annexes\','+i+',\'mt\',this.value)"></td><td><input value="'+escA(x.obs||'')+'" onchange="estLigne(\'annexes\','+i+',\'obs\',this.value)"></td><td style="text-align:center"><input type="checkbox"'+(x.hp?' checked':'')+' onchange="estLigne(\'annexes\','+i+',\'hp\',this.checked)"></td><td><button class="rm" onclick="estLigne(\'annexes\','+i+',\'haut\')">↑</button><button class="rm" onclick="estLigne(\'annexes\','+i+',\'suppr\')">×</button></td></tr>';}).join('')+
+    '</table></div><button class="sml-btn" style="width:auto" onclick="estLigne(\'annexes\',0,\'ajout\')">＋ Ajouter un poste annexe</button>'+
+    '<div class="fg">'+inp('prov_lib','Ligne de provision (libellé)')+inp('prov','Provision (%)',{v:pctStr(e.prov)})+'</div>'+
+    '<div class="ctr-total">Annexes : '+fmtE(t.annexes||0)+' € TTC · <b>Budget global prévisionnel : '+fmtE(t.budget||0)+' € TTC</b></div>'+
+    inp('budget_note','Précision sous le budget global')+inp('vigilance','Points de vigilance — une ligne par puce',{ta:4})+inp('nature','Nature de l\'estimation',{ta:3})+
+    '<div class="mbtns"><button class="mb-s" onclick="closeSub(\'m-est\')">Fermer</button></div>';
+  document.getElementById('est-body').innerHTML=h;
+}
+
+// ── Annexe 1 : analyse du terrain et du PLU ──
+function openPlu(){
+  if(!act)return;
+  if(!act.plu){act.plu={commune:act.commune||'',lieudit:'',cad:act.cad||'',contenance:act.contenance||'',doc:'',
+    sections:[['Zonage — point déterminant',''],['Dispositions générales du règlement (communes à toutes les zones)',''],['Point à vérifier',''],['Synthèse','']].map(function(s){return {titre:s[0],texte:s[1]};})};ctrSave();}
+  renderPlu();showM('m-plu');
+}
+function pluSet(champ,v,i){var p=act&&act.plu;if(!p)return;
+  if(i!==undefined){if(champ==='suppr')p.sections.splice(i,1);else p.sections[i][champ]=v;}
+  else if(champ==='ajout')p.sections.push({titre:'Nouvelle section',texte:''});else p[champ]=v;
+  ctrSave();if(i!==undefined&&champ!=='suppr')return;renderPlu();}
+function renderPlu(){
+  var p=act.plu,f=function(ch,lib){return '<div class="fld"><label>'+lib+'</label><input value="'+escA(p[ch]||'')+'" onchange="pluSet(\''+ch+'\',this.value)"></div>';};
+  document.getElementById('plu-body').innerHTML='<div class="mn-ttl">🗺️ Annexe 1 — Analyse du terrain et du PLU</div>'+
+    '<div class="fg">'+f('commune','Commune (ex : Brive-la-Gaillarde (19031))')+f('lieudit','Lieu-dit')+f('cad','Référence cadastrale (ex : Section AB, feuille 1, n°0012)')+f('contenance','Contenance')+'</div>'+f('doc','Document d\'urbanisme applicable')+
+    '<div class="rel-note" style="margin:8px 0">Dans les textes : une ligne commençant par « - » devient une puce, une ligne commençant par « ! » devient un paragraphe d\'alerte (orange, italique).</div>'+
+    p.sections.map(function(s,i){return '<div class="plu-sec"><input class="sd-inp" style="font-weight:700;color:var(--or)" value="'+escA(s.titre)+'" onchange="pluSet(\'titre\',this.value,'+i+')"><textarea class="sd-inp" rows="5" onchange="pluSet(\'texte\',this.value,'+i+')">'+esc(s.texte)+'</textarea><button class="rm" style="float:right" onclick="pluSet(\'suppr\',0,'+i+')">Supprimer la section</button></div>';}).join('')+
+    '<button class="sml-btn" onclick="pluSet(\'ajout\')">＋ Ajouter une section</button><div class="mbtns"><button class="mb-s" onclick="closeSub(\'m-plu\')">Fermer</button></div>';
+}
+function pluSections(p){
+  return (p.sections||[]).filter(function(s){return lignes(s.texte).length;}).map(function(s){
+    return {titre:s.titre,blocs:lignes(s.texte).map(function(l){
+      if(l.charAt(0)==='-')return {puce:true,t:l.replace(/^-\s*/,'')};
+      if(l.charAt(0)==='!')return {alerte:true,t:l.replace(/^!\s*/,'')};
+      return {texte:true,t:l};
+    })};
+  });
+}
+function estRempli(c){return !!(c.est&&(c.est.lots||[]).length&&estTotaux(c).ht>0);}
+function pluRempli(c){return !!(c.plu&&(c.plu.sections||[]).some(function(s){return lignes(s.texte).length;}));}
+
+// ── Données envoyées aux modèles Word ──
+function paires(l){var r=[];for(var i=0;i<l.length;i+=2)r.push({o:l[i],e:l[i+1]||null});return r;}
+var NB_MOTS=['','première','deux','trois','quatre','cinq','six','sept','huit','neuf','dix'];
+function refLignes(n){return n<=1?'à la première ligne':'aux '+(NB_MOTS[n]||n)+' premières lignes';}
+function tplBase(k){return k.type==='LIBRE'?(k.docs==='A'?'A':'PC'):k.type;}
+function donneesDoc(c,k,num,dateIso){
+  var r=reglages(),T=ctrMontant(k),calc=echCalc(k),base=tplBase(k),annee=dateIso.slice(0,4);
+  var autre=(c.contrats||[]).find(function(x){return x.id!==k.id&&x.statut!=='abandonne'&&((k.type==='PC'&&x.type==='SUIVI')||(k.type==='SUIVI'&&x.type==='PC'))&&ctrNumero(x);});
+  var projet=c.projet||c.nat||'';
+  var rep=function(s){return String(s||'').replace(/\[projet\]/g,projet).replace(/\[commune\]/g,c.commune||'').replace(/\[intitule\]/g,k.intitule||'').replace(/\[voir autre\]/g,autre?' (voir proposition d\'honoraires n°'+ctrNumero(autre)+')':'').replace(/\[annee\]/g,annee);};
+  var tx={};Object.keys(TX_DEF[k.type]).forEach(function(f){tx[f]=rep(k.tx&&k.tx[f]!==undefined?k.tx[f]:TX_DEF[k.type][f]);});
+  var echL=(k.ech||[]).map(function(l,i){return {lib:rep(l.lib),decl:rep(l.decl),pct:l.pct!==null&&l.pct!==undefined?pctStr(l.pct)+' %':'',mt:fmtE(calc.mt[i])+' €',dec:l.dec,c:calc.mt[i]};});
+  var sig=echL.filter(function(l){return l.dec==='signature';}),acompte=sig.reduce(function(a,l){return a+l.c;},0);
+  var echLm=echL;
+  if(base==='A'&&sig.length){echLm=[{lib:tx.lm_acompte_lib||'Acompte à la signature',mt:fmtE(acompte)+' €'}].concat(echL.filter(function(l){return l.dec!=='signature';}));}
+  var iDepot=echL.findIndex(function(l){return l.dec==='depot';});
+  var plafMt=k.plafond?partDe(T,k.plafond):0;
+  var terrainA=[c.addr,c.cad,c.contenance?'Contenance '+c.contenance:''].filter(Boolean).join(' — ');
+  var cadB=c.cad?c.cad+(c.lot?' — '+c.lot:'')+(c.contenance?', contenance '+c.contenance:''):'';
+  var client=c.desig||c.nom||'';
+  var d={num:num,date:dateFr(dateIso),annee:annee,mo_label:c.moLabel||'Maître d\'ouvrage',client:client,soc:c.soc||'',sans_soc:!c.soc,
+    signataire:c.signataire||client,sig_client:c.soc?c.soc+' — '+client:client,adr_client:c.cadr||'',adr_projet:c.addr||'',terrain_a:terrainA,cadastre_b:cadB,
+    projet:projet,Projet:majuscule(projet),sous_titre_prop:tx.sous_titre_prop,sous_titre_lm:tx.sous_titre_lm,intro:tx.intro,objet_intro:tx.objet_intro,objet:lignes(tx.objet),
+    nc_intro:tx.nc_intro,non_compris:lignes(tx.non_compris),a_taux:k.calc==='taux',travaux:fmtE(k.travaux||0),taux:pctStr(k.taux),taux_lib:tx.taux_lib,total:fmtE(T),
+    ech_intro:tx.ech_intro,ech:paires(echL),ech_lm:paires(echLm),
+    plafond:!!k.plafond,plafond_pct:pctStr(k.plafond),plafond_mt:fmtE(plafMt),plafond_solde:fmtE(T-plafMt),plafond_solde_pct:pctStr(10000-(k.plafond||0)),
+    plafond_lignes:iDepot>=0?(iDepot===0?'la première ligne du tableau ci-dessus':'les '+(NB_MOTS[iDepot+1]||(iDepot+1))+' premières lignes du tableau ci-dessus'):'les lignes correspondantes du tableau ci-dessus',
+    acompte:fmtE(acompte),acompte_lettres:lettres(acompte),
+    acompte_ref:refLignes(sig.length)+' de l\'échéancier ci-dessus'+(sig.length>1?' ('+sig.map(function(l){return l.lib;}).join(' + ')+')':''),
+    acompte_ref_court:refLignes(sig.length)+' de l\'échéancier ci-dessus',
+    lm_acompte_ref:(base==='A'?'à la première ligne':refLignes(sig.length))+' de l\'échéancier ci-dessus',acompte_texte:tx.acompte_texte,
+    delai:String(r.delai||15),iban:r.iban||'',bic:r.bic||'',titulaire:r.titulaire||'',
+    lm_intro:tx.lm_intro,phases:lignes(tx.phases).length?lignes(tx.phases):lignes(tx.objet),lm_fin:tx.lm_fin,limites:lignes(tx.limites),lm_role:tx.lm_role};
+  // Estimatif
+  var e=c.est,et=estTotaux(c),s=e?surfNum(e.surf):0;
+  d.a_est_a=estRempli(c);d.est_budget=fmtE(et.budget||0);
+  var estHt=et.ht||(k.calc==='taux'?k.travaux||0:0);
+  d.a_est_b=estHt>0;d.est_ht=fmtE(estHt);d.est_ttc=fmtE(et.ht?et.ttc:estHt+partDe(estHt,2000));
+  if(e){
+    var lots=e.lots.map(function(l){return {lib:l.lib,ht:l.ht||0};});
+    if(e.alea)lots.push({lib:rep(e.alea_lib)+' (provision '+pctStr(e.alea)+' %)',ht:et.alea});
+    var ann=e.annexes.map(function(x){return {lib:x.lib,mt:x.mt||0,obs:x.obs||''};});
+    if(e.prov)ann.push({lib:rep(e.prov_lib)+' ('+pctStr(e.prov)+' %)',mt:et.prov,obs:'Provision sur les postes d\'études et de raccordement'});
+    Object.assign(d,{est_titre:rep(e.titre),est_sous_titre:rep(e.sous_titre),est_ref:num+'-EST',presentation:paras(rep(e.presentation)),
+      a_est_objet:lignes(e.objet).length>0,est_objet_intro:rep(e.objet_intro),est_objet:lignes(rep(e.objet)),
+      total_ttc:fmtE(et.ttc||0),ratio:s&&et.ttc?fmtE(Math.round(et.ttc/100/s)*100):'—',surf_hab:e.surf||'—',ratio_note:rep(e.ratio_note),hypothese:paras(rep(e.hypothese)),
+      lots:paires(lots.map(function(l,i){return {n:String(i+1),lib:l.lib,part:et.ht?partPct(l.ht,et.ht)+' %':'',ht:fmtE(l.ht)+' €',ttc:fmtE(l.ht+partDe(l.ht,e.tva||0))+' €'};})),
+      total_ht:fmtE(et.ht||0),tva_taux:pctStr(e.tva),tva:fmtE(et.tva||0),annexes_intro:paras(rep(e.annexes_intro)),
+      annexes:paires(ann.map(function(x){return {lib:x.lib,mt:fmtE(x.mt)+' €',m2:s?fmtE(Math.round(x.mt/s))+' €':'',obs:x.obs};})),
+      annexes_total:fmtE(et.annexes||0),budget:fmtE(et.budget||0),budget_note:rep(e.budget_note),a_vigilance:lignes(e.vigilance).length>0,vigilance:lignes(rep(e.vigilance)),nature:paras(rep(e.nature))});
+  }
+  var p=c.plu;
+  if(p)Object.assign(d,{plu_commune:p.commune||'',plu_lieudit:p.lieudit||'',plu_cad:p.cad||'',plu_contenance:p.contenance||'',plu_doc:p.doc||'',sections:pluSections(p)});
+  return d;
+}
+// Champs affichés dans l'aperçu (vides signalés en rouge)
+function champsApercu(c,k,d,docs){
+  var L=[['Client',d.client],['Qualité',d.soc?'Société : '+d.soc:'Particulier'],['Signataire',d.signataire],['Adresse du client',d.adr_client],['Adresse du chantier',d.adr_projet],['Parcelle',c.cad||''],['Contenance',c.contenance||''],['Commune',c.commune||''],
+    ['Description du projet',d.projet],['Intitulé',k.intitule],['Montant du contrat',ctrMontant(k)?d.total+' € HT':'']];
+  if(k.calc==='taux')L.push(['Travaux HT',k.travaux?d.travaux+' €':''],['Taux',k.taux?d.taux+' %':'']);
+  L.push(['Acompte à la signature',d.acompte!=='0'?d.acompte+' € ('+d.acompte_lettres+')':''],['Délai de paiement',d.delai+' jours']);
+  if(docs.indexOf('lm')>=0)L.push(['IBAN',d.iban],['BIC',d.bic],['Titulaire du compte',d.titulaire]);
+  if(docs.indexOf('est')>=0)L.push(['Estimatif : travaux HT',d.total_ht?d.total_ht+' €':''],['Estimatif : surface habitable',c.est&&c.est.surf||''],['Estimatif : présentation',(d.presentation||[]).join(' ')]);
+  if(docs.indexOf('plu')>=0)L.push(['Annexe : commune',d.plu_commune],['Annexe : référence cadastrale',d.plu_cad]);
+  return L;
+}
+function alertesDoc(c,k,d,docs){
+  var a=[],calc=echCalc(k);
+  if(!ctrMontant(k))a.push('Le montant du contrat est vide.');
+  else if(!calc.ok)a.push('L\'échéancier ne tombe pas juste ('+fmtE(calc.somme)+' € sur '+fmtE(calc.total)+' €).');
+  if(!(k.ech||[]).some(function(l){return l.dec==='signature';}))a.push('Aucune tranche « Signature » : l\'acompte sera de 0 €.');
+  if((k.ech||[]).some(function(l){return /\[commune\]/.test(l.decl||'');})&&!c.commune)a.push('La commune est vide alors qu\'elle est citée dans l\'échéancier (« Dépôt du dossier en mairie de … »).');
+  if(docs.indexOf('est')>=0&&!estRempli(c))a.push('L\'estimatif n\'a pas de lots chiffrés.');
+  if(docs.indexOf('est')>=0&&c.est){var sans=(c.est.annexes||[]).filter(function(x){return !x.mt;}).map(function(x){return x.lib;});if(sans.length)a.push('Postes annexes sans montant (ils afficheront 0 €) : '+sans.join(', ')+'.');
+    var lv=(c.est.lots||[]).filter(function(l){return !l.ht;}).length;if(lv)a.push(lv+' lot(s) de travaux sans montant.');}
+  return a;
+}
+
+// ── Génération ──
+var DOCS_LIB={prop:'Proposition d\'honoraires',lm:'Lettre de mission',est:'Estimatif des travaux',plu:'Annexe 1 — Analyse du terrain et du PLU'};
+var DOCS_TYPE={prop:'Proposition',lm:'LettreMission',est:'Estimatif',plu:'AnnexePLU'};
+function docsChoisis(){return ['prop','lm','est','plu'].filter(function(x){var el=document.getElementById('gen-'+x);return el&&el.checked;});}
+function prochainNum(k){ // null = premier numéro à demander au script ; sinon même numéro + « -V2 », « -V3 »…
+  var v=(k.versions||[]).filter(function(x){return x.num;});if(!v.length)return null;
+  var der=v[v.length-1];if(der.echec)return der.num; // génération précédente interrompue : on réutilise son numéro
+  var ok=v.filter(function(x){return !x.echec;});return ok[0].num.replace(/-V\d+$/,'')+'-V'+(ok.length+1);
+}
+function openGen(){
+  var k=actK;if(!k||!act)return;
+  if(k.statut==='signe'){alert('Ce contrat est signé : son montant est figé. Pour le modifier, il faudra passer par un avenant (étape 2).');return;}
+  var docs=['prop','lm'];if(estRempli(act))docs.push('est');if(pluRempli(act))docs.push('plu');
+  var h='<div class="mn-ttl">📄 Générer les documents</div><div class="gen-docs">'+['prop','lm','est','plu'].map(function(x){
+    var dispo=x==='est'?estRempli(act):x==='plu'?pluRempli(act):true;
+    return '<label class="chk-it'+(dispo?'':' off')+'"><input type="checkbox" id="gen-'+x+'"'+(docs.indexOf(x)>=0?' checked':'')+(dispo?'':' disabled')+' onchange="renderGenApercu()"> '+DOCS_LIB[x]+(dispo?'':' (vide)')+'</label>';
+  }).join('')+'</div><div id="gen-apercu"></div>'+
+    '<label class="sd-chk" style="margin-top:8px"><input type="checkbox" id="gen-drive"'+(remoteReady?' checked':' disabled')+'><label for="gen-drive">Ranger aussi une copie dans Google Drive (documents du dossier)</label></label>'+
+    '<div class="mbtns"><button class="mb-c" onclick="closeSub(\'m-gen\')">Annuler</button><button class="mb-s" id="gen-go" onclick="genValider()">Valider, numéroter et générer</button></div>';
+  document.getElementById('gen-body').innerHTML=h;renderGenApercu();showM('m-gen');
+}
+function renderGenApercu(){
+  var k=actK,docs=docsChoisis(),n=prochainNum(k);
+  var d=donneesDoc(act,k,n||'A2M-'+new Date().getFullYear()+'-P???',isoAuj()),champs=champsApercu(act,k,d,docs),al=alertesDoc(act,k,d,docs);
+  var vides=champs.filter(function(x){return !String(x[1]||'').trim();}).length;
+  document.getElementById('gen-apercu').innerHTML=
+    '<div class="gen-num">Numéro : <b>'+(n?esc(n)+'</b> (nouvelle version de la même proposition)':'attribué à la validation</b> par votre script Google (jamais pendant l\'aperçu)')+'</div>'+
+    (al.length?'<div class="gen-al">'+al.map(function(x){return '⚠ '+esc(x);}).join('<br>')+'</div>':'')+
+    '<div class="sec-lbl" style="margin-top:8px">Aperçu des champs'+(vides?' — <span style="color:var(--red)">'+vides+' vide'+(vides>1?'s':'')+'</span>':' — tout est rempli ✓')+'</div>'+
+    '<table class="gen-t">'+champs.map(function(x){var v=String(x[1]||'').trim();return '<tr class="'+(v?'':'vide')+'"><td>'+esc(x[0])+'</td><td>'+(v?esc(v.length>160?v.slice(0,160)+'…':v):'(vide)')+'</td></tr>';}).join('')+'</table>'+
+    '<div class="rel-note">Fichiers : '+docs.map(function(x){return esc(nomFichier(x,n||'A2M-…-P…',act));}).join(', ')+'</div>';
+}
+function nomFichier(doc,num,c){
+  var nom=String(c.nom||'CLIENT').normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^A-Za-z0-9]+/g,'-').replace(/^-|-$/g,'').toUpperCase();
+  return isoAuj()+'_'+DOCS_TYPE[doc]+'_'+num+'_'+nom+'.docx';
+}
+function chargerScript(src,glob){
+  return window[glob]?Promise.resolve():new Promise(function(ok,ko){var s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=function(){ko(new Error('Chargement impossible : '+src));};document.head.appendChild(s);});
+}
+function chargerLibs(){return chargerScript('https://cdn.jsdelivr.net/npm/pizzip@3.3.0/dist/pizzip.min.js','PizZip').then(function(){return chargerScript('https://cdn.jsdelivr.net/npm/docxtemplater@3.71.0/build/docxtemplater.min.js','docxtemplater');});}
+var TPL={prop:function(k){return 'proposition_'+tplBase(k)+'.docx';},lm:function(k){return 'lettre_mission_'+tplBase(k)+'.docx';},est:function(k,c){return 'estimatif_'+(c.est&&c.est.mise==='A'?'A':'B')+'.docx';},plu:function(){return 'annexe_PLU.docx';}};
+function remplirModele(fichier,data){
+  return fetch('modeles/'+fichier,{cache:'no-cache'}).then(function(r){if(!r.ok)throw new Error('Modèle introuvable : '+fichier);return r.arrayBuffer();}).then(function(buf){
+    var doc=new window.docxtemplater(new window.PizZip(buf),{paragraphLoop:true,linebreaks:true,nullGetter:function(){return '';}});
+    doc.render(data);
+    return doc.getZip().generate({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+  });
+}
+// Numéro attribué par le script Google (verrou côté serveur). Même « req » en cas de nouvel essai = même numéro.
+function demanderNumero(type,info){
+  if(location.protocol==='file:'||!remoteReady)return Promise.reject(new Error('Connexion au serveur Google nécessaire pour attribuer un numéro.'));
+  var req=type+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,10);
+  var essai=function(){return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'numero',type:type,req:req,info:info||''})}).then(function(r){return r.json();});};
+  return essai().catch(function(){return essai();}).then(function(res){
+    if(!res||!res.ok||!res.numero)throw new Error(res&&res.erreur==='Données invalides'?'Votre script Google n\'est pas encore à jour (numérotation absente). Suivez les instructions de mise à jour.':'Numéro refusé : '+((res&&res.erreur)||'réponse inattendue'));
+    return res;
+  });
+}
+function enregistrerFichiers(fichiers,dossier){
+  if(dossier){
+    return fichiers.reduce(function(p,f){return p.then(function(){return dossier.getFileHandle(f.nom,{create:true}).then(function(h){return h.createWritable();}).then(function(w){return w.write(f.blob).then(function(){return w.close();});});});},Promise.resolve()).then(function(){return 'dossier';});
+  }
+  fichiers.forEach(function(f,i){setTimeout(function(){var a=document.createElement('a');a.href=URL.createObjectURL(f.blob);a.download=f.nom;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},4000);},i*400);});
+  return Promise.resolve('telechargement');
+}
+function genValider(){
+  var k=actK,c=act,docs=docsChoisis();if(!k||!c)return;
+  if(!docs.length){alert('Cochez au moins un document.');return;}
+  var d0=donneesDoc(c,k,'X',isoAuj()),al=alertesDoc(c,k,d0,docs);
+  if(al.length&&!confirm('Attention :\n- '+al.join('\n- ')+'\n\nGénérer quand même ?'))return;
+  var btn=document.getElementById('gen-go');btn.disabled=true;btn.textContent='Choix du dossier…';
+  // 1. Choix du dossier client (fenêtre Chrome) AVANT de demander le numéro : si on annule, aucun numéro n'est consommé
+  var choix=window.showDirectoryPicker?window.showDirectoryPicker({id:'a2m-client',mode:'readwrite'}).catch(function(e){if(e&&e.name==='AbortError')throw e;return null;}):Promise.resolve(null);
+  var dossier=null,numero,dateIso,fichiers=[];
+  choix.then(function(dir){dossier=dir;btn.textContent='Numérotation…';return chargerLibs();})
+  .then(function(){
+    var n=prochainNum(k);
+    if(n)return {numero:n,date:isoAuj()};
+    return demanderNumero('P',(c.nom||'')+' — '+(k.intitule||''));
+  })
+  .then(function(res){
+    numero=res.numero;dateIso=res.date||isoAuj();btn.textContent='Génération…';
+    var data=donneesDoc(c,k,numero,dateIso);
+    return docs.reduce(function(p,x){return p.then(function(){return remplirModele(TPL[x](k,c),data).then(function(blob){fichiers.push({doc:x,nom:nomFichier(x,numero,c).replace(/^\d{4}-\d{2}-\d{2}/,dateIso),blob:blob});});});},Promise.resolve());
+  })
+  .then(function(){return enregistrerFichiers(fichiers,dossier);})
+  .then(function(mode){
+    k.versions=(k.versions||[]).filter(function(v){return !(v.echec&&v.num===numero);});
+    k.versions.push({v:k.versions.length+1,num:numero,date:dateIso,montant:ctrMontant(k),docs:fichiers.map(function(f){return f.nom;})});
+    if(k.statut==='brouillon')k.statut='propose';
+    c.upd=Date.now();sv();render();
+    if(document.getElementById('gen-drive').checked&&act&&act.id===c.id)uploadDocs(fichiers.map(function(f){return new File([f.blob],f.nom,{type:f.blob.type});}));
+    closeSub('m-gen');renderCtr();
+    toast(fichiers.length+' document'+(fichiers.length>1?'s':'')+' '+(mode==='dossier'?'enregistré'+(fichiers.length>1?'s':'')+' dans le dossier choisi':'téléchargé'+(fichiers.length>1?'s':''))+' — '+numero);
+    setTimeout(function(){proposerEnvoi(c);},300);
+  })
+  .catch(function(e){
+    btn.disabled=false;btn.textContent='Valider, numéroter et générer';
+    if(e&&e.name==='AbortError')return;
+    alert('La génération n\'a pas abouti : '+(e&&e.message||e)+(numero?'\n\nLe numéro '+numero+' a été attribué : il sera réutilisé si vous relancez la génération de ce contrat.':''));
+    if(numero&&!(k.versions||[]).some(function(v){return v.num===numero;})){k.versions=k.versions||[];k.versions.push({v:k.versions.length+1,num:numero,date:dateIso||isoAuj(),montant:ctrMontant(k),docs:[],echec:true});c.upd=Date.now();sv();}
+  });
+}
+function proposerEnvoi(c){
+  var avant=['prospects','propositions'].indexOf(c.col)>=0;
+  var q=c.col==='prospects'?'Passer le dossier en « Propositions » et noter « Proposition envoyée » aujourd\'hui ?':avant?'Noter « Proposition envoyée » aujourd\'hui ?':'';
+  if(!q||!confirm(q))return;
+  if(c.col==='prospects'){c.col='propositions';var sel=document.getElementById('d-col-sel');if(sel)sel.value='propositions';}
+  c.prop=true;c.propDate=isoAuj();c.upd=Date.now();sv();render();
+  var cb=document.getElementById('d-prop-e');if(cb&&act&&act.id===c.id)cb.checked=true;
+  toast('Proposition notée comme envoyée');
+}
+
+// ── Paramètres : banque, délai, échéanciers par défaut, numéros, reprise ──
+var echDefType=null;
+function renderReglages(){
+  var r=reglages(),el=document.getElementById('p-reg');if(!el)return;
+  el.innerHTML='<div class="fg"><div class="fld"><label>IBAN</label><input id="p-iban" value="'+escA(r.iban||'')+'"></div><div class="fld"><label>BIC</label><input id="p-bic" value="'+escA(r.bic||'')+'"></div></div>'+
+    '<div class="fg"><div class="fld"><label>Titulaire du compte</label><input id="p-tit" value="'+escA(r.titulaire||'')+'"></div><div class="fld"><label>Délai de paiement (jours)</label><input id="p-delai" type="number" min="1" max="90" value="'+(r.delai||15)+'"></div></div>'+
+    '<div class="rel-note">Utilisés dans les lettres de mission (et plus tard les factures). Enregistrés avec vos dossiers dans Google Drive, jamais dans le code du site.</div>'+
+    '<div class="sec-lbl" style="margin-top:12px">Échéanciers par défaut</div><div class="ctr-bar">'+Object.keys(CTR_TYPES).map(function(t){return '<button class="sml-btn" style="width:auto;margin:0" onclick="openEchDef(\''+t+'\')">'+CTR_ICO[t]+' '+CTR_TYPES[t]+'</button>';}).join('')+'</div>'+
+    '<div class="sec-lbl" style="margin-top:12px">Numérotation</div><div id="p-nums" class="rel-note">Prochains numéros : lecture…</div>'+
+    '<div class="sec-lbl" style="margin-top:12px">Reprise des dossiers existants</div><button class="sml-btn" onclick="repriseApercu()">Créer les contrats à partir des honoraires déjà saisis…</button>';
+  lireCompteurs();
+}
+function saveReglages(){
+  var r=reglages(),g=function(id){var e=document.getElementById(id);return e?e.value.trim():'';};
+  var n={iban:g('p-iban'),bic:g('p-bic'),titulaire:g('p-tit'),delai:parseInt(g('p-delai'))||15};
+  if(n.iban!==(r.iban||'')||n.bic!==(r.bic||'')||n.titulaire!==(r.titulaire||'')||n.delai!==r.delai){Object.assign(r,n);sv();}
+}
+function lireCompteurs(){
+  var el=document.getElementById('p-nums');if(!el)return;
+  if(!remoteReady||location.protocol==='file:'){el.textContent='Prochains numéros : connexion au serveur nécessaire.';return;}
+  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'compteurs'})}).then(function(r){return r.json();}).then(function(res){
+    el.innerHTML=res&&res.ok&&res.P?'Prochaine proposition : <b>'+esc(res.P)+'</b> · prochaine facture : <b>'+esc(res.F)+'</b><br>Attribués par votre script Google, dans l\'ordre, sans trou ni doublon ; le compteur repart à 001 chaque 1er janvier.'
+      :'<span style="color:var(--red)">Votre script Google n\'est pas encore à jour : la numérotation ne fonctionnera qu\'après sa mise à jour.</span>';
+  }).catch(function(){el.textContent='Prochains numéros : serveur injoignable.';});
+}
+function openEchDef(type){echDefType=type;reglages().echDef[type]=echDefaut(type);renderEchDef();showM('m-echdef');}
+function echDefSet(i,champ,v){echModif(reglages().echDef[echDefType],i,champ,v);sv();renderEchDef();}
+function renderEchDef(){
+  document.getElementById('echdef-body').innerHTML='<div class="mn-ttl">Échéancier par défaut — '+CTR_ICO[echDefType]+' '+CTR_TYPES[echDefType]+'</div>'+
+    '<div class="rel-note" style="margin-bottom:8px">Utilisé pour chaque nouveau contrat de ce type (modifiable ensuite contrat par contrat). [commune] est remplacé par la commune du dossier.</div>'+
+    echHtml(reglages().echDef[echDefType],null,'echDefSet')+
+    '<div class="mbtns"><button class="mb-c" onclick="echDefOrigine()">Échéancier d\'origine</button><button class="mb-s" onclick="closeSub(\'m-echdef\')">Fermer</button></div>';
+}
+function echDefOrigine(){if(!confirm('Revenir à l\'échéancier d\'origine pour ce type de contrat ?'))return;delete reglages().echDef[echDefType];sv();openEchDef(echDefType);}
+function repriseListe(){
+  var L=[];
+  DB.cards.concat(DB.archived||[]).forEach(function(c){
+    if((c.contrats||[]).length)return;
+    var avance=['prospects','propositions'].indexOf(c.col)<0;
+    [['honoPC','PC'],['honoAMO','SUIVI'],['honoLibre','LIBRE']].forEach(function(x){
+      var v=parseFloat(c[x[0]])||0;if(v>0)L.push({c:c,type:x[1],cts:Math.round(v*100),signe:avance});
+    });
+  });
+  return L;
+}
+function repriseApercu(){
+  var L=repriseListe();
+  if(!L.length){alert('Aucun dossier à reprendre : tous les dossiers avec des honoraires ont déjà des contrats (ou aucun honoraire n\'est saisi).');return;}
+  document.getElementById('rep-body').innerHTML='<div class="mn-ttl">Reprise des honoraires en contrats</div><div class="rel-note" style="margin-bottom:8px">'+L.length+' contrat(s) vont être créés. Les montants actuels sont conservés tels quels ; les anciens champs ne sont pas effacés.</div>'+
+    '<table class="gen-t">'+L.map(function(x){return '<tr><td>'+esc(x.c.nom)+(x.c.ref?' <i>('+esc(x.c.ref)+')</i>':'')+'</td><td>'+CTR_ICO[x.type]+' '+esc(x.type==='LIBRE'?(x.c.nat||'Mission libre'):CTR_TYPES[x.type])+'</td><td class="num">'+fmtE(x.cts)+' €</td><td>'+(x.signe?'Signé (repris)':'Proposé (repris)')+'</td></tr>';}).join('')+'</table>'+
+    '<div class="mbtns"><button class="mb-c" onclick="closeSub(\'m-rep\')">Annuler</button><button class="mb-s" onclick="repriseAppliquer()">Créer ces '+L.length+' contrat(s)</button></div>';
+  showM('m-rep');
+}
+function repriseAppliquer(){
+  var L=repriseListe();
+  L.forEach(function(x){
+    var k=nouveauContrat(x.type,x.type==='LIBRE'?(x.c.nat||'Mission libre'):'');
+    k.calc='forfait';k.forfait=x.cts;k.repris=true;k.statut=x.signe?'signe':'propose';
+    x.c.contrats=x.c.contrats||[];x.c.contrats.push(k);
+  });
+  sv();render();closeSub('m-rep');toast(L.length+' contrat(s) créé(s)');
+}
+
+function showParams(){document.getElementById('p-stale').value=staledays;document.getElementById('p-cal').checked=!DB.calOff;renderReglages();showM('m-params');}
+function saveParams(){saveReglages();staledays=parseInt(document.getElementById('p-stale').value)||14;var off=!document.getElementById('p-cal').checked;if(off!==!!DB.calOff){DB.calOff=off;sv();}closeM();render();toast('Paramètres enregistrés');}
 
 function openNew(){document.getElementById('n-col').value='prospects';showM('m-new');}
 
