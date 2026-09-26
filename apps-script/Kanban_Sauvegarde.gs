@@ -189,7 +189,7 @@ function sauvegardeDuJour_(fichier) {
   if (dossier.getFilesByName(nom).hasNext()) return;
   if (fichier.getSize() > 30) dossier.createFile(nom, fichier.getBlob().getDataAsString(), 'application/json');
   var liste = [], f = dossier.getFiles();
-  while (f.hasNext()) liste.push(f.next());
+  while (f.hasNext()) { var x = f.next(); if (/^kanban-/.test(x.getName())) liste.push(x); }
   liste.sort(function (a, b) { return b.getName() < a.getName() ? -1 : 1; });
   liste.slice(NB_SAUVEGARDES).forEach(function (x) { x.setTrashed(true); });
 }
