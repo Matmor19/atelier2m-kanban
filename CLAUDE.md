@@ -41,6 +41,13 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   (`fige` par tranche, `etat` : `a_facturer` / `prevue`). **Avenants** (`k.avenants`) : un « plus »
   ajoute une tranche, un « moins » réduit une tranche (`reduc`). Total = montant signé + avenants
   (`ctrMontant`). Avenant Word : modèle `public/modeles/avenant.docx`, sans numéro P/F.
+- **Facturation** (`k.factures`) : acompte / situation / solde / avoir, lignes rattachées aux tranches
+  (`t`), paiements (`paiements`), relances (`relances` : 1re, 2e, mise en demeure). Une facture émise
+  n'est jamais modifiée ni supprimée (correction par avoir) ; elle est enregistrée AVANT la création du
+  Word. Chaque facture est aussi copiée dans `DB.registre` (registre chronologique, export CSV).
+  Les tranches passent « à facturer » via `majDeclencheurs()` (checklists, colonnes, dates) ou le bouton
+  « Étape atteinte ». Modèle `public/modeles/facture.docx` (factures et avoirs). Un dossier facturé ne
+  peut pas être supprimé.
 - **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
   uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
   Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le

@@ -472,6 +472,50 @@ function avenant() {
   ]);
 }
 
+
+// ── Facture / avoir (modèle créé pour le Kanban) ──
+function facture() {
+  const L2 = [7000, 2400], L4 = [2600, 2200, 2300, 2300], L3 = [3400, 3000, 3000];
+  const info = (a, b) => new TableRow({ children: [cellule(a, { w: 3000, fond: ORANGE_PALE }), cellule(b, { w: 6400 })] });
+  return document('{entete}', [
+    titre('{titre}'), sousTitre('{sous_titre}'),
+    signatures(
+      [P('ÉMETTEUR', { s: 16, c: GRIS, ap: 40 }), P('{emetteur}', { b: true, ap: 0 }), P('29 Avenue Thiers – 19100 BRIVE LA GAILLARDE', { ap: 0 }),
+        P('06 59 98 68 81 – contact@atelier2m.com', { ap: 0 }), P('SIRET : 484 070 065 00038 – APE 7112Z', { ap: 0 })],
+      [P('CLIENT', { s: 16, c: GRIS, ap: 40 }), P('{client}', { b: true, ap: 0 }), ...si('soc', [P('{soc}', { ap: 0 })]), P('{adr_client}', { ap: 0 })]
+    ),
+    P('', { ap: 120 }),
+    tableau([
+      info('{num_lib}', '{num}'), info('Date d\'émission', '{date}'), info('Date d\'échéance', '{echeance}'),
+      info('Contrat', '{contrat_ref}'), info('Projet', '{Projet} — {adr_projet}'),
+      ...[]
+    ], [3000, 6400]),
+    ...si('avoir', [P('Avoir sur la facture n°{avoir_de} du {avoir_de_date}. Motif : {motif}.', { av: 160, a: 'j' })]),
+    H('Détail'),
+    tableau([
+      ligneEntete(['Désignation', 'Montant HT'], L2, [null, 'r']),
+      ...lignesAlternees('lignes', ['lib', 'mt'], L2, [null, 'r']),
+      ligneTotal('TOTAL HT', '{total} €', L2, 1),
+      ligneTotal('TVA non applicable, art. 293 B du CGI', '—', L2, 1),
+      ligneTotal('{net_lib}', '{total} €', L2, 1, { fond: 'E07B39', c: 'FFFFFF' })
+    ], L2),
+    ...si('a_prec', [H('Factures précédentes sur ce contrat'),
+      tableau([ligneEntete(['N°', 'Date', 'Montant HT'], L3, [null, null, 'r']), ...lignesAlternees('prec', ['num', 'date', 'mt'], L3, [null, null, 'r'])], L3)]),
+    H('Récapitulatif du contrat'),
+    tableau([
+      ligneEntete(['Montant du contrat', 'Déjà facturé', 'Cette facture', 'Reste à facturer'], L4, ['r', 'r', 'r', 'r']),
+      new TableRow({ children: ['{r_contrat} €', '{r_deja} €', '{r_cette} €', '{r_reste} €'].map((t, i) => cellule(t, { w: L4[i], a: 'r' })) })
+    ], L4),
+    note('Montants HT, avenants et avoirs compris.', { av: 40 }),
+    ...si('a_payer', [
+      H('Conditions de règlement'),
+      P('Paiement à {delai} jours, soit au plus tard le {echeance}, par virement bancaire : IBAN : {iban} – BIC : {bic} – Titulaire du compte : {titulaire}. Merci de rappeler le numéro de facture en référence du virement.', { a: 'j' }),
+      P('Pas d\'escompte pour paiement anticipé. Pénalités de retard : trois fois le taux d\'intérêt légal, exigibles dès le lendemain de la date d\'échéance. Pour les clients professionnels : indemnité forfaitaire pour frais de recouvrement de 40 € (articles L441-10 et D441-5 du Code de commerce).', { a: 'j', s: 17, c: GRIS })
+    ]),
+    ...si('avoir', [P('Cet avoir vient en déduction des sommes dues au titre du contrat{#rembourse} ; le montant déjà réglé en trop vous sera remboursé par virement{/rembourse}.', { a: 'j', av: 160 })])
+  ]);
+}
+
 // ── Fabrication ───────────────────────────────────────────────
 const MODELES = {
   'proposition_A.docx': propositionA(),
@@ -506,7 +550,8 @@ const MODELES = {
   'estimatif_A.docx': estimatifA(),
   'estimatif_B.docx': estimatifB(),
   'annexe_PLU.docx': annexePLU(),
-  'avenant.docx': avenant()
+  'avenant.docx': avenant(),
+  'facture.docx': facture()
 };
 
 fs.mkdirSync(SORTIE, { recursive: true });
