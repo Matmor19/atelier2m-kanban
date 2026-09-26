@@ -1242,7 +1242,7 @@ function renderTelLink(){
 function openDet(id){
   infosOuvert=null;
   act=DB.cards.find(function(c){return c.id===id;});if(!act)return;
-  if((act.contrats||[]).length&&preremplirInfos(act))sv(); // champs vides des documents : valeurs de départ tirées de la fiche
+  if(preremplirInfos(act))sv(); // champs vides des documents : valeurs de départ tirées de la fiche (toutes les cartes)
   document.getElementById('d-ref').textContent=act.ref||'';
   document.getElementById('d-name').textContent=act.nom;
   document.getElementById('d-nom-e').value=act.nom||'';
@@ -1608,7 +1608,9 @@ function setCont(on){
   act.upd=Date.now();sv();render();renderCont();
   toast(on?'Dossier passé en contentieux':'Contentieux levé');
 }
-function sf(k,v){if(!act)return;act[k]=v;act.upd=Date.now();sv();render();}
+function sf(k,v){if(!act)return;act[k]=v;act.upd=Date.now();
+  if(['nom','addr','resume','nat'].indexOf(k)>=0&&preremplirInfos(act)&&document.getElementById('d-ctrs'))renderCtrs(); // complète les champs encore vides
+  sv();render();}
 
 function moveTo(colId){if(!act)return;if(colId==='instruction')onEnterInstruction(act);if(colId==='termines'&&act.col!=='termines')setTimeout(celebrate,100);act.col=colId;act.upd=Date.now();sv();render();openDet(act.id);}
 function moveC(d){if(!act)return;var i=COLS.findIndex(function(c){return c.id===act.col;});var ni=i+d;if(ni<0||ni>=COLS.length)return;if(COLS[ni].id==='instruction')onEnterInstruction(act);act.col=COLS[ni].id;act.upd=Date.now();sv();render();openDet(act.id);}
