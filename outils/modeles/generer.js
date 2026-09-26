@@ -323,26 +323,28 @@ function lettreB(o) {
 }
 
 // ── Estimatifs ─────────────────────────────────────────────────
-const tableauLots = (avecTotauxDansTableau) => {
-  const L = [700, 4300, 1000, 1700, 1700];
-  const lignes = [
-    ligneEntete(['Lot', 'Poste de travaux', 'Part', 'Montant HT', 'Montant TTC'], L),
-    ...lignesAlternees('lots', ['n', 'lib', 'part', 'ht', 'ttc'], L, ['c', null, 'r', 'r', 'r']),
-    ligneTotal('TOTAL GÉNÉRAL TRAVAUX HT', '{total_ht} €', L, 4)
-  ];
-  if (avecTotauxDansTableau) lignes.push(
-    ligneTotal('TVA {tva_taux} %', '{tva} €', L, 4),
-    ligneTotal('TOTAL GÉNÉRAL TRAVAUX TTC', '{total_ttc} €', L, 4, { fond: 'E07B39', c: 'FFFFFF' })
-  );
-  return tableau(lignes, L);
-};
 const budget = () => [
   grand('BUDGET GLOBAL PRÉVISIONNEL : {budget} € TTC'),
   note('({budget_note})', { a: 'c', ap: 160 })
 ];
+// Sections facultatives : titre et contenu disparaissent si les champs sont vides
+const debutEstimatif = () => [
+  ...si('a_presentation', [
+    H('Présentation générale du projet'),
+    ...paragraphes('presentation', { a: 'j' })
+  ]),
+  ...si('a_est_objet', [
+    H('Objet de la mission'),
+    ...si('est_objet_intro', [P('{est_objet_intro}', { a: 'j' })]),
+    ...liste('est_objet'),
+    ...si('a_est_ctr', [note('Le détail de cette mission et son chiffrage font l\'objet du document « Proposition d\'honoraires » joint au présent dossier.', { av: 60 })])
+  ])
+];
 const finEstimatif = () => [
-  ...si('a_vigilance', [H('Points de vigilance à instruire en phase diagnostic')]),
-  ...liste('vigilance'),
+  ...si('a_vigilance', [
+    H('Points de vigilance à instruire en phase diagnostic'),
+    ...liste('vigilance')
+  ]),
   H('Nature de l\'estimation'),
   ...paragraphes('nature', { a: 'j' })
 ];
@@ -352,38 +354,48 @@ const baseDeCalcul = () => [
   note('soit un ratio d\'environ {ratio} € TTC / m² sur les {surf_hab} m² de surface habitable {ratio_note}', { a: 'c', ap: 160 }),
   ...paragraphes('hypothese', { a: 'j' })
 ];
+// Tableau des lots avec les 3 lignes de total (HT, TVA, TTC) dans le même tableau
+const tableauLots = () => {
+  const L = [700, 4300, 1000, 1700, 1700];
+  return tableau([
+    ligneEntete(['Lot', 'Poste de travaux', 'Part', 'Montant HT', 'Montant TTC'], L),
+    ...lignesAlternees('lots', ['n', 'lib', 'part', 'ht', 'ttc'], L, ['c', null, 'r', 'r', 'r']),
+    ligneTotal('TOTAL GÉNÉRAL TRAVAUX HT', '{total_ht} €', L, 4),
+    ligneTotal('TVA {tva_taux} %', '{tva} €', L, 4),
+    ligneTotal('TOTAL GÉNÉRAL TRAVAUX TTC', '{total_ttc} €', L, 4, { fond: 'E07B39', c: 'FFFFFF' })
+  ], L);
+};
+// Postes annexes : montant, € / m² habitable et observation
+const tableauAnnexes = (totalOrange) => {
+  const L = [3700, 1450, 1250, 3000];
+  return tableau([
+    ligneEntete(['Poste annexe (hors travaux)', 'Montant TTC', '€ / m² hab.', 'Observation'], L),
+    ...lignesAlternees('annexes', ['lib', 'mt', 'm2', 'obs'], L, [null, 'r', 'r', null]),
+    ligneTotal('MONTANT TTC ANNEXES', '{annexes_total} €', L, 1, totalOrange ? { fond: 'E07B39', c: 'FFFFFF' } : {})
+  ], L);
+};
+const corpsEstimatif = (totalOrange) => [
+  ...debutEstimatif(),
+  ...baseDeCalcul(),
+  tableauLots(),
+  H('Budget global prévisionnel — Travaux et annexes financières'),
+  ...paragraphes('annexes_intro', { a: 'j' }),
+  tableauAnnexes(totalOrange),
+  ...budget(),
+  ...finEstimatif()
+];
 
 function estimatifA() {
-  const LA = [5600, 1900, 1900];
   return document('Estimation des travaux relative à la proposition d\'honoraires', [
     titre('{est_titre}'), sousTitre('{est_sous_titre}'),
     P('{mo_label} : {client}'),
     ...si('soc', [P('Dossier établi au nom de : {soc}')]),
     P('Terrain : {terrain_a}'),
-    H('Présentation générale du projet'),
-    ...paragraphes('presentation', { a: 'j' }),
-    ...si('a_est_objet', [
-      H('Objet de la mission'),
-      ...si('est_objet_intro', [P('{est_objet_intro}', { a: 'j' })]),
-      ...liste('est_objet'),
-      note('Le détail de cette mission et son chiffrage font l\'objet du document « Proposition d\'honoraires » joint au présent dossier.', { av: 60 })
-    ]),
-    ...baseDeCalcul(),
-    tableauLots(true),
-    H('Budget global prévisionnel — Travaux et annexes financières'),
-    ...paragraphes('annexes_intro', { a: 'j' }),
-    tableau([
-      ligneEntete(['Poste annexe (hors travaux)', 'Montant TTC', '€ / m² hab.'], LA),
-      ...lignesAlternees('annexes', ['lib', 'mt', 'm2'], LA, [null, 'r', 'r']),
-      ligneTotal('MONTANT TTC ANNEXES', '{annexes_total} €', LA, 1, { fond: 'E07B39', c: 'FFFFFF' })
-    ], LA),
-    ...budget(),
-    ...finEstimatif()
+    ...corpsEstimatif(true)
   ]);
 }
 
 function estimatifB() {
-  const LB = [2900, 1300, 5200], LT = [6400, 3000];
   return document('Estimatif des travaux', [
     titre('{est_titre}'), sousTitre('{est_sous_titre}'),
     P('{mo_label} : {client}'),
@@ -391,23 +403,7 @@ function estimatifB() {
     P('Terrain : {adr_projet}'),
     ...si('cadastre_b', [P('Références cadastrales : {cadastre_b}')]),
     P('Référence dossier : {est_ref} — Date : {date}'),
-    ...paragraphes('presentation', { a: 'j' }),
-    ...baseDeCalcul(),
-    tableauLots(false),
-    P('', { ap: 120 }),
-    tableau([
-      new TableRow({ children: [cellule('TVA {tva_taux} %', { w: LT[0] }), cellule('{tva} €', { w: LT[1], a: 'r' })] }),
-      new TableRow({ children: [cellule('TOTAL GÉNÉRAL TRAVAUX TTC', { w: LT[0], fond: ORANGE_PALE }), cellule('{total_ttc} €', { w: LT[1], a: 'r', fond: ORANGE_PALE })] })
-    ], LT),
-    H('Budget global prévisionnel — Travaux et annexes financières'),
-    ...paragraphes('annexes_intro', { a: 'j' }),
-    tableau([
-      ligneEntete(['Poste annexe (hors travaux)', 'Montant', 'Observation'], LB),
-      ...lignesAlternees('annexes', ['lib', 'mt', 'obs'], LB, [null, 'r', null]),
-      ligneTotal('MONTANT TTC ANNEXES', '{annexes_total} €', LB, 1)
-    ], LB),
-    ...budget(),
-    ...finEstimatif()
+    ...corpsEstimatif(false)
   ]);
 }
 

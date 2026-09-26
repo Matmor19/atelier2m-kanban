@@ -71,6 +71,12 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   Version 3 (`BIB_MAJ_V3` / `bibMaj3()`, `BIB_V=3`) : prix vérifiés (double comptages PMR, photovoltaïque,
   volets ; couverture piscine, porte de garage, fenêtres 7.05/7.07 ; faïence des salles d'eau 14.04). Une
   mise à jour de version ne change une valeur que si elle est encore l'ancienne (`ancienPu`, `ancienF`).
+- **Word « Estimatif »** (`estimatif_A` / `estimatif_B`, même corps `corpsEstimatif()` dans le générateur) : sections
+  facultatives Présentation (`a_presentation`), Objet de la mission (`a_est_objet`, phrase « Proposition
+  d'honoraires » si `a_est_ctr`) et Points de vigilance (`a_vigilance`), masquées si vides ; totaux HT / TVA / TTC
+  dans le tableau des lots ; annexes avec « € / m² hab. » et « Observation ». Champs : `estTextesHaut()` /
+  `estTextesVig()` (fenêtre Estimatif et bloc « Textes du Word » de l'assistant) ; listes stockées en texte,
+  une ligne par puce (`e.objet`, `e.vigilance`).
 - **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
   uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
   Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le

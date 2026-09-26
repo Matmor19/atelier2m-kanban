@@ -381,6 +381,8 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .dp-menu td{background:color-mix(in srgb,var(--or) 4%,transparent)}.dp-menu td:nth-child(2){font-size:11px;color:var(--txt)}.dp-obs{font-style:italic}
 .mn-c{border:1px solid var(--brd);border-radius:10px;padding:8px 10px 4px;margin-bottom:6px;background:var(--surface)}
 .mn-h{display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--txt);margin-bottom:6px}.mn-h span{font-size:11px;color:var(--txt2)}.mn-h .mn-b{margin-left:auto;white-space:nowrap}
+.lst-it{display:flex;gap:4px;align-items:center;margin-bottom:4px}.lst-it .sd-inp{margin:0;flex:1}.lst-p{color:var(--or);font-size:9px;width:12px;text-align:center}.lst-nv .sd-inp{border-style:dashed}
+.lst-it .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:0 3px}.lst-it .rm:hover{color:var(--or)}.lst-fac{font-weight:600;text-transform:none;letter-spacing:0;color:var(--txt3);font-size:9.5px}
 .mn-err{border-color:var(--red)}.mn-h .mn-alerte{flex-basis:100%;color:var(--red);font-weight:700}
 .mn-c .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:15px;padding:0 4px}.mn-c .rm:hover{color:var(--or)}
 .mn-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:0 8px}.mn-g .fld{margin-bottom:6px}.mn-g .fld input,.mn-g .fld select{padding:6px 8px;font-size:12px}
@@ -2159,10 +2161,9 @@ function renderEst(){
   var e=act.est,t=estTotaux(act),s=surfNum(e.surf);
   var inp=function(ch,lib,o){o=o||{};return '<div class="fld"'+(o.st?' style="'+o.st+'"':'')+'><label>'+lib+'</label>'+(o.ta?'<textarea rows="'+o.ta+'" onchange="estSet(\''+ch+'\',this.value)">'+esc(e[ch]||'')+'</textarea>':'<input value="'+escA(o.v!==undefined?o.v:(e[ch]||''))+'" onchange="estSet(\''+ch+'\',this.value)">')+'</div>';};
   var ro=!!e.dpgf,h='<div class="mn-ttl">📊 Estimatif des travaux</div>'+estDpgfBandeau(e)+
-    '<div class="fg"><div class="fld"><label>Mise en page</label><select onchange="estSet(\'mise\',this.value)"><option value="A"'+(e.mise==='A'?' selected':'')+'>Comme la mission complète (colonne € / m²)</option><option value="B"'+(e.mise!=='A'?' selected':'')+'>Comme les missions séparées (colonne Observation)</option></select></div>'+inp('surf','Surface habitable (m²)')+'</div>'+
+    '<div class="fg"><div class="fld"><label>Mise en page</label><select onchange="estSet(\'mise\',this.value)"><option value="A"'+(e.mise==='A'?' selected':'')+'>Comme la mission complète</option><option value="B"'+(e.mise!=='A'?' selected':'')+'>Comme les missions séparées (référence, cadastre)</option></select></div>'+inp('surf','Surface habitable (m²)')+'</div>'+
     inp('titre','Titre')+inp('sous_titre','Sous-titre (ex : Maison contemporaine plain-pied — 150 m² avec piscine)')+
-    inp('presentation','Présentation du projet (laisser une ligne vide entre deux paragraphes)',{ta:5})+
-    (e.mise==='A'?inp('objet_intro','Objet de la mission : phrase d\'introduction')+inp('objet','Objet de la mission — une ligne par puce (vide = section absente)',{ta:4}):'')+
+    estTextesHaut(e)+
     inp('ratio_note','Précision après le ratio € / m² (ex : (hors garage, cave et piscine))')+inp('hypothese','Paragraphe d\'hypothèse',{ta:3})+
     '<div class="sec-lbl" style="margin-top:10px">Lots de travaux (montants HT)</div><div class="ech-w"><table class="ech-t"><tr><th>N°</th><th>Poste de travaux</th><th>Montant HT €</th><th>Part</th><th>TTC</th><th></th></tr>'+
     e.lots.map(function(l,i){var ttc=(l.ht||0)+partDe(l.ht||0,e.tva||0);if(ro)return '<tr class="ech-ro"><td class="num">'+(i+1)+'</td><td>'+esc(l.lib)+'</td><td class="num">'+fmtE(l.ht||0)+' €</td><td class="num">'+(t.ht?partPct(l.ht||0,t.ht)+' %':'')+'</td><td class="num">'+fmtE(ttc)+' €</td><td></td></tr>';
@@ -2176,7 +2177,7 @@ function renderEst(){
     '</table></div><button class="sml-btn" style="width:auto" onclick="estLigne(\'annexes\',0,\'ajout\')">＋ Ajouter un poste annexe</button>'+
     '<div class="fg">'+inp('prov_lib','Ligne de provision (libellé)')+inp('prov','Provision (%)',{v:pctStr(e.prov)})+'</div>'+
     '<div class="ctr-total">Annexes : '+fmtE(t.annexes||0)+' € TTC · <b>Budget global prévisionnel : '+fmtE(t.budget||0)+' € TTC</b></div>'+
-    inp('budget_note','Précision sous le budget global')+inp('vigilance','Points de vigilance — une ligne par puce',{ta:4})+inp('nature','Nature de l\'estimation',{ta:3})+
+    inp('budget_note','Précision sous le budget global')+estTextesVig(e)+inp('nature','Nature de l\'estimation',{ta:3})+
     '<div class="mbtns" style="flex-wrap:wrap"><button class="mb-c" onclick="dpgfVersContrat()">➜ Envoyer vers le contrat…</button><button class="mb-c" onclick="genEstimatifSeul()">📄 Word Estimatif</button><button class="mb-s" onclick="closeSub(\'m-est\')">Fermer</button></div>';
   document.getElementById('est-body').innerHTML=h;
 }
@@ -2559,6 +2560,49 @@ function renderBibMenu(){
     '<label class="sd-chk"><input type="checkbox"'+(T.poseOn?' checked':'')+' onchange="bibMenuSet(\'poseOn\',\'\',this.checked)"><label>Ajouter automatiquement la pose dans le lot Pose menuiseries</label></label>'+
     '<div class="rel-note">Exemple : fenêtre alu 120×135 = 1,62 m² × '+fmtE(T.mat.alu)+' €/m² = '+fmtE(menuPrix({type:'fen',l:120,h:135,mat:'alu',occ:''},T).fourn)+' € ; avec volet roulant électrique télécommande : '+fmtE(menuPrix({type:'fen',l:120,h:135,mat:'alu',occ:'vre',cmd:'tele'},T).pu)+' €.</div></details>';
 }
+// ── Textes facultatifs du Word « Estimatif » (fenêtre Estimatif et assistant DPGF) ──
+// Présentation (paragraphes), Objet de la mission (intro + liste), Points de vigilance (liste).
+// Les listes restent enregistrées comme texte, une ligne par puce (e.objet, e.vigilance).
+var OBJET_INTRO_DEF='La mission confiée porte sur l\'ensemble du projet, de la conception jusqu\'à la réception des travaux :';
+var OBJET_PHASES=['Relevé de l\'existant et étude de faisabilité','Esquisse (ESQ), avant-projet sommaire (APS) et avant-projet définitif (APD)','Constitution et dépôt du dossier de permis de construire (PC)','Dossier de consultation des entreprises (DCE) et analyse des offres','Direction de l\'exécution des travaux (DET) et assistance aux opérations de réception (AOR)'];
+var dpgfTOuvert=false;
+function estReafficher(){if(document.getElementById('m-est').classList.contains('open'))renderEst();if(document.getElementById('m-dpgf').classList.contains('open')&&act.est.dpgf)renderDpgf();}
+function estTexte(champ,v){if(!act||!act.est)return;act.est[champ]=v;ctrSave();estReafficher();}
+function listeDe(t){return lignes(t);}
+function estListe(champ,action,i,v){
+  var e=act&&act.est;if(!e)return;var L=listeDe(e[champ]);
+  if(action==='set')L[i]=String(v).replace(/\s*\n\s*/g,' ').trim(); // i = longueur : nouvelle ligne ; texte vidé : ligne supprimée
+  else if(action==='suppr')L.splice(i,1);
+  else if(action==='haut'&&i>0)L.splice(i-1,0,L.splice(i,1)[0]);
+  else if(action==='bas'&&i<L.length-1)L.splice(i+1,0,L.splice(i,1)[0]);
+  else if(action==='types')L=L.filter(function(x){return x.trim();}).concat(OBJET_PHASES);
+  e[champ]=L.filter(function(x){return x&&x.trim();}).join('\n');ctrSave();estReafficher();
+}
+function editeurListe(e,champ,exemple){
+  var L=listeDe(e[champ]);
+  return '<div class="lst-ed">'+L.map(function(x,i){
+    return '<div class="lst-it"><span class="lst-p">●</span><input class="sd-inp" value="'+escA(x)+'" title="Videz le texte pour supprimer la ligne" onchange="estListe(\''+champ+'\',\'set\','+i+',this.value)">'+
+      '<button class="rm" title="Monter" onclick="estListe(\''+champ+'\',\'haut\','+i+')">↑</button><button class="rm" title="Descendre" onclick="estListe(\''+champ+'\',\'bas\','+i+')">↓</button><button class="rm" title="Supprimer" onclick="estListe(\''+champ+'\',\'suppr\','+i+')">×</button></div>';
+  }).join('')+'<div class="lst-it lst-nv"><span class="lst-p">＋</span><input class="sd-inp" placeholder="Nouvelle ligne (ex : '+escA(exemple)+')" onchange="estListe(\''+champ+'\',\'set\','+L.length+',this.value)"></div>'+
+    (champ==='objet'&&!L.length?'<div class="ctr-bar"><button class="sml-btn" style="width:auto;margin:0" onclick="estListe(\'objet\',\'types\')">Insérer les phases types</button></div>':'')+'</div>';
+}
+function estTextesHaut(e){
+  return '<div class="sec-lbl" style="margin-top:10px">Présentation générale du projet <i class="lst-fac">facultatif</i></div>'+
+    '<div class="fld"><label>Nature, composition, particularités (laisser une ligne vide entre deux paragraphes)</label><textarea rows="4" onchange="estTexte(\'presentation\',this.value)">'+esc(e.presentation||'')+'</textarea></div>'+
+    '<div class="sec-lbl">Objet de la mission <i class="lst-fac">facultatif</i></div>'+
+    '<div class="fld"><label>Introduction</label><textarea rows="2" onchange="estTexte(\'objet_intro\',this.value)">'+esc(e.objet_intro||'')+'</textarea></div>'+
+    '<div class="fld"><label>Phases de la mission (une puce par ligne)</label>'+editeurListe(e,'objet','Dépôt du permis de construire')+'</div>'+
+    '<div class="rel-note" style="margin-bottom:8px">La section apparaît dans le Word s\'il y a au moins une phase (ou une introduction personnalisée). La phrase « Le détail de cette mission et son chiffrage font l\'objet du document « Proposition d\'honoraires »… » est ajoutée seulement si le dossier a un contrat.</div>';
+}
+function estTextesVig(e){
+  return '<div class="sec-lbl">Points de vigilance à instruire en phase diagnostic <i class="lst-fac">facultatif</i></div><div class="fld">'+editeurListe(e,'vigilance','Portance du sol à vérifier, étude G2')+'</div>';
+}
+// Dans l'assistant : bloc repliable avec les mêmes champs
+function dpgfTextes(e){
+  var n=(paras(e.presentation).length?1:0)+(estObjetVisible(e)?1:0)+(lignes(e.vigilance).length?1:0);
+  return '<details class="ctr-tx"'+(dpgfTOuvert?' open':'')+' ontoggle="dpgfTOuvert=this.open"><summary>📄 Textes du Word « Estimatif » (facultatifs) — '+n+' / 3 section(s) remplie(s)</summary>'+estTextesHaut(e)+estTextesVig(e)+'</details>';
+}
+function estObjetVisible(e){var intro=String(e.objet_intro||'').trim();return lignes(e.objet).length>0||(!!intro&&intro!==OBJET_INTRO_DEF);}
 // Bandeau en haut de la fenêtre « Estimatif »
 function estDpgfBandeau(e){
   if(e.dpgf)return '<div class="dp-band"><b>🧮 Estimatif détaillé (DPGF)</b> — '+e.dpgf.lignes.filter(function(l){return !l.off;}).length+' lignes chiffrées. Les lots ci-dessous sont les totaux du tableau détaillé : pour les modifier, ouvrez l\'assistant.'+
@@ -2594,7 +2638,8 @@ function renderDpgf(){
   document.getElementById('dpgf-body').innerHTML='<div class="mn-ttl">🧮 Assistant d\'estimation des travaux (DPGF)</div>'+q+renderMenus(d)+
     '<div class="ctr-bar"><label class="sd-chk" style="margin:0"><input type="checkbox"'+(dpgfExclus?' checked':'')+' onchange="dpgfExclus=this.checked;renderDpgf()"><label>Afficher les lignes exclues par le questionnaire</label></label></div>'+tab+
     '<div class="fac-rec"><div><span>Travaux HT (lots)</span><b>'+fmtE(t.base||0)+' €</b></div><div><span>Aléas '+pctStr(e.alea)+' %</span><b>'+fmtE(t.alea||0)+' €</b></div><div class="cette"><span>Total travaux HT</span><b>'+fmtE(t.ht||0)+' €</b></div><div><span>TVA '+pctStr(e.tva)+' %</span><b>'+fmtE(t.tva||0)+' €</b></div><div><span>Total TTC</span><b>'+fmtE(t.ttc||0)+' €</b></div></div>'+
-    '<div class="rel-note">Le taux d\'aléas, la TVA, les postes annexes et les textes se règlent dans la fenêtre « Estimatif ». '+(v.S?'Ratio : '+fmtE(Math.round((t.ht||0)/100/v.S)*100)+' € HT / m².':'')+'</div>'+
+    dpgfTextes(e)+
+    '<div class="rel-note">Le taux d\'aléas, la TVA, les postes annexes et les autres textes se règlent dans la fenêtre « Estimatif ». '+(v.S?'Ratio : '+fmtE(Math.round((t.ht||0)/100/v.S)*100)+' € HT / m².':'')+'</div>'+
     '<div class="mbtns" style="flex-wrap:wrap"><button class="mb-c" onclick="dpgfPrix()" title="Prix, notes, nouvelles lignes et tarifs des menuiseries">Mettre à jour depuis la bibliothèque</button><button class="mb-c" onclick="exporterDpgf()">⬇ DPGF détaillé (Excel/CSV)</button><button class="mb-c" onclick="dpgfVersContrat()">➜ Envoyer vers le contrat…</button><button class="mb-c" onclick="genEstimatifSeul()">📄 Word Estimatif</button><button class="mb-s" onclick="closeSub(\'m-dpgf\');if(document.getElementById(\'m-est\').classList.contains(\'open\'))renderEst()">Fermer</button></div>';
 }
 function exporterDpgf(){
@@ -2676,12 +2721,13 @@ function donneesDoc(c,k,num,dateIso){
     if(e.alea)lots.push({lib:rep(e.alea_lib)+' (provision '+pctStr(e.alea)+' %)',ht:et.alea});
     var ann=e.annexes.map(function(x){return {lib:x.lib,mt:x.mt||0,obs:x.obs||''};});
     if(e.prov)ann.push({lib:rep(e.prov_lib)+' ('+pctStr(e.prov)+' %)',mt:et.prov,obs:'Provision sur les postes d\'études et de raccordement'});
-    Object.assign(d,{est_titre:rep(e.titre),est_sous_titre:rep(e.sous_titre),est_ref:num+'-EST',presentation:paras(rep(e.presentation)),
-      a_est_objet:lignes(e.objet).length>0,est_objet_intro:rep(e.objet_intro),est_objet:lignes(rep(e.objet)),
+    Object.assign(d,{est_titre:rep(e.titre),est_sous_titre:rep(e.sous_titre),est_ref:num+'-EST',presentation:paras(rep(e.presentation)),a_presentation:paras(e.presentation).length>0,
+      a_est_objet:estObjetVisible(e),est_objet_intro:rep(String(e.objet_intro||'').trim()),est_objet:lignes(rep(e.objet)),
+      a_est_ctr:(c.contrats||[]).some(function(x){return x.statut!=='abandonne';}),
       total_ttc:fmtE(et.ttc||0),ratio:s&&et.ttc?fmtE(Math.round(et.ttc/100/s)*100):'—',surf_hab:e.surf||'—',ratio_note:rep(e.ratio_note),hypothese:paras(rep(e.hypothese)),
       lots:paires(lots.map(function(l,i){return {n:String(i+1),lib:l.lib,part:et.ht?partPct(l.ht,et.ht)+' %':'',ht:fmtE(l.ht)+' €',ttc:fmtE(l.ht+partDe(l.ht,e.tva||0))+' €'};})),
       total_ht:fmtE(et.ht||0),tva_taux:pctStr(e.tva),tva:fmtE(et.tva||0),annexes_intro:paras(rep(e.annexes_intro)),
-      annexes:paires(ann.map(function(x){return {lib:x.lib,mt:fmtE(x.mt)+' €',m2:s?fmtE(Math.round(x.mt/s))+' €':'',obs:x.obs};})),
+      annexes:paires(ann.map(function(x){return {lib:x.lib,mt:fmtE(x.mt)+' €',m2:s&&x.mt?fmtE(Math.round(x.mt/s))+' €':'',obs:x.obs};})),
       annexes_total:fmtE(et.annexes||0),budget:fmtE(et.budget||0),budget_note:rep(e.budget_note),a_vigilance:lignes(e.vigilance).length>0,vigilance:lignes(rep(e.vigilance)),nature:paras(rep(e.nature))});
   }
   var p=c.plu;
