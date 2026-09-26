@@ -81,6 +81,13 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   est vide (`sectionsVides()`). Postes annexes : « Coût d'acquisition du terrain » et « Frais de notaire » en tête
   (0 €, hors base de la provision, `ANNEXES_TERRAIN()`), ajoutés une fois aux estimatifs existants
   (`ajouterAnnexesTerrain()`, marqueur `e.annexesTerrain`).
+  **Pré-remplissage** (`preremplirEst()`, appelé par `ctrSave`, `sf` et `renderCtrs`) : « Objet de la mission »
+  généré depuis les contrats (`missionsDe` : A = liste complète ; PC et SUIVI séparés = une liste par mission
+  avec sous-titres « # … » ; LIBRE ignoré ; ligne PMR si coché dans le DPGF ; phrases `OBJET_PHRASES`) et
+  « Présentation » composée depuis la fiche (`presentationAuto` : nature, surface, commune, résumé). Un champ
+  suit les changements tant qu'il est identique au dernier texte automatique (`e.objetAuto`, `e.introAuto`,
+  `e.presAuto`) ; retouché par l'utilisateur, il n'est plus jamais modifié (boutons « ↻ » pour régénérer).
+  Points de vigilance : saisie manuelle uniquement.
 - **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
   uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
   Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le

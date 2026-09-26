@@ -338,8 +338,12 @@ const debutEstimatif = () => [
   ...si('a_est_objet', [
     HE('Objet de la mission'),
     ...si('est_objet_intro', [P('{est_objet_intro}', { a: 'j' })]),
-    ...liste('est_objet'),
-    ...si('a_est_ctr', [note('Le détail de cette mission et son chiffrage font l\'objet du document « Proposition d\'honoraires » joint au présent dossier.', { av: 60 })])
+    // Chaque élément : { sous: true, t } = sous-titre (plusieurs missions), { p: true, t } = puce
+    T('{#est_objet}'),
+    ...si('sous', [P('{t}', { b: true, av: 80, ap: 40, kn: true })]),
+    ...si('p', [puce('{t}')]),
+    T('{/est_objet}'),
+    ...si('a_est_ctr', [note('{est_ctr_phrase}', { av: 60 })])
   ])
 ];
 const finEstimatif = () => [

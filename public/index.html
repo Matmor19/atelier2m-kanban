@@ -381,7 +381,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .dp-menu td{background:color-mix(in srgb,var(--or) 4%,transparent)}.dp-menu td:nth-child(2){font-size:11px;color:var(--txt)}.dp-obs{font-style:italic}
 .mn-c{border:1px solid var(--brd);border-radius:10px;padding:8px 10px 4px;margin-bottom:6px;background:var(--surface)}
 .mn-h{display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--txt);margin-bottom:6px}.mn-h span{font-size:11px;color:var(--txt2)}.mn-h .mn-b{margin-left:auto;white-space:nowrap}
-.lst-it{display:flex;gap:4px;align-items:center;margin-bottom:4px}.lst-it .sd-inp{margin:0;flex:1}.lst-p{color:var(--or);font-size:9px;width:12px;text-align:center}.lst-nv .sd-inp{border-style:dashed}
+.lst-it{display:flex;gap:4px;align-items:center;margin-bottom:4px}.lst-it .sd-inp{margin:0;flex:1}.lst-p{color:var(--or);font-size:9px;width:12px;text-align:center}.lst-nv .sd-inp{border-style:dashed}.lst-st .sd-inp{font-weight:700}.est-auto{font-size:10px;color:var(--txt3);margin:3px 0 6px}
 .lst-it .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:0 3px}.lst-it .rm:hover{color:var(--or)}.lst-fac{font-weight:600;text-transform:none;letter-spacing:0;color:var(--txt3);font-size:9.5px}
 .mn-err{border-color:var(--red)}.mn-h .mn-alerte{flex-basis:100%;color:var(--red);font-weight:700}
 .mn-c .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:15px;padding:0 4px}.mn-c .rm:hover{color:var(--or)}
@@ -1628,6 +1628,7 @@ function setCont(on){
 }
 function sf(k,v){if(!act)return;act[k]=v;act.upd=Date.now();
   if(['nom','addr','resume','nat'].indexOf(k)>=0&&preremplirInfos(act)&&document.getElementById('d-ctrs'))renderCtrs(); // complète les champs encore vides
+  if(['addr','resume','nat','surf','commune'].indexOf(k)>=0)preremplirEst(act);
   sv();render();}
 
 function moveTo(colId){if(!act)return;if(colId==='instruction')onEnterInstruction(act);if(colId==='termines'&&act.col!=='termines')setTimeout(celebrate,100);act.col=colId;act.upd=Date.now();sv();render();openDet(act.id);}
@@ -1981,6 +1982,7 @@ function ctrNumero(k){var v=(k.versions||[]);return v.length?v[v.length-1].num:'
 
 // ── Section « Contrats » de la fiche ──
 function renderCtrs(){
+  if(act&&preremplirEst(act))sv(); // contrat ajouté, changé ou abandonné : « Objet de la mission » suit
   var el=document.getElementById('d-ctrs');if(!el||!act)return;
   var L=(act.contrats||[]).map(function(k){
     var t=ctrMontant(k),n=ctrNumero(k);
@@ -2048,7 +2050,7 @@ var actK=null;
 function ctrDe(id){return (act&&act.contrats||[]).find(function(k){return k.id===id;});}
 function openCtr(id){actK=ctrDe(id);if(!actK)return;renderCtr();showM('m-ctr');}
 function closeSub(id){document.getElementById(id).classList.remove('open');if(act){renderCtrs();renderHono();}}
-function ctrSave(){if(!act)return;act.upd=Date.now();sv();render();renderCtrs();renderHono();}
+function ctrSave(){if(!act)return;preremplirEst(act);act.upd=Date.now();sv();render();renderCtrs();renderHono();}
 function ctrSet(champ,v){
   if(!actK)return;
   if(champ==='travaux'||champ==='forfait')actK[champ]=cts(v);
@@ -2152,7 +2154,7 @@ function estTotaux(c){
   var ann=(e.annexes||[]).reduce(function(a,x){return a+(x.mt||0);},0)+prov;
   return {base:base,alea:alea,ht:ht,tva:tva,ttc:ttc,prov:prov,annexes:ann,budget:ttc+ann};
 }
-function openEst(){if(!act)return;if(!act.est){act.est=estDefaut(act);ctrSave();}renderEst();showM('m-est');}
+function openEst(){if(!act)return;if(!act.est)act.est=estDefaut(act);ctrSave();renderEst();showM('m-est');}
 function estSet(champ,v){
   var e=act&&act.est;if(!e)return;
   if(champ==='tva'||champ==='alea'||champ==='prov')e[champ]=cts(v)||0;else e[champ]=v;
@@ -2593,18 +2595,21 @@ function estListe(champ,action,i,v){
 function editeurListe(e,champ,exemple){
   var L=listeDe(e[champ]);
   return '<div class="lst-ed">'+L.map(function(x,i){
-    return '<div class="lst-it"><span class="lst-p">●</span><input class="sd-inp" value="'+escA(x)+'" title="Videz le texte pour supprimer la ligne" onchange="estListe(\''+champ+'\',\'set\','+i+',this.value)">'+
+    var st=/^#/.test(x);
+    return '<div class="lst-it'+(st?' lst-st':'')+'"><span class="lst-p">'+(st?'▸':'●')+'</span><input class="sd-inp" value="'+escA(x)+'" title="Videz le texte pour supprimer la ligne" onchange="estListe(\''+champ+'\',\'set\','+i+',this.value)">'+
       '<button class="rm" title="Monter" onclick="estListe(\''+champ+'\',\'haut\','+i+')">↑</button><button class="rm" title="Descendre" onclick="estListe(\''+champ+'\',\'bas\','+i+')">↓</button><button class="rm" title="Supprimer" onclick="estListe(\''+champ+'\',\'suppr\','+i+')">×</button></div>';
   }).join('')+'<div class="lst-it lst-nv"><span class="lst-p">＋</span><input class="sd-inp" placeholder="Nouvelle ligne (ex : '+escA(exemple)+')" onchange="estListe(\''+champ+'\',\'set\','+L.length+',this.value)"></div>'+
-    (champ==='objet'&&!L.length?'<div class="ctr-bar"><button class="sml-btn" style="width:auto;margin:0" onclick="estListe(\'objet\',\'types\')">Insérer les phases types</button></div>':'')+'</div>';
+    (champ==='objet'?'<div class="ctr-bar"><button class="sml-btn" style="width:auto;margin:0" onclick="estRegenerer(\'objet\')">↻ Générer depuis les contrats</button>'+(!L.length?'<button class="sml-btn" style="width:auto;margin:0" onclick="estListe(\'objet\',\'types\')">Insérer les phases types</button>':'')+'</div>':'')+'</div>';
 }
 function estTextesHaut(e){
   return '<div class="sec-lbl" style="margin-top:10px">Présentation générale du projet <i class="lst-fac">facultatif</i></div>'+
     '<div class="fld"><label>Nature, composition, particularités (laisser une ligne vide entre deux paragraphes)</label><textarea rows="4" placeholder="ex : Construction d\'une maison individuelle de plain-pied de 100 m² environ, 3 chambres, garage accolé…" onchange="estTexte(\'presentation\',this.value)">'+esc(e.presentation||'')+'</textarea>'+
-      (!String(e.presentation||'').trim()&&String(act.resume||'').trim()?'<a class="lnk" onclick="estTexte(\'presentation\',act.resume)">Reprendre le résumé de la fiche</a>':'')+'</div>'+
+      '<div class="est-auto">'+(e.presAuto!==undefined&&e.presentation===e.presAuto&&e.presentation?'<i>Pré-rempli depuis la fiche (nature, surface, commune, résumé) — modifiable.</i> ':'')+'<a class="lnk" onclick="estRegenerer(\'pres\')">↻ Composer depuis la fiche</a></div></div>'+
     '<div class="sec-lbl">Objet de la mission <i class="lst-fac">facultatif</i></div>'+
     '<div class="fld"><label>Introduction</label><textarea rows="2" onchange="estTexte(\'objet_intro\',this.value)">'+esc(e.objet_intro||'')+'</textarea></div>'+
-    '<div class="fld"><label>Phases de la mission (une puce par ligne)</label>'+editeurListe(e,'objet','Dépôt du permis de construire')+'</div>'+
+    '<div class="fld"><label>Phases de la mission (une puce par ligne ; une ligne commençant par # est un sous-titre)</label>'+
+      (e.objetAuto!==undefined&&e.objet===e.objetAuto&&e.objet?'<div class="est-auto"><i>Généré depuis les contrats du dossier ('+missionsDe(act).map(function(t){return t==='A'?'mission complète':t==='PC'?'permis de construire':'suivi de chantier';}).join(' + ')+') — modifiable.</i></div>':'')+
+      editeurListe(e,'objet','Dépôt du permis de construire')+'</div>'+
     '<div class="rel-note" style="margin-bottom:8px">La section apparaît dans le Word s\'il y a au moins une phase (ou une introduction personnalisée). La phrase « Le détail de cette mission et son chiffrage font l\'objet du document « Proposition d\'honoraires »… » est ajoutée seulement si le dossier a un contrat.</div>';
 }
 function estTextesVig(e){
@@ -2618,6 +2623,78 @@ function dpgfTextes(e){
 }
 function sectionsVides(e){var v=[];if(!paras(e.presentation).length)v.push('Présentation générale du projet');if(!estObjetVisible(e))v.push('Objet de la mission (aucune phase)');if(!lignes(e.vigilance).length)v.push('Points de vigilance');return v;}
 function estObjetVisible(e){var intro=String(e.objet_intro||'').trim();return lignes(e.objet).length>0||(!!intro&&intro!==OBJET_INTRO_DEF);}
+// ── Pré-remplissage de « Objet de la mission » et « Présentation générale du projet » ──
+// Point de départ modifiable : un texte déjà modifié par l'utilisateur n'est jamais écrasé.
+// On retient le dernier texte automatique (e.objetAuto, e.introAuto, e.presAuto) : tant que le champ lui est
+// identique (donc pas retouché), il suit les changements de la fiche et des contrats.
+var OBJET_PHRASES={
+  PC:['Relevé de la parcelle, analyse réglementaire (PLU, zonage) et étude de faisabilité','Esquisse (ESQ), Avant-Projet Sommaire (APS) et Avant-Projet Détaillé (APD)','Élaboration et dépôt du dossier de Permis de Construire, suivi de l\'instruction'],
+  SUIVI:['Dossier de Consultation des Entreprises (DCE), analyse des offres','Direction de l\'Exécution des Travaux (DET) et Assistance aux Opérations de Réception (AOR)']};
+var OBJET_PMR='Intégration des exigences d\'accessibilité PMR à l\'ensemble du projet';
+var OBJET_INTROS={A:OBJET_INTRO_DEF,PC:'La mission confiée porte sur la conception du projet jusqu\'à l\'obtention du permis de construire :',
+  SUIVI:'La mission confiée porte sur la consultation des entreprises et le suivi des travaux jusqu\'à leur réception :',
+  PLUS:'Les missions confiées portent sur l\'ensemble du projet, de la conception jusqu\'à la réception des travaux :'};
+var OBJET_TITRES={PC:'Mission Permis de construire',SUIVI:'Mission Suivi de chantier (AMO)'};
+// Missions reconnues dans les contrats du dossier (les contrats « libres » et abandonnés sont ignorés)
+function missionsDe(c){
+  var T={};(c.contrats||[]).forEach(function(k){if(k.statut!=='abandonne'&&(k.type==='A'||k.type==='PC'||k.type==='SUIVI'))T[k.type]=1;});
+  if(T.A)return ['A'];                    // mission complète : elle contient déjà PC et suivi
+  return ['PC','SUIVI'].filter(function(t){return T[t];});
+}
+function phrasesMission(t,pmr){
+  var L=t==='A'?OBJET_PHRASES.PC.concat(OBJET_PHRASES.SUIVI):(OBJET_PHRASES[t]||[]).slice();
+  if(pmr&&t!=='SUIVI')L.splice(2,0,OBJET_PMR); // après ESQ / APS / APD, comme dans le modèle de référence
+  return L;
+}
+function objetAuto(c){
+  var M=missionsDe(c),pmr=!!(c.est&&c.est.dpgf&&c.est.dpgf.rep&&c.est.dpgf.rep.PMR);
+  if(!M.length)return null;
+  if(M.length===1)return {intro:OBJET_INTROS[M[0]],texte:phrasesMission(M[0],pmr).join('\n')};
+  return {intro:OBJET_INTROS.PLUS,texte:M.map(function(t){return ['# '+OBJET_TITRES[t]].concat(phrasesMission(t,pmr)).join('\n');}).join('\n')};
+}
+// « la construction d'une maison neuve », « l'extension de… » : article selon le premier mot de la nature
+function natureEnPhrase(nat){
+  var n=String(nat||'').trim().replace(/[.\s]+$/,'');if(!n)return '';
+  var m=n.charAt(0).toLowerCase()+n.slice(1);
+  if(/^(l'|la |le |les |un |une |des |du |d')/i.test(m))return m;
+  if(/^(maison|habitation|villa|logement)/i.test(m))return 'la construction d\'une '+m;
+  if(/^[aeiouyéèêàâîôûh]/i.test(m))return 'l\''+m;
+  if(/^(construction|rénovation|réhabilitation|surélévation|création|transformation|restructuration|division|démolition|piscine|véranda|toiture|annexe)/i.test(m))return 'la '+m;
+  return 'un projet de '+m;
+}
+function presentationAuto(c){
+  var nat=natureEnPhrase(c.nat),surf=surfNum(c.surf||(c.est&&c.est.surf)),commune=String(c.commune||communeDe(c.addr)||'').trim(),res=String(c.resume||'').trim();
+  var p='';
+  if(nat||surf||commune){
+    p='Le projet consiste en '+(nat||'un projet de construction');
+    if(surf&&!/m²|m2/.test(c.nat||''))p+=', d\'environ '+String(surf).replace('.',',')+' m² de surface habitable';
+    if(commune)p+=', à '+commune;
+    p+='.';
+  }
+  if(res)p+=(p?' ':'')+res+(/[.!?…]$/.test(res)?'':'.');
+  return p;
+}
+function preremplirEst(c){
+  var e=c&&c.est;if(!e)return false;var ch=false;
+  var g=objetAuto(c),txt=g?g.texte:'';
+  if((e.objetAuto===undefined&&!lignes(e.objet).length)||(e.objetAuto!==undefined&&e.objet===e.objetAuto)){if(e.objet!==txt||e.objetAuto!==txt){e.objet=txt;e.objetAuto=txt;ch=true;}}
+  if(g&&e.objet===e.objetAuto){var it=String(e.objet_intro||'').trim(); // l'introduction ne suit que si la liste n'a pas été retouchée
+    if((!it||it===OBJET_INTRO_DEF||it===e.introAuto)&&(e.objet_intro!==g.intro||e.introAuto!==g.intro)){e.objet_intro=g.intro;e.introAuto=g.intro;ch=true;}}
+  var p=presentationAuto(c);
+  if((e.presAuto===undefined&&!String(e.presentation||'').trim())||(e.presAuto!==undefined&&e.presentation===e.presAuto)){if(e.presentation!==p||e.presAuto!==p){e.presentation=p;e.presAuto=p;ch=true;}}
+  return ch;
+}
+// Boutons « régénérer » : remplacent le texte actuel (confirmation s'il a été modifié)
+function estRegenerer(quoi){
+  var c=act,e=c&&c.est;if(!e)return;
+  if(quoi==='objet'){var g=objetAuto(c);if(!g){alert('Aucune mission reconnue dans les contrats du dossier (mission complète, permis de construire ou suivi de chantier).\nLes contrats « libres » ne génèrent rien : saisissez les phases à la main.');return;}
+    if(lignes(e.objet).length&&e.objet!==e.objetAuto&&!confirm('Remplacer la liste actuelle par celle générée depuis les contrats ?'))return;
+    e.objet=g.texte;e.objetAuto=g.texte;e.objet_intro=g.intro;e.introAuto=g.intro;}
+  else{var p=presentationAuto(c);if(!p){alert('La fiche ne contient ni nature du projet, ni surface, ni commune, ni résumé.');return;}
+    if(String(e.presentation||'').trim()&&e.presentation!==e.presAuto&&!confirm('Remplacer la présentation actuelle par celle composée depuis la fiche ?'))return;
+    e.presentation=p;e.presAuto=p;}
+  ctrSave();estReafficher();
+}
 // Bandeau en haut de la fenêtre « Estimatif »
 function estDpgfBandeau(e){
   if(e.dpgf)return '<div class="dp-band"><b>🧮 Estimatif détaillé (DPGF)</b> — '+e.dpgf.lignes.filter(function(l){return !l.off;}).length+' lignes chiffrées. Les lots ci-dessous sont les totaux du tableau détaillé : pour les modifier, ouvrez l\'assistant.'+
@@ -2738,7 +2815,8 @@ function donneesDoc(c,k,num,dateIso){
     var ann=e.annexes.map(function(x){return {lib:x.lib,mt:x.mt||0,obs:x.obs||''};});
     if(e.prov)ann.push({lib:rep(e.prov_lib)+' ('+pctStr(e.prov)+' %)',mt:et.prov,obs:'Provision sur les postes d\'études et de raccordement'});
     Object.assign(d,{est_titre:rep(e.titre),est_sous_titre:rep(e.sous_titre),est_ref:num+'-EST',presentation:paras(rep(e.presentation)),a_presentation:paras(e.presentation).length>0,
-      a_est_objet:estObjetVisible(e),est_objet_intro:rep(String(e.objet_intro||'').trim()),est_objet:lignes(rep(e.objet)),
+      a_est_objet:estObjetVisible(e),est_objet_intro:rep(String(e.objet_intro||'').trim()),est_objet:lignes(rep(e.objet)).map(function(l){return /^#/.test(l)?{sous:true,t:l.replace(/^#+\s*/,'')}:{p:true,t:l};}),
+      est_ctr_phrase:lignes(e.objet).filter(function(l){return /^#/.test(l);}).length>1?'Le détail de ces missions et leur chiffrage font l\'objet des documents « Proposition d\'honoraires » joints au présent dossier.':'Le détail de cette mission et son chiffrage font l\'objet du document « Proposition d\'honoraires » joint au présent dossier.',
       a_est_ctr:(c.contrats||[]).some(function(x){return x.statut!=='abandonne';}),
       total_ttc:fmtE(et.ttc||0),ratio:s&&et.ttc?fmtE(Math.round(et.ttc/100/s)*100):'—',surf_hab:e.surf||'—',ratio_note:rep(e.ratio_note),hypothese:paras(rep(e.hypothese)),
       lots:paires(lots.map(function(l,i){return {n:String(i+1),lib:l.lib,part:et.ht?partPct(l.ht,et.ht)+' %':'',ht:fmtE(l.ht)+' €',ttc:fmtE(l.ht+partDe(l.ht,e.tva||0))+' €'};})),
