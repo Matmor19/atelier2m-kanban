@@ -378,6 +378,11 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .dp-t tr.dp-lot td{background:color-mix(in srgb,var(--or) 10%,var(--surface));font-weight:800;font-size:10.5px;color:var(--txt);padding:6px 4px}
 .dp-t td:nth-child(2){min-width:220px}.dp-q-c{white-space:nowrap}.dp-t input.man{border-color:var(--or);font-weight:700}.bib-t input.err{border-color:var(--red);color:var(--red)}
 @media(max-width:600px){.dp-t td:nth-child(2),.bib-t td:nth-child(2){min-width:150px}}
+.dp-menu td{background:color-mix(in srgb,var(--or) 4%,transparent)}.dp-menu td:nth-child(2){font-size:11px;color:var(--txt)}.dp-obs{font-style:italic}
+.mn-c{border:1px solid var(--brd);border-radius:10px;padding:8px 10px 4px;margin-bottom:6px;background:var(--surface)}
+.mn-h{display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--txt);margin-bottom:6px}.mn-h span{font-size:11px;color:var(--txt2)}.mn-h .mn-b{margin-left:auto;white-space:nowrap}
+.mn-c .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:15px;padding:0 4px}.mn-c .rm:hover{color:var(--or)}
+.mn-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:0 8px}.mn-g .fld{margin-bottom:6px}.mn-g .fld input,.mn-g .fld select{padding:6px 8px;font-size:12px}
 .bib-grp{display:block;font-size:9px;color:var(--txt3);font-style:normal;padding:1px 2px}.bib-t td:nth-child(2){min-width:220px}
 .bib-lot{border:1px solid var(--brd);border-radius:10px;padding:6px 8px;margin-bottom:6px}.bib-lot summary{cursor:pointer;font-size:11.5px;color:var(--txt)}.bib-lot summary i{font-size:10px;color:var(--txt3);font-style:normal;margin-left:6px}
 .ech-t tr.off td{opacity:.45}.fac-t td{font-size:11px}.fac-act{white-space:normal;min-width:150px}
@@ -2217,12 +2222,13 @@ var DPGF_VARS=[
   ['S','Surface habitable (m²)','n',100],['N','Nombre de niveaux (1 = plain-pied)','n',1],
   ['E','Emprise au sol (m²) — vide = surface ÷ niveaux','a',null],['P','Périmètre des murs extérieurs (ml) — vide = estimé','a',null],
   ['CH','Nombre de chambres','n',3],['SDE','Nombre de salles d\'eau / de bains','n',1],['WC','Nombre de WC suspendus séparés','n',1],
-  ['GAR','Garage : surface (m², 0 = aucun)','n',0],['TER','Terrasse bois : surface (m², 0 = aucune)','n',0],
+  ['GAR','Garage : surface (m², 0 = aucun)','n',0],['GARM','Garage : murs','s',2,[[1,'Maçonnerie (agglos)'],[2,'Ossature bois']]],
+  ['PGAR','Garage : longueur des murs à construire (ml) — vide = estimé (retirer le mur commun avec la maison)','a',null],['TER','Terrasse bois : surface (m², 0 = aucune)','n',0],
   ['PISC','Piscine : surface du bassin (m², 0 = aucune)','n',0],['COUV','Couverture de piscine amovible','c',0],
   ['PV','Photovoltaïque (kWc, 0 = aucun)','n',0],['ANC','Assainissement autonome (pas de tout-à-l\'égout)','c',0],
   ['CUVE','Cuve de récupération des eaux pluviales','c',0],['PMR','Accessibilité PMR','c',0],
   ['EXT','Aménagements extérieurs (clôture, portail, espaces verts)','c',0],['VOIRIE','Voirie d\'accès : surface (m²)','n',0]];
-var DPGF_AIDE='Variables : S surface habitable · E emprise au sol · P périmètre des murs · N niveaux · CH chambres · SDE salles d\'eau · WC · GAR garage (m²) · TER terrasse (m²) · PISC bassin (m²) · COUV couverture piscine (0/1) · PV kWc · ANC assainissement autonome (0/1) · EGOUT tout-à-l\'égout (0/1) · CUVE · PMR · EXT (0/1) · VOIRIE (m²). Opérations : + − × (*) ÷ (/) et parenthèses, rac(x) racine carrée, arr(x) arrondi supérieur. Condition : ex. « PISC>0 », « CUVE », « N>1 » (vide = toujours).';
+var DPGF_AIDE='Variables : S surface habitable · E emprise au sol · P périmètre des murs · N niveaux · CH chambres · SDE salles d\'eau · WC · GAR garage (m²) · GARM murs du garage (1 maçonnerie, 2 ossature bois) · PGAR longueur des murs du garage (ml) · TER terrasse (m²) · PISC bassin (m²) · COUV couverture piscine (0/1) · PV kWc · ANC assainissement autonome (0/1) · EGOUT tout-à-l\'égout (0/1) · CUVE · PMR · EXT (0/1) · VOIRIE (m²). Opérations : + − × (*) ÷ (/) et parenthèses, rac(x) racine carrée, arr(x) arrondi supérieur. Condition : ex. « PISC>0 », « CUVE », « N>1 » (vide = toujours).';
 
 // ── Lecture sécurisée des formules (aucun code exécuté : seulement nombres, variables, opérations) ──
 function evalExpr(src,vars){
@@ -2253,15 +2259,43 @@ function varsDe(rep){
   v.N=Math.max(1,v.N||1);v.S=v.S||0;
   if(!(rep.E>0))v.E=Math.round(v.S/v.N*100)/100;
   if(!(rep.P>0))v.P=Math.round(4.65*Math.sqrt(v.E)*100)/100;
+  if(!(rep.PGAR>0))v.PGAR=v.GAR>0?q2(4*Math.sqrt(v.GAR)):0;
   v.EGOUT=v.ANC?0:1;return v;
 }
+var DPGF_DEP={GARM:'GAR',PGAR:'GAR',COUV:'PISC'}; // questions affichées seulement si la réponse liée est > 0
 function q2(x){return Math.round((+x||0)*100)/100;}
 function fmtQ(x){return String(q2(x)).replace('.',',');}
 function formuleFr(f){return String(f||'').replace(/\*/g,' × ').replace(/\//g,' ÷ ').replace(/(\d)\.(\d)/g,'$1,$2');}
 
+// Version 2 de la bibliothèque : lot 21 Garage complété (fondations, murs, charpente-couverture) et dalle au prix de la maison.
+// Appliquée à BIB_ORIGINE au chargement et, une seule fois, à une bibliothèque déjà modifiée (DB.bib) sans toucher aux prix changés.
+var BIB_V=2;
+var BIB_MAJ_V2={lot:'L21',lignes:[
+  {id:'21.01',art:'21.01',lib:'Dalle béton armé sur terre-plein du garage (film polyane + treillis soudé + béton).',u:'m2',pu:10500,ancienPu:8306,f:'GAR',obs:'Même composition et même prix que la dalle de la maison (2.05) : pas de raison de la compter moins cher (l\'isolation de la maison est dans le lot 14, pas dans la dalle).'},
+  {id:'gar-fond',art:'21.02',lib:'Fondations du garage : fouilles en rigoles et semelles filantes béton 50x35 sous les murs.',u:'ml',pu:8900,f:'PGAR',obs:'Prix de la maison : fouilles 18 € (1.04) + béton de fondations 71 € (2.01) par mètre.'},
+  {id:'gar-mac',art:'21.03',lib:'Murs du garage en maçonnerie d\'agglos 20 cm, chaînages, enduit monocouche extérieur (hauteur 2,40 m).',u:'m2',pu:10000,f:'PGAR*2.4',cond:'GARM=1',obs:'Choisi par la question « Garage : murs = Maçonnerie ». Environ 55 €/m² de maçonnerie + 45 €/m² d\'enduit.'},
+  {id:'gar-ob',art:'21.04',lib:'Murs du garage en ossature bois 145x45, OSB de contreventement, pare-pluie et bardage bois, non isolés (hauteur 2,40 m).',u:'m2',pu:15000,f:'PGAR*2.4',cond:'GARM=2',obs:'Choisi par la question « Garage : murs = Ossature bois ». Base : ossature 88 €/m² (3.01) + OSB 14,50 €/m² (5.02) + pare-pluie et bardage bois.'},
+  {id:'gar-toit',art:'21.05',lib:'Charpente et couverture du garage (structure, support, étanchéité ou couverture, zinguerie et descente EP).',u:'m2',pu:12500,f:'GAR*1.15',obs:'Surface du garage + 15 % de débords, comme la toiture de la maison (4.01 à 4.04, environ 120 €/m²).'},
+  {id:'21.02',art:'21.06',ancienArt:'21.02'},{id:'21.03',art:'21.07',ancienArt:'21.03'},{id:'21.04',art:'21.08',ancienArt:'21.04'}]};
+function bibMaj(B){
+  var lot=B.find(function(l){return l.id===BIB_MAJ_V2.lot;});if(!lot)return;
+  var prec=null;
+  BIB_MAJ_V2.lignes.forEach(function(m){
+    var x=lot.lignes.find(function(y){return y.id===m.id;});
+    if(!x){x={id:m.id,art:m.art,lib:m.lib,u:m.u,pu:m.pu,f:m.f,grp:''};if(m.cond)x.cond=m.cond;if(m.obs)x.obs=m.obs;
+      var i=prec?lot.lignes.indexOf(prec)+1:lot.lignes.length;lot.lignes.splice(i,0,x);}
+    else{
+      if(m.ancienPu!==undefined&&x.pu===m.ancienPu){x.pu=m.pu;x.lib=m.lib;if(!x.obs)x.obs=m.obs;}
+      if(m.ancienArt&&x.art===m.ancienArt)x.art=m.art;
+    }
+    prec=x;
+  });
+}
+bibMaj(BIB_ORIGINE);
+
 // ── Bibliothèque de prix (commune à tous les dossiers) ──
-function bib(){return DB.bib||BIB_ORIGINE;}
-function bibModifiable(){if(!DB.bib)DB.bib=JSON.parse(JSON.stringify(BIB_ORIGINE));return DB.bib;}
+function bib(){if(DB.bib&&(DB.bibV||1)<BIB_V){bibMaj(DB.bib);DB.bibV=BIB_V;}return DB.bib||BIB_ORIGINE;}
+function bibModifiable(){if(!DB.bib){DB.bib=JSON.parse(JSON.stringify(BIB_ORIGINE));DB.bibV=BIB_V;}return bib();}
 function trierLots(L){return L.slice().sort(function(a,b){return (parseFloat(a.n)||999)-(parseFloat(b.n)||999);});}
 var bibOuverts={},dpgfQOuvert=true;
 function openBib(){renderBib();showM('m-bib');}
@@ -2275,19 +2309,20 @@ function bibSet(li,xi,champ,v){
   sv();renderBib();
 }
 function bibNouveauLot(){var B=bibModifiable(),n=String(B.reduce(function(m,l){return Math.max(m,parseFloat(l.n)||0);},0)+1);B.push({id:'L'+nouvelId(),n:n,nom:'Nouveau lot',cond:'',lignes:[]});sv();renderBib();}
-function bibOrigine(){if(!confirm('Remplacer toute la bibliothèque par celle d\'origine (gabarit « Maison ossature bois ») ?\nVos modifications de la bibliothèque seront perdues. Les estimatifs déjà faits dans les dossiers ne changent pas.'))return;delete DB.bib;sv();renderBib();}
+function bibOrigine(){if(!confirm('Remplacer toute la bibliothèque par celle d\'origine (gabarit « Maison ossature bois ») ?\nVos modifications de la bibliothèque seront perdues. Les estimatifs déjà faits dans les dossiers ne changent pas.'))return;delete DB.bib;delete DB.bibV;delete DB.bibMenu;sv();renderBib();}
 function renderBib(){
   var B=bib(),n=B.reduce(function(a,l){return a+l.lignes.length;},0);
   document.getElementById('bib-body').innerHTML='<div class="mn-ttl">📚 Bibliothèque de prix <span class="ctr-st">'+B.length+' lots · '+n+' lignes'+(DB.bib?' · modifiée':' · d\'origine')+'</span></div>'+
     '<div class="rel-note" style="margin-bottom:8px">Commune à tous les dossiers et enregistrée avec vos données (Google Drive). Chaque nouvel estimatif part de cette bibliothèque ; modifier un prix ici ne change pas les estimatifs déjà faits (bouton « Mettre à jour les prix » dans l\'assistant).<br>'+esc(DPGF_AIDE)+'</div>'+
+    renderBibMenu()+
     trierLots(B).map(function(lot){var li=B.indexOf(lot);
       return '<details class="bib-lot"'+(bibOuverts[lot.id]?' open':'')+' ontoggle="bibOuverts[\''+escA(String(lot.id))+'\']=this.open"><summary><b>Lot '+esc(lot.n)+' — '+esc(lot.nom)+'</b> <i>'+lot.lignes.length+' ligne(s)'+(lot.cond?' · si '+esc(lot.cond):'')+'</i></summary>'+
         '<div class="fg" style="grid-template-columns:70px 1fr 1fr auto;align-items:end"><div class="fld"><label>N°</label><input value="'+escA(lot.n)+'" onchange="bibSet('+li+',-1,\'n\',this.value)"></div><div class="fld"><label>Nom du lot</label><input value="'+escA(lot.nom)+'" onchange="bibSet('+li+',-1,\'nom\',this.value)"></div>'+
         '<div class="fld"><label>Condition du lot (vide = toujours)</label><input value="'+escA(lot.cond||'')+'" onchange="bibSet('+li+',-1,\'cond\',this.value)"></div><button class="del-btn" style="width:auto;margin:0 0 10px" onclick="bibSet('+li+',-1,\'suppr\')">Supprimer le lot</button></div>'+
-        '<div class="ech-w"><table class="ech-t bib-t"><tr><th>Art.</th><th>Désignation</th><th>U</th><th>PU HT €</th><th>Règle de quantité</th><th>Condition</th><th></th></tr>'+
+        '<div class="ech-w"><table class="ech-t bib-t"><tr><th>Art.</th><th>Désignation</th><th>U</th><th>PU HT €</th><th>Règle de quantité</th><th>Condition</th><th>Note / observation</th><th></th></tr>'+
         lot.lignes.map(function(x,xi){var err=formuleOK(x.f,x.cond),h='onchange="bibSet('+li+','+xi+',\'';
           return '<tr><td><input style="width:52px" value="'+escA(x.art)+'" '+h+'art\',this.value)"></td><td><input value="'+escA(x.lib)+'" '+h+'lib\',this.value)" title="'+escA(x.lib)+'">'+(x.grp?'<i class="bib-grp">'+esc(x.grp)+'</i>':'')+'</td><td><input style="width:44px" value="'+escA(x.u)+'" '+h+'u\',this.value)"></td>'+
-            '<td><input class="num" value="'+fmtE(x.pu)+'" '+h+'pu\',this.value)"></td><td><input'+(err?' class="err" title="'+escA(err)+'"':'')+' value="'+escA(x.f)+'" '+h+'f\',this.value)"></td><td><input style="width:80px" value="'+escA(x.cond||'')+'" '+h+'cond\',this.value)"></td>'+
+            '<td><input class="num" value="'+fmtE(x.pu)+'" '+h+'pu\',this.value)"></td><td><input'+(err?' class="err" title="'+escA(err)+'"':'')+' value="'+escA(x.f)+'" '+h+'f\',this.value)"></td><td><input style="width:80px" value="'+escA(x.cond||'')+'" '+h+'cond\',this.value)"></td><td><input style="min-width:160px" value="'+escA(x.obs||'')+'" title="'+escA(x.obs||'')+'" '+h+'obs\',this.value)"></td>'+
             '<td><button class="rm" title="Supprimer la ligne" onclick="bibSet('+li+','+xi+',\'suppr\')">×</button></td></tr>';}).join('')+
         '</table></div><button class="sml-btn" style="width:auto" onclick="bibSet('+li+',-1,\'ajout\')">＋ Ajouter une ligne</button></details>';}).join('')+
     '<div class="mbtns"><button class="mb-c" onclick="bibOrigine()">Bibliothèque d\'origine</button><button class="mb-c" onclick="bibNouveauLot()">＋ Nouveau lot</button><button class="mb-s" onclick="closeSub(\'m-bib\')">Fermer</button></div>';
@@ -2299,12 +2334,15 @@ function dpgfCreer(c){
   var s=surfNum((c.est&&c.est.surf)||c.surf);if(s)rep.S=s;
   var L=[];
   trierLots(bib()).forEach(function(lot){lot.lignes.forEach(function(x){
-    L.push({id:L.length+1,bib:x.id,lotId:lot.id,lot:lot.n,lotNom:lot.nom,lotCond:lot.cond||'',art:x.art,lib:x.lib,u:x.u,pu:x.pu,f:x.f,cond:x.cond||'',grp:x.grp||'',q:0,man:false,off:false});
+    L.push(ligneDeBib(x,lot,L.length+1));
   });});
-  return {rep:rep,lignes:L,seq:L.length,cree:isoAuj()};
+  return {rep:rep,lignes:L,seq:L.length,menus:[],cree:isoAuj()};
+}
+function ligneDeBib(x,lot,id){return {id:id,bib:x.id,lotId:lot.id,lot:lot.n,lotNom:lot.nom,lotCond:lot.cond||'',art:x.art,lib:x.lib,u:x.u,pu:x.pu,f:x.f,cond:x.cond||'',grp:x.grp||'',obs:x.obs||'',q:0,man:false,off:false};
 }
 function dpgfCalc(c){
   var d=c.est.dpgf,v=varsDe(d.rep);
+  menuLignes(d);
   d.lignes.forEach(function(l){
     l.off=!(condOK(l.lotCond,v)&&(!l.bib||condOK(l.cond,v)));
     if(l.bib&&!l.man){try{l.q=q2(evalExpr(l.f,v));l.err='';}catch(e){l.q=0;l.err=e.message;}}
@@ -2336,7 +2374,7 @@ function dpgfLigne(id,champ,v){
   if(champ==='q'){var n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));l.q=isNaN(n)?0:q2(n);l.man=true;}
   else if(champ==='auto'){l.man=false;}
   else if(champ==='pu')l.pu=cts(v)||0;
-  else if(champ==='suppr'){if(!confirm('Retirer la ligne « '+l.lib+' » de cet estimatif ?'))return;d.lignes=d.lignes.filter(function(x){return x.id!==id;});}
+  else if(champ==='suppr'){if(!confirm('Retirer la ligne « '+l.lib+' » de cet estimatif ?'))return;d.lignes=d.lignes.filter(function(x){return x.id!==id;});if(l.bib){d.retirees=d.retirees||[];d.retirees.push(l.bib);}}
   else l[champ]=v;
   dpgfCalc(act);ctrSave();renderDpgf();
 }
@@ -2347,10 +2385,24 @@ function dpgfAjout(refId){
   d.lignes.push({id:d.seq,lotCond:lotCond,bib:null,lot:lot,lotNom:lotNom,art:lot+'.'+String(n).padStart(2,'0')+'b',lib:'Ligne ajoutée',u:'u',pu:0,f:'',cond:'',grp:'',q:1,man:true,off:false});
   dpgfCalc(act);ctrSave();renderDpgf();
 }
+// Reprend les prix et notes de la bibliothèque, ajoute ses nouvelles lignes (sauf celles retirées volontairement) et les tarifs des menuiseries
 function dpgfPrix(){
-  var d=act.est.dpgf,idx={},n=0;bib().forEach(function(lot){lot.lignes.forEach(function(x){idx[x.id]=x;});});
-  d.lignes.forEach(function(l){var x=l.bib&&idx[l.bib];if(x&&x.pu!==l.pu){l.pu=x.pu;n++;}});
-  dpgfCalc(act);ctrSave();renderDpgf();toast(n?n+' prix mis à jour depuis la bibliothèque':'Les prix sont déjà ceux de la bibliothèque');
+  var d=act.est.dpgf,n=0,aj=0,dans={},ret={};
+  d.lignes.forEach(function(l){if(l.bib)dans[l.bib]=l;});(d.retirees||[]).forEach(function(x){ret[x]=1;});
+  trierLots(bib()).forEach(function(lot){lot.lignes.forEach(function(x){
+    var l=dans[x.id];
+    if(l){if(x.pu!==l.pu){l.pu=x.pu;n++;}l.obs=x.obs||'';if(l.art!==x.art&&l.lot===lot.n)l.art=x.art;if(!l.man){l.f=x.f;l.cond=x.cond||'';}return;}
+    if(ret[x.id])return;
+    d.seq=Math.max(d.seq||0,d.lignes.reduce(function(m,y){return Math.max(m,y.id);},0))+1;
+    var nl=ligneDeBib(x,lot,d.seq),pos=-1;
+    d.lignes.forEach(function(y,i){if(y.lot===lot.n&&!y.menu)pos=i;});
+    if(pos<0)d.lignes.push(nl);else d.lignes.splice(pos+1,0,nl);aj++;
+  });});
+  if(aj){var rang=function(l){var x=String(l.art).split('.'),n=parseFloat(x[1]);return [parseFloat(l.lot)||999,isNaN(n)?999:n];};
+    d.lignes=d.lignes.map(function(l,i){return [l,i];}).sort(function(a,b){var x=rang(a[0]),y=rang(b[0]);return x[0]-y[0]||x[1]-y[1]||a[1]-b[1];}).map(function(x){return x[0];});}
+  var avant=JSON.stringify(d.menuTarif||null);if(d.menuTarif){d.menuTarif=JSON.parse(JSON.stringify(tarifMenu()));if(JSON.stringify(d.menuTarif)!==avant)n++;}
+  dpgfCalc(act);ctrSave();renderDpgf();
+  toast(n||aj?(n?n+' prix mis à jour':'')+(n&&aj?' · ':'')+(aj?aj+' nouvelle(s) ligne(s) ajoutée(s)':''):'L\'estimatif est déjà à jour avec la bibliothèque');
 }
 function dpgfManuel(){
   var e=act.est;if(!confirm('Repasser l\'estimatif en saisie manuelle des lots ?\nLe DPGF détaillé est conservé de côté ; les lots actuels (totaux du DPGF) restent modifiables à la main.'))return;
@@ -2359,6 +2411,104 @@ function dpgfManuel(){
 function estRestaurerManuel(){
   var e=act.est;if(!e.lotsManuel)return;if(!confirm('Remettre les '+e.lotsManuel.length+' lot(s) saisis à la main avant l\'assistant ? Les lots actuels seront remplacés.'))return;
   e.lots=e.lotsManuel;delete e.lotsManuel;ctrSave();renderEst();
+}
+// ── Configurateur de menuiseries sur mesure (complément du catalogue fixe 7.xx) ──
+// Chaque menuiserie (d.menus) devient une ligne du lot Fourniture menuiseries ; la pose est regroupée dans le lot Pose.
+// Tarifs communs : DB.bibMenu (sinon MENU_ORIGINE), copiés dans le dossier (d.menuTarif) comme les prix des lignes.
+var MENU_TYPES=[['fen','Fenêtre','fen'],['pf','Porte-fenêtre','fen'],['baie','Baie coulissante','porte'],['fixe','Châssis fixe','fen'],['entree','Porte d\'entrée','porte'],['service','Porte de service','porte']];
+var MENU_MATS=[['alu','Alu','alu'],['pvc','PVC','PVC'],['bois','Bois','bois'],['mixte','Mixte (bois-alu)','mixte bois-alu']];
+var MENU_OCCS=[['','Aucune'],['vre','Volet roulant électrique'],['vrm','Volet roulant manuel'],['vb','Volet battant']];
+var MENU_ORIGINE={mat:{alu:48000,pvc:33000,bois:52000,mixte:70000},coef:{fen:100,pf:110,baie:80,fixe:75,entree:130,service:100},smin:1,
+  occF:{vre:22000,vrm:12000,vb:15000},occM:{vre:7000,vrm:6000,vb:18000},tele:8000,pose:{fen:9000,porte:15000,vre:16000,vrm:6500,vb:8000},poseOn:1};
+var MENU_CATALOGUE=['7.01','7.02','7.03','7.04','7.05','7.06','7.07','8.01','8.02','8.04','8.05']; // lignes fixes remplacées par le configurateur
+var dpgfMOuvert=true;
+function tarifMenu(){return DB.bibMenu||MENU_ORIGINE;}
+function lib2(liste,k){var x=liste.find(function(y){return y[0]===k;});return x?x[1]:'';}
+function menuPrix(m,T){
+  var S=(+m.l||0)*(+m.h||0)/10000,Sf=Math.max(S,T.smin||0);
+  var fourn=Math.round(Sf*(T.mat[m.mat]||0)*(T.coef[m.type]||100)/100);
+  var occ=m.occ?(T.occF[m.occ]||0)+Math.round(Sf*(T.occM[m.occ]||0))+(m.occ==='vre'&&m.cmd==='tele'?T.tele||0:0):0;
+  return {S:S,Sf:Sf,fourn:fourn,occ:occ,pu:S>0?fourn+occ:0};
+}
+function menuLib(m){
+  var mat=MENU_MATS.find(function(x){return x[0]===m.mat;});
+  return lib2(MENU_TYPES,m.type)+' '+(m.l||'?')+'×'+(m.h||'?')+' '+(mat?mat[2]:'')+
+    (m.occ?', '+lib2(MENU_OCCS,m.occ).toLowerCase()+(m.occ==='vre'?(m.cmd==='tele'?' télécommande':' filaire'):''):', sans occultation')+(m.rep?' — '+m.rep:'');
+}
+// Place du lot : celui de la ligne 7.01 (ou 8.01) du dossier, sinon celui de la bibliothèque
+function menuLot(d,idBib,idLot,defN,defNom){
+  var l=d.lignes.find(function(x){return x.bib===idBib;});if(l)return {lot:l.lot,lotNom:l.lotNom,lotCond:l.lotCond||''};
+  var b=bib().find(function(x){return x.id===idLot;});return b?{lot:b.n,lotNom:b.nom,lotCond:b.cond||''}:{lot:defN,lotNom:defNom,lotCond:''};
+}
+function menuLignes(d){
+  d.lignes=d.lignes.filter(function(l){return !l.menu;});
+  var M=(d.menus||[]).filter(function(m){return m.l>0&&m.h>0&&m.n>0;});if(!M.length)return;
+  var T=d.menuTarif||tarifMenu(),L7=menuLot(d,'7.01','L7','7','Fourniture Menuiseries'),L8=menuLot(d,'8.01','L8','8','Pose Menuiseries'),id=0,cpt={fen:0,porte:0,vre:0,vrm:0,vb:0};
+  var aj=function(lo,o){id--;d.lignes.push(Object.assign({id:id,bib:null,lot:lo.lot,lotNom:lo.lotNom,lotCond:lo.lotCond,u:'u',f:'',cond:'',grp:'',man:true,off:false},o));};
+  M.forEach(function(m,i){
+    var p=menuPrix(m,T),ty=MENU_TYPES.find(function(x){return x[0]===m.type;});
+    cpt[ty?ty[2]:'fen']+=m.n;if(m.occ)cpt[m.occ]+=m.n;
+    aj(L7,{menu:m.id,art:L7.lot+'.M'+(i+1),lib:menuLib(m),q:m.n,pu:p.pu,
+      obs:fmtQ(p.S)+' m²'+(p.S<p.Sf?' (compté '+fmtQ(p.Sf)+' m² minimum)':'')+' · menuiserie '+fmtE(p.fourn)+' €'+(m.occ?' + occultation '+fmtE(p.occ)+' €':'')});
+  });
+  if(!T.poseOn)return;
+  [['fen','Pose des fenêtres, portes-fenêtres et châssis sur mesure, étanchéités selon DTU et réglages'],['porte','Pose des baies coulissantes et portes sur mesure, étanchéités selon DTU et réglages'],
+   ['vre','Pose, alimentation et raccordement des volets roulants électriques'],['vrm','Pose et réglages des volets roulants manuels'],['vb','Pose des volets battants (gonds, arrêts, espagnolettes)']].forEach(function(x,i){
+    if(cpt[x[0]])aj(L8,{menu:'pose',art:L8.lot+'.M'+(i+1),lib:x[1]+' (configurateur)',q:cpt[x[0]],pu:T.pose[x[0]]||0,obs:''});
+  });
+}
+function menuNouveau(){return {id:0,type:'fen',rep:'',l:120,h:135,mat:'alu',occ:'vre',cmd:'fil',n:1};}
+function menuAct(fn){var d=act.est.dpgf;d.menus=d.menus||[];if(!d.menuTarif)d.menuTarif=JSON.parse(JSON.stringify(tarifMenu()));fn(d);dpgfCalc(act);ctrSave();renderDpgf();}
+function menuAjout(){menuAct(function(d){var m=d.menus.length?Object.assign({},d.menus[d.menus.length-1]):menuNouveau();m.rep='';m.n=1;d.mseq=(d.mseq||0)+1;m.id=d.mseq;d.menus.push(m);});}
+function menuDup(id){menuAct(function(d){var i=d.menus.findIndex(function(x){return x.id===id;});if(i<0)return;var m=Object.assign({},d.menus[i]);d.mseq=(d.mseq||0)+1;m.id=d.mseq;d.menus.splice(i+1,0,m);});}
+function menuSuppr(id){var m=(act.est.dpgf.menus||[]).find(function(x){return x.id===id;});if(!m||!confirm('Supprimer « '+menuLib(m)+' » ?'))return;menuAct(function(d){d.menus=d.menus.filter(function(x){return x.id!==id;});});}
+function menuSet(id,champ,v){menuAct(function(d){var m=d.menus.find(function(x){return x.id===id;});if(!m)return;
+  if(champ==='l'||champ==='h'||champ==='n'){var n=parseFloat(String(v).replace(',','.'));m[champ]=n>0?(champ==='n'?Math.round(n):Math.round(n*10)/10):0;}
+  else m[champ]=v;});}
+function menuCatalogueZero(){
+  if(!confirm('Mettre à 0 les menuiseries du catalogue fixe (7.01 à 7.07) et leur pose (8.01, 8.02, 8.04, 8.05) ?\nLes lignes restent dans le tableau : vous pourrez revenir à la quantité calculée avec ✎↺.'))return;
+  menuAct(function(d){d.lignes.forEach(function(l){if(MENU_CATALOGUE.indexOf(l.bib)>=0){l.q=0;l.man=true;}});});
+}
+function renderMenus(d){
+  var M=d.menus||[],T=d.menuTarif||tarifMenu(),tot=0;
+  var opts=function(liste,val){return liste.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===val?' selected':'')+'>'+esc(o[1])+'</option>';}).join('');};
+  var rows=M.map(function(m,i){
+    var p=menuPrix(m,T),mt=p.pu*m.n,h='onchange="menuSet('+m.id+',\'',
+      fs=function(lib,ch,liste){return '<div class="fld"><label>'+lib+'</label><select '+h+ch+'\',this.value)">'+opts(liste,m[ch])+'</select></div>';},
+      fi=function(lib,ch,o){return '<div class="fld"><label>'+lib+'</label><input'+(o?' type="number" min="1"':' placeholder="ex : Séjour"')+' value="'+escA(String(m[ch]||''))+'" '+h+ch+'\',this.value)"></div>';};
+    tot+=mt;
+    return '<div class="mn-c"><div class="mn-h"><b>'+(i+1)+'. '+esc(menuLib(m))+'</b><span>'+(p.S?fmtQ(p.S)+' m² · '+fmtE(p.pu)+' € HT'+(m.n>1?' × '+m.n+' = <b>'+fmtE(mt)+' €</b>':''):'<i>dimensions à saisir</i>')+'</span>'+
+      '<span class="mn-b"><button class="rm" title="Dupliquer" onclick="menuDup('+m.id+')">⧉</button><button class="rm" title="Supprimer" onclick="menuSuppr('+m.id+')">×</button></span></div>'+
+      '<div class="mn-g">'+fs('Type','type',MENU_TYPES)+fi('Repère (facultatif)','rep')+fi('Largeur (cm)','l',1)+fi('Hauteur (cm)','h',1)+fi('Quantité','n',1)+
+      fs('Matériau','mat',MENU_MATS)+fs('Occultation','occ',MENU_OCCS)+(m.occ==='vre'?fs('Commande du volet','cmd',[['fil','Filaire'],['tele','Télécommande']]):'')+'</div></div>';
+  }).join('');
+  var nb=M.reduce(function(a,m){return a+(m.n||0);},0);
+  var cat=M.length?d.lignes.filter(function(l){return MENU_CATALOGUE.indexOf(l.bib)>=0&&!l.off&&l.q>0;}):[];
+  return '<details class="ctr-tx"'+(dpgfMOuvert?' open':'')+' ontoggle="dpgfMOuvert=this.open"><summary>🪟 Menuiseries sur mesure (configurateur)'+(nb?' — '+nb+' menuiserie'+(nb>1?'s':'')+' · '+fmtE(tot)+' € HT hors pose':'')+'</summary>'+
+    '<div class="rel-note" style="margin-bottom:6px">Une ligne par menuiserie (dimensions en cm). Le prix = surface × prix au m² du matériau × coefficient du type, + l\'occultation. Chaque ligne apparaît dans le lot Fourniture menuiseries ; la pose est ajoutée dans le lot Pose. Tarifs : Paramètres → Bibliothèque de prix.</div>'+
+    rows+
+    (cat.length?'<div class="gen-al">⚠ '+cat.length+' ligne(s) du catalogue fixe de menuiseries (7.xx / pose 8.xx) sont encore comptées : attention au double comptage. <a class="lnk" onclick="menuCatalogueZero()">Les mettre à 0</a></div>':'')+
+    '<button class="sml-btn" style="width:auto" onclick="menuAjout()">＋ Ajouter une menuiserie</button></details>';
+}
+// Tarifs du configurateur, dans la bibliothèque de prix
+function bibMenuSet(g,k,v){
+  if(!DB.bibMenu)DB.bibMenu=JSON.parse(JSON.stringify(MENU_ORIGINE));var T=DB.bibMenu;
+  if(g==='poseOn')T.poseOn=v?1:0;
+  else if(g==='smin'){var n=parseFloat(String(v).replace(',','.'));T.smin=n>=0?n:0;}
+  else if(g==='coef'){var c=parseFloat(String(v).replace(',','.'));T.coef[k]=c>0?Math.round(c):100;}
+  else if(g==='tele')T.tele=cts(v)||0;
+  else T[g][k]=cts(v)||0;
+  sv();renderBib();
+}
+function renderBibMenu(){
+  var T=tarifMenu(),f=function(g,k,val,lib){return '<div class="fld"><label>'+lib+'</label><input class="num" value="'+escA(String(val))+'" onchange="bibMenuSet(\''+g+'\',\''+k+'\',this.value)"></div>';};
+  return '<details class="bib-lot"'+(bibOuverts.menu?' open':'')+' ontoggle="bibOuverts.menu=this.open"><summary><b>🪟 Configurateur de menuiseries — tarifs</b> <i>'+(DB.bibMenu?'modifiés':'d\'origine')+'</i></summary>'+
+    '<div class="sec-lbl">Prix de la menuiserie au m² (fourniture HT, selon le matériau)</div><div class="dp-q">'+MENU_MATS.map(function(x){return f('mat',x[0],fmtE(T.mat[x[0]]),x[1]+' (€/m²)');}).join('')+f('smin','',String(T.smin).replace('.',','),'Surface minimum comptée (m²)')+'</div>'+
+    '<div class="sec-lbl">Coefficient selon le type (% du prix au m²)</div><div class="dp-q">'+MENU_TYPES.map(function(x){return f('coef',x[0],T.coef[x[0]],x[1]+' (%)');}).join('')+'</div>'+
+    '<div class="sec-lbl">Occultation : forfait par volet + prix au m²</div><div class="dp-q">'+MENU_OCCS.slice(1).map(function(x){return f('occF',x[0],fmtE(T.occF[x[0]]),x[1]+' : forfait (€)')+f('occM',x[0],fmtE(T.occM[x[0]]),x[1]+' : €/m²');}).join('')+f('tele','',fmtE(T.tele),'Supplément télécommande (€ par volet)')+'</div>'+
+    '<div class="sec-lbl">Pose (lot Pose menuiseries, prix par unité)</div><div class="dp-q">'+f('pose','fen',fmtE(T.pose.fen),'Fenêtre / porte-fenêtre / châssis (€)')+f('pose','porte',fmtE(T.pose.porte),'Baie coulissante / porte (€)')+f('pose','vre',fmtE(T.pose.vre),'Volet roulant électrique, raccordement compris (€)')+f('pose','vrm',fmtE(T.pose.vrm),'Volet roulant manuel (€)')+f('pose','vb',fmtE(T.pose.vb),'Volet battant (€)')+'</div>'+
+    '<label class="sd-chk"><input type="checkbox"'+(T.poseOn?' checked':'')+' onchange="bibMenuSet(\'poseOn\',\'\',this.checked)"><label>Ajouter automatiquement la pose dans le lot Pose menuiseries</label></label>'+
+    '<div class="rel-note">Exemple : fenêtre alu 120×135 = 1,62 m² × '+fmtE(T.mat.alu)+' €/m² = '+fmtE(menuPrix({type:'fen',l:120,h:135,mat:'alu',occ:''},T).fourn)+' € ; avec volet roulant électrique télécommande : '+fmtE(menuPrix({type:'fen',l:120,h:135,mat:'alu',occ:'vre',cmd:'tele'},T).pu)+' €.</div></details>';
 }
 // Bandeau en haut de la fenêtre « Estimatif »
 function estDpgfBandeau(e){
@@ -2371,10 +2521,12 @@ function estDpgfBandeau(e){
 function renderDpgf(){
   var c=act,d=c.est.dpgf,v=varsDe(d.rep),e=c.est,t=estTotaux(c);
   var q='<details class="ctr-tx"'+(dpgfQOuvert?' open':'')+' ontoggle="dpgfQOuvert=this.open"><summary>Questionnaire du projet</summary><div class="dp-q">'+DPGF_VARS.map(function(x){
-    var val=d.rep[x[0]];
+    var val=d.rep[x[0]],dep=DPGF_DEP[x[0]];
+    if(dep&&!(v[dep]>0))return '';
+    if(x[2]==='s')return '<div class="fld"><label>'+esc(x[1])+'</label><select onchange="dpgfRep(\''+x[0]+'\',this.value,\'s\')">'+x[4].map(function(o){return '<option value="'+o[0]+'"'+(+v[x[0]]===o[0]?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select></div>';
     if(x[2]==='c')return '<label class="sd-chk"><input type="checkbox"'+(val?' checked':'')+' onchange="dpgfRep(\''+x[0]+'\',this.checked,\'c\')"><label>'+esc(x[1])+'</label></label>';
     return '<div class="fld"><label>'+esc(x[1])+'</label><input type="number" min="0" step="any" value="'+(val===null||val===undefined?'':val)+'"'+(x[2]==='a'?' placeholder="'+fmtQ(v[x[0]])+' (auto)"':'')+' onchange="dpgfRep(\''+x[0]+'\',this.value,\''+x[2]+'\')"></div>';
-  }).join('')+'</div><div class="rel-note">Emprise retenue : '+fmtQ(v.E)+' m² · périmètre retenu : '+fmtQ(v.P)+' ml. Les quantités se recalculent à chaque réponse, sauf celles modifiées à la main (✎).</div></details>';
+  }).join('')+'</div><div class="rel-note">Emprise retenue : '+fmtQ(v.E)+' m² · périmètre retenu : '+fmtQ(v.P)+' ml'+(v.GAR>0?' · murs du garage : '+fmtQ(v.PGAR)+' ml':'')+'. Les quantités se recalculent à chaque réponse, sauf celles modifiées à la main (✎).</div></details>';
   var lots=[],idx={};
   d.lignes.forEach(function(l){var k=l.lot+'|'+l.lotNom;if(!(k in idx)){idx[k]=lots.length;lots.push({n:l.lot,nom:l.lotNom,L:[],ht:0,actives:0});}var g=lots[idx[k]];g.L.push(l);if(!l.off){g.ht+=Math.round(l.q*l.pu);g.actives++;}});
   lots.sort(function(a,b){return (parseFloat(a.n)||999)-(parseFloat(b.n)||999);});
@@ -2382,26 +2534,27 @@ function renderDpgf(){
     lots.filter(function(g){return g.actives||dpgfExclus;}).map(function(g){
       return '<tr class="dp-lot"><td colspan="5">LOT '+esc(g.n)+' — '+esc(g.nom)+'</td><td class="num">'+fmtE(g.ht)+' €</td><td><button class="rm" title="Ajouter une ligne à ce lot" onclick="dpgfAjout('+g.L[0].id+')">＋</button></td></tr>'+
         g.L.filter(function(l){return !l.off||dpgfExclus;}).map(function(l){
+          if(l.menu)return '<tr class="dp-menu'+(l.off?' off':'')+'"><td>'+esc(l.art)+'</td><td title="Ligne créée par le configurateur de menuiseries : modifiez-la dans le configurateur">🪟 '+esc(l.lib)+(l.obs?'<i class="bib-grp">'+esc(l.obs)+'</i>':'')+'</td><td>'+esc(l.u)+'</td><td class="num">'+fmtQ(l.q)+'</td><td class="num">'+fmtE(l.pu)+'</td><td class="num">'+(l.off?'<i>exclue</i>':fmtE(Math.round(l.q*l.pu))+' €')+'</td><td></td></tr>';
           var h='onchange="dpgfLigne('+l.id+',\'';
-          return '<tr'+(l.off?' class="off"':'')+'><td>'+esc(l.art)+'</td><td><input value="'+escA(l.lib)+'" title="'+escA(l.lib)+'" '+h+'lib\',this.value)">'+(l.grp?'<i class="bib-grp">'+esc(l.grp)+'</i>':'')+'</td><td>'+esc(l.u)+'</td>'+
+          return '<tr'+(l.off?' class="off"':'')+'><td>'+esc(l.art)+'</td><td><input value="'+escA(l.lib)+'" title="'+escA(l.lib)+'" '+h+'lib\',this.value)">'+(l.grp?'<i class="bib-grp">'+esc(l.grp)+'</i>':'')+(l.obs?'<i class="bib-grp dp-obs">'+esc(l.obs)+'</i>':'')+'</td><td>'+esc(l.u)+'</td>'+
             '<td class="dp-q-c"><input class="num'+(l.man?' man':'')+'" value="'+fmtQ(l.q)+'" '+h+'q\',this.value)" title="'+(l.bib?'Règle : '+escA(formuleFr(l.f)):'Ligne ajoutée')+(l.err?' — erreur : '+escA(l.err):'')+'">'+(l.man&&l.bib?'<a class="lnk" title="Revenir à la quantité calculée ('+escA(formuleFr(l.f))+')" onclick="dpgfLigne('+l.id+',\'auto\')">✎↺</a>':'')+'</td>'+
             '<td><input class="num" value="'+fmtE(l.pu)+'" '+h+'pu\',this.value)"></td><td class="num">'+(l.off?'<i>exclue</i>':fmtE(Math.round(l.q*l.pu))+' €')+'</td>'+
             '<td><button class="rm" title="Retirer la ligne" onclick="dpgfLigne('+l.id+',\'suppr\')">×</button></td></tr>';
         }).join('');
     }).join('')+'</table></div>';
-  document.getElementById('dpgf-body').innerHTML='<div class="mn-ttl">🧮 Assistant d\'estimation des travaux (DPGF)</div>'+q+
+  document.getElementById('dpgf-body').innerHTML='<div class="mn-ttl">🧮 Assistant d\'estimation des travaux (DPGF)</div>'+q+renderMenus(d)+
     '<div class="ctr-bar"><label class="sd-chk" style="margin:0"><input type="checkbox"'+(dpgfExclus?' checked':'')+' onchange="dpgfExclus=this.checked;renderDpgf()"><label>Afficher les lignes exclues par le questionnaire</label></label></div>'+tab+
     '<div class="fac-rec"><div><span>Travaux HT (lots)</span><b>'+fmtE(t.base||0)+' €</b></div><div><span>Aléas '+pctStr(e.alea)+' %</span><b>'+fmtE(t.alea||0)+' €</b></div><div class="cette"><span>Total travaux HT</span><b>'+fmtE(t.ht||0)+' €</b></div><div><span>TVA '+pctStr(e.tva)+' %</span><b>'+fmtE(t.tva||0)+' €</b></div><div><span>Total TTC</span><b>'+fmtE(t.ttc||0)+' €</b></div></div>'+
     '<div class="rel-note">Le taux d\'aléas, la TVA, les postes annexes et les textes se règlent dans la fenêtre « Estimatif ». '+(v.S?'Ratio : '+fmtE(Math.round((t.ht||0)/100/v.S)*100)+' € HT / m².':'')+'</div>'+
-    '<div class="mbtns" style="flex-wrap:wrap"><button class="mb-c" onclick="dpgfPrix()">Mettre à jour les prix depuis la bibliothèque</button><button class="mb-c" onclick="exporterDpgf()">⬇ DPGF détaillé (Excel/CSV)</button><button class="mb-c" onclick="dpgfVersContrat()">➜ Envoyer vers le contrat…</button><button class="mb-c" onclick="genEstimatifSeul()">📄 Word Estimatif</button><button class="mb-s" onclick="closeSub(\'m-dpgf\');if(document.getElementById(\'m-est\').classList.contains(\'open\'))renderEst()">Fermer</button></div>';
+    '<div class="mbtns" style="flex-wrap:wrap"><button class="mb-c" onclick="dpgfPrix()" title="Prix, notes, nouvelles lignes et tarifs des menuiseries">Mettre à jour depuis la bibliothèque</button><button class="mb-c" onclick="exporterDpgf()">⬇ DPGF détaillé (Excel/CSV)</button><button class="mb-c" onclick="dpgfVersContrat()">➜ Envoyer vers le contrat…</button><button class="mb-c" onclick="genEstimatifSeul()">📄 Word Estimatif</button><button class="mb-s" onclick="closeSub(\'m-dpgf\');if(document.getElementById(\'m-est\').classList.contains(\'open\'))renderEst()">Fermer</button></div>';
 }
 function exporterDpgf(){
   var c=act,d=c.est.dpgf,t=estTotaux(c),e=function(v){v=String(v===undefined?'':v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;},m=function(x){return (x<0?'-':'')+Math.floor(Math.abs(x)/100)+','+String(Math.abs(x)%100).padStart(2,'0');};
-  var L=[['DPGF — '+(c.nom||'')+(c.ref?' ('+c.ref+')':'')],['Surface habitable (m²)',fmtQ(varsDe(d.rep).S)],[],['Lot','Article','Désignation','Unité','Quantité','Prix unitaire HT','Montant HT']],cur=null,st=0;
+  var L=[['DPGF — '+(c.nom||'')+(c.ref?' ('+c.ref+')':'')],['Surface habitable (m²)',fmtQ(varsDe(d.rep).S)],[],['Lot','Article','Désignation','Unité','Quantité','Prix unitaire HT','Montant HT','Observations']],cur=null,st=0;
   var actives=d.lignes.filter(function(l){return !l.off;}).slice().sort(function(a,b){return (parseFloat(a.lot)||999)-(parseFloat(b.lot)||999);});
   actives.forEach(function(l,i){
     if(cur!==l.lot){cur=l.lot;st=0;L.push(['LOT '+l.lot+' — '+l.lotNom]);}
-    var mt=Math.round(l.q*l.pu);st+=mt;L.push([l.lot,l.art,l.lib,l.u,fmtQ(l.q),m(l.pu),m(mt)]);
+    var mt=Math.round(l.q*l.pu);st+=mt;L.push([l.lot,l.art,l.lib,l.u,fmtQ(l.q),m(l.pu),m(mt),l.obs||'']);
     if(!actives[i+1]||actives[i+1].lot!==l.lot)L.push(['','','Total HT du lot '+l.lot,'','','',m(st)]);
   });
   L.push([],['','','Total travaux HT (lots)','','','',m(t.base||0)],['','','Aléas '+pctStr(c.est.alea)+' %','','','',m(t.alea||0)],['','','TOTAL TRAVAUX HT','','','',m(t.ht||0)],['','','TVA '+pctStr(c.est.tva)+' %','','','',m(t.tva||0)],['','','TOTAL TRAVAUX TTC','','','',m(t.ttc||0)]);
