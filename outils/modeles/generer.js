@@ -435,6 +435,43 @@ function annexePLU() {
   ]);
 }
 
+
+// ── Avenant au contrat (texte créé pour le Kanban, même style que les lettres de mission) ──
+function avenant() {
+  const L = [6400, 3000];
+  const ligne = (a, b, fond) => new TableRow({ children: [cellule(a, { w: L[0], fond }), cellule(b, { w: L[1], a: 'r', fond })] });
+  return document('Avenant au contrat', [
+    titre('AVENANT N°{av_n}'), sousTitre('Contrat « {intitule} »'),
+    ...prestataireGauche(),
+    P('Client : {client}{#soc} — {soc}{/soc}'),
+    P('Adresse du client : {adr_client}'),
+    P('Projet : {Projet}', { a: 'j' }),
+    P('Adresse du projet : {adr_projet}'),
+    P('Contrat initial : {contrat_ref}, signé le {date_signature}'),
+    P('Date de l\'avenant : {av_date}'),
+    H('1. Objet de l\'avenant'),
+    P('Le présent avenant a pour objet de modifier le contrat cité ci-dessus, dans les conditions suivantes :', { a: 'j' }),
+    P('{av_lib}', { b: true }),
+    ...paragraphes('av_objet', { a: 'j' }),
+    H('2. Incidence financière'),
+    tableau([
+      ligne('Montant initial du contrat (HT)', '{montant_initial} €'),
+      new TableRow({ children: [cellule('{#a_avant_prec}Avenants précédents (HT)', { w: L[0], fond: ORANGE_PALE }), cellule('{avenants_prec} €{/a_avant_prec}', { w: L[1], a: 'r', fond: ORANGE_PALE })] }),
+      ligne('Montant du présent avenant (HT)', '{av_montant} €'),
+      ligneTotal('NOUVEAU MONTANT DU CONTRAT (HT)', '{nouveau_total} €', L, 1)
+    ], L),
+    note('(TVA non applicable, article 293 B du Code Général des Impôts)', { a: 'c', av: 60, ap: 160 }),
+    ...si('av_plus', [P('Ce montant supplémentaire sera facturé selon les modalités suivantes : {av_decl}.', { a: 'j' })]),
+    ...si('av_moins', [P('Cette diminution est imputée sur la phase « {av_tranche} » de l\'échéancier du contrat.', { a: 'j' })]),
+    H('3. Autres dispositions'),
+    P('Toutes les autres clauses et conditions du contrat initial, non modifiées par le présent avenant, demeurent inchangées et continuent de produire leur plein effet.', { a: 'j' }),
+    H('4. Acceptation'),
+    P('La signature du présent avenant vaut acceptation pleine et entière des modifications qu\'il contient.', { a: 'j' }),
+    faitA(),
+    signaturesB()
+  ]);
+}
+
 // ── Fabrication ───────────────────────────────────────────────
 const MODELES = {
   'proposition_A.docx': propositionA(),
@@ -468,7 +505,8 @@ const MODELES = {
   }),
   'estimatif_A.docx': estimatifA(),
   'estimatif_B.docx': estimatifB(),
-  'annexe_PLU.docx': annexePLU()
+  'annexe_PLU.docx': annexePLU(),
+  'avenant.docx': avenant()
 };
 
 fs.mkdirSync(SORTIE, { recursive: true });

@@ -365,8 +365,13 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .gen-t tr.vide td{color:var(--red);font-weight:700;background:color-mix(in srgb,var(--red) 6%,transparent)}
 .plu-sec{border:1px solid var(--brd);border-radius:10px;padding:8px;margin-bottom:8px;overflow:hidden}
 .mn.large{max-width:900px}
+.etat{font-size:9.5px;font-weight:800;padding:2px 8px;border-radius:20px;white-space:nowrap;background:color-mix(in srgb,var(--txt3) 14%,transparent);color:var(--txt2)}
+.et-a_facturer{background:color-mix(in srgb,var(--or) 16%,transparent);color:var(--or)}
+.ech-ro td{padding:6px 4px;border-bottom:1px solid var(--brd);color:var(--txt)}.ech-ro td i{font-size:10px;color:var(--txt3)}
+.mb-s:disabled{opacity:.45;cursor:not-allowed}
+.ver-l a{color:var(--or);text-decoration:none}.ver-l a:hover{text-decoration:underline}
 .inf-l{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);margin:4px 0 2px}
-#m-ctr,#m-est,#m-plu,#m-gen,#m-echdef,#m-rep{z-index:210} /* au-dessus de la fiche et des Paramètres */
+#m-ctr,#m-est,#m-plu,#m-gen,#m-echdef,#m-rep{z-index:210}#m-sig,#m-av{z-index:220} /* au-dessus de la fiche et des Paramètres */
 
 /* TÉLÉPHONE */
 @media (max-width:760px){
@@ -652,6 +657,8 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 <div class="mov" id="m-echdef"><div class="mn large"><button class="mx" onclick="closeSub('m-echdef')">×</button><div class="mn-in" id="echdef-body"></div></div></div>
 <div class="mov" id="m-rep"><div class="mn" style="max-width:640px"><button class="mx" onclick="closeSub('m-rep')">×</button><div class="mn-in" id="rep-body"></div></div></div>
 
+<div class="mov" id="m-sig"><div class="mn" style="max-width:560px"><button class="mx" onclick="closeSub('m-sig')">×</button><div class="mn-in" id="sig-body"></div></div></div>
+<div class="mov" id="m-av"><div class="mn" style="max-width:640px"><button class="mx" onclick="closeSub('m-av')">×</button><div class="mn-in" id="av-body"></div></div></div>
 <!-- MODAL PARAMS -->
 <div class="mov" id="m-params">
   <div class="mn" style="max-width:600px">
@@ -1467,14 +1474,13 @@ function renderDocs(){
   document.getElementById('doc-list').innerHTML=h;
   document.getElementById('doc-folder').innerHTML=act.folderUrl?'<a href="'+esc(act.folderUrl)+'" target="_blank" rel="noopener" style="font-size:10px;color:var(--or-l);text-decoration:none">→ Ouvrir le dossier du client dans Google Drive</a>':'';
 }
-function uploadDocs(list){
-  if(!act||!list||!list.length)return;
-  if(location.protocol==='file:'||!remoteReady){toast('Connexion au serveur nécessaire pour envoyer un document');return;}
-  var card=act;
-  Array.prototype.forEach.call(list,function(file){
-    if(file.size>MAX_MO*1048576){toast(file.name+' : trop lourd (max '+MAX_MO+' Mo)');return;}
-    var u={card:card.id,name:file.name};uploading.push(u);renderDocs();
+// Envoie un fichier dans le dossier Google Drive du client ; renvoie la fiche du document ajoutée à card.files
+function uploadUn(card,file){
+  return new Promise(function(ok,ko){
+    if(location.protocol==='file:'||!remoteReady){ko(new Error('connexion au serveur nécessaire'));return;}
+    if(file.size>MAX_MO*1048576){ko(new Error(file.name+' : trop lourd (max '+MAX_MO+' Mo)'));return;}
     var r=new FileReader();
+    r.onerror=function(){ko(new Error('lecture du fichier impossible'));};
     r.onload=function(){
       var b64=String(r.result).split(',')[1]||'';
       fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
@@ -1482,15 +1488,25 @@ function uploadDocs(list){
         .then(function(x){return x.json();})
         .then(function(res){
           if(!res||!res.ok)throw new Error((res&&res.erreur)||'erreur');
-          card.files=card.files||[];
-          card.files.push({id:res.id,name:res.name,url:res.url,size:res.size||file.size,date:new Date().toISOString().split('T')[0]});
+          var f={id:res.id,name:res.name,url:res.url,size:res.size||file.size,date:new Date().toISOString().split('T')[0]};
+          card.files=card.files||[];card.files.push(f);
           if(res.folderUrl)card.folderUrl=res.folderUrl;
-          card.upd=Date.now();sv();render();toast('Document ajouté : '+file.name);
-        })
-        .catch(function(e){toast('Échec de l\'envoi de '+file.name+' — réessayez');console.log(e);})
-        .then(function(){uploading.splice(uploading.indexOf(u),1);if(act&&act.id===card.id)renderDocs();});
+          card.upd=Date.now();sv();render();if(act&&act.id===card.id)renderDocs();ok(f);
+        }).catch(ko);
     };
     r.readAsDataURL(file);
+  });
+}
+function uploadDocs(list){
+  if(!act||!list||!list.length)return;
+  if(location.protocol==='file:'||!remoteReady){toast('Connexion au serveur nécessaire pour envoyer un document');return;}
+  var card=act;
+  Array.prototype.forEach.call(list,function(file){
+    if(file.size>MAX_MO*1048576){toast(file.name+' : trop lourd (max '+MAX_MO+' Mo)');return;}
+    var u={card:card.id,name:file.name};uploading.push(u);renderDocs();
+    uploadUn(card,file).then(function(){toast('Document ajouté : '+file.name);})
+      .catch(function(e){toast('Échec de l\'envoi de '+file.name+' — réessayez');console.log(e);})
+      .then(function(){uploading.splice(uploading.indexOf(u),1);if(act&&act.id===card.id)renderDocs();});
   });
 }
 function removeDoc(i){
@@ -1790,7 +1806,7 @@ function lettres(cents){
 }
 
 // ── Types de contrats, textes et échéanciers par défaut ──
-var DECL={signature:'Signature',esq:'Esquisse validée',aps:'APS remis',apd:'APD remis',depot:'Dépôt en mairie',obtention:'Obtention de l\'autorisation',dce:'DCE / analyse des offres',chantier:'Avancement du chantier',reception:'Réception des travaux',fin:'Fin de mission',manuel:'Manuel'};
+var DECL={signature:'Signature',esq:'Esquisse validée',aps:'APS remis',apd:'APD remis',depot:'Dépôt en mairie',obtention:'Obtention de l\'autorisation',dce:'DCE / analyse des offres',chantier:'Avancement du chantier',reception:'Réception des travaux',fin:'Fin de mission',avenant:'Signature de l\'avenant',manuel:'Manuel'};
 var CTR_TYPES={A:'Mission complète',PC:'Mission Permis de Construire',SUIVI:'Mission suivi de chantier',LIBRE:'Mission libre'};
 var CTR_ICO={A:'🏗️',PC:'🏠',SUIVI:'👷',LIBRE:'✏️'};
 var ECH_DEF={
@@ -1874,11 +1890,16 @@ function nouveauContrat(type,intitule){
     calc:type==='LIBRE'?'forfait':'taux',travaux:null,taux:null,forfait:null,ech:echDefaut(type),plafond:0,tx:tx,versions:[],cree:isoAuj()};
 }
 function ctrMontant(k){
+  if(k.signature)return k.signature.montant+(k.avenants||[]).reduce(function(a,v){return a+v.montant;},0);
   if(k.calc==='taux')return (k.travaux>0&&k.taux>0)?partDe(k.travaux,k.taux):0;
   return k.forfait>0?k.forfait:0;
 }
 // Montant de chaque tranche : % arrondi à l'euro ; la dernière tranche en % absorbe l'écart pour tomber juste
 function echCalc(k,total){
+  if(k.signature){ // contrat signé : montants figés, moins les réductions d'avenants
+    var mf=(k.ech||[]).map(function(l){return (l.fige||0)-(l.reduc||0);}),Tf=ctrMontant(k),sf=mf.reduce(function(a,b){return a+b;},0);
+    return {mt:mf,somme:sf,total:Tf,pct:10000,ok:Tf>0&&sf===Tf&&mf.every(function(x){return x>=0;}),fige:true};
+  }
   var T=total===undefined?ctrMontant(k):total,ech=k.ech||[],m=[],dernier=-1,pct=0;
   ech.forEach(function(l,i){
     if(l.mt!==null&&l.mt!==undefined&&(l.pct===null||l.pct===undefined)){m.push(l.mt);}
@@ -1890,7 +1911,7 @@ function echCalc(k,total){
 }
 function ctrStatut(k){
   if(k.statut==='abandonne')return 'Abandonné';
-  if(k.statut==='signe')return k.repris?'Signé (repris)':'Signé';
+  if(k.statut==='signe')return k.signature?'Signé le '+dateFr(k.signature.date):(k.repris?'Signé (repris)':'Signé');
   if(k.statut==='propose'){var v=(k.versions||[]).length;return 'Proposé'+(v>1?' V'+v:'');}
   return 'Brouillon';
 }
@@ -1902,7 +1923,7 @@ function renderCtrs(){
   var L=(act.contrats||[]).map(function(k){
     var t=ctrMontant(k),n=ctrNumero(k);
     return '<div class="ctr-it'+(k.statut==='abandonne'?' off':'')+'" onclick="openCtr('+k.id+')"><span class="ctr-ico">'+CTR_ICO[k.type]+'</span>'+
-      '<span class="ctr-nm"><b>'+esc(k.intitule||CTR_TYPES[k.type])+'</b><i>'+esc(CTR_TYPES[k.type])+(n?' · '+esc(n):'')+'</i></span>'+
+      '<span class="ctr-nm"><b>'+esc(k.intitule||CTR_TYPES[k.type])+'</b><i>'+esc(CTR_TYPES[k.type])+(n?' · '+esc(n):'')+((k.avenants||[]).length?' · '+k.avenants.length+' avenant'+(k.avenants.length>1?'s':''):'')+'</i></span>'+
       '<span class="ctr-st st-'+k.statut+'">'+ctrStatut(k)+'</span><span class="ctr-mt">'+(t?fmtE(t)+' €':'—')+'</span></div>';
   }).join('');
   el.innerHTML=(L||'<div class="ck-empty" style="padding:8px">Aucun contrat. Créez-en un pour générer la proposition et la lettre de mission.</div>')+
@@ -1944,7 +1965,7 @@ var actK=null;
 function ctrDe(id){return (act&&act.contrats||[]).find(function(k){return k.id===id;});}
 function openCtr(id){actK=ctrDe(id);if(!actK)return;renderCtr();showM('m-ctr');}
 function closeSub(id){document.getElementById(id).classList.remove('open');if(act){renderCtrs();renderHono();}}
-function ctrSave(){if(!act)return;act.upd=Date.now();sv();render();}
+function ctrSave(){if(!act)return;act.upd=Date.now();sv();render();renderCtrs();renderHono();}
 function ctrSet(champ,v){
   if(!actK)return;
   if(champ==='travaux'||champ==='forfait')actK[champ]=cts(v);
@@ -1980,6 +2001,7 @@ function echModif(ech,i,champ,v){
 function echSet(i,champ,v){if(!actK)return;echModif(actK.ech,i,champ,v);ctrSave();renderCtr();}
 function renderCtr(){
   var k=actK;if(!k)return;
+  if(estSigne(k)){renderCtrSigne(k);return;}
   var t=ctrMontant(k),calc=echCalc(k),verrou=k.statut==='signe';
   var h='<div class="mn-ttl">'+CTR_ICO[k.type]+' '+esc(k.intitule||CTR_TYPES[k.type])+' <span class="ctr-st st-'+k.statut+'">'+ctrStatut(k)+'</span></div>'+
     '<div class="fg"><div class="fld"><label>Intitulé du contrat</label><input value="'+escA(k.intitule)+'" onchange="ctrSet(\'intitule\',this.value)"></div>'+
@@ -1995,7 +2017,7 @@ function renderCtr(){
     TX_LIB.map(function(f){return '<div class="fld"><label>'+f[1]+'</label>'+(f[2]>1?'<textarea rows="'+f[2]+'" onchange="txSet(\''+f[0]+'\',this.value)">'+esc(k.tx[f[0]]||'')+'</textarea>':'<input value="'+escA(k.tx[f[0]]||'')+'" onchange="txSet(\''+f[0]+'\',this.value)">')+'</div>';}).join('')+
     '<button class="sml-btn" onclick="txDefaut()">Remettre les textes par défaut de ce type de contrat</button></details>'+
     ((k.versions||[]).length?'<div class="sec-lbl" style="margin-top:12px">Historique des propositions</div><div class="ver-l">'+k.versions.map(function(v){return '<div><b>V'+v.v+'</b> · '+esc(v.num)+' · '+dateFr(v.date)+' · '+fmtE(v.montant)+' € HT<br><i>'+esc((v.docs||[]).join(', '))+'</i></div>';}).join('')+'</div>':'')+
-    '<div class="mbtns"><button class="del-btn" style="flex:1;margin:0" onclick="supprCtr()">'+((k.versions||[]).length?'Abandonner':'Supprimer')+'</button><button class="mb-c" onclick="closeSub(\'m-ctr\')">Fermer</button><button class="mb-s" onclick="openGen()">📄 Générer les documents (Word)</button></div>';
+    '<div class="mbtns"><button class="del-btn" style="flex:1;margin:0" onclick="supprCtr()">'+((k.versions||[]).length?'Abandonner':'Supprimer')+'</button><button class="mb-c" onclick="closeSub(\'m-ctr\')">Fermer</button><button class="mb-c" onclick="openSig()">✍️ Contrat signé</button><button class="mb-s" onclick="openGen()">📄 Générer les documents (Word)</button></div>';
   document.getElementById('ctr-body').innerHTML=h;
 }
 function txDefaut(){if(!actK||!confirm('Remplacer tous les textes de ce contrat par les textes par défaut ?'))return;actK.tx=JSON.parse(JSON.stringify(TX_DEF[actK.type]));ctrSave();renderCtr();}
@@ -2196,7 +2218,7 @@ function prochainNum(k){ // null = premier numéro à demander au script ; sinon
 }
 function openGen(){
   var k=actK;if(!k||!act)return;
-  if(k.statut==='signe'){alert('Ce contrat est signé : son montant est figé. Pour le modifier, il faudra passer par un avenant (étape 2).');return;}
+  if(estSigne(k)){alert('Ce contrat est signé : son montant est figé. Pour le modifier, ajoutez un avenant.');return;}
   var docs=['prop','lm'];if(estRempli(act))docs.push('est');if(pluRempli(act))docs.push('plu');
   var h='<div class="mn-ttl">📄 Générer les documents</div><div class="gen-docs">'+['prop','lm','est','plu'].map(function(x){
     var dispo=x==='est'?estRempli(act):x==='plu'?pluRempli(act):true;
@@ -2296,6 +2318,187 @@ function proposerEnvoi(c){
   c.prop=true;c.propDate=isoAuj();c.upd=Date.now();sv();render();
   var cb=document.getElementById('d-prop-e');if(cb&&act&&act.id===c.id)cb.checked=true;
   toast('Proposition notée comme envoyée');
+}
+
+// ── ÉTAPE 2 : RETOUR SIGNÉ, MONTANT FIGÉ, AVENANTS ──
+// À la signature : k.signature = {date, num, montant (centimes), fichier} ; chaque tranche reçoit
+// son montant figé (fige) et son état (« a_facturer » ou « prevue »). Un avenant « plus » ajoute une
+// tranche ; un avenant « moins » réduit une tranche (reduc). Total = montant signé + avenants.
+function estSigne(k){return !!(k&&(k.signature||k.statut==='signe'));}
+function signeMt(x){return (x<0?'− ':'+ ')+fmtE(Math.abs(x));}
+function nomDocFichier(c,type,num,ext,dateIso){
+  return nomFichier('prop',num||'SansNumero',c).replace(/^\d{4}-\d{2}-\d{2}/,dateIso||isoAuj()).replace('_Proposition_','_'+type+'_').replace(/\.docx$/,ext||'.docx');
+}
+function extDe(f){var m=/\.[A-Za-z0-9]+$/.exec(f&&f.name||'');return m?m[0].toLowerCase():'.pdf';}
+function renommer(f,nom){return new File([f],nom,{type:f.type||'application/octet-stream'});}
+
+function openSig(){
+  var k=actK;if(!k||!act)return;
+  var vers=(k.versions||[]).filter(function(v){return v.num&&!v.echec;}),t=ctrMontant(k),calc=echCalc(k);
+  var h='<div class="mn-ttl">✍️ Contrat signé — '+esc(k.intitule)+'</div>'+
+    '<div class="fg"><div class="fld"><label>Date de signature</label><input type="date" id="sig-date" value="'+isoAuj()+'"></div>'+
+    '<div class="fld"><label>Version signée</label><select id="sig-ver">'+vers.map(function(v,i){return '<option value="'+escA(v.num)+'"'+(i===vers.length-1?' selected':'')+'>'+esc(v.num)+' — '+fmtE(v.montant)+' € HT</option>';}).join('')+'<option value=""'+(vers.length?'':' selected')+'>Aucune (contrat signé hors Kanban)</option></select></div></div>'+
+    '<div class="ctr-total">Montant qui sera figé : <b>'+(t?fmtE(t)+' € HT':'à renseigner')+'</b></div>'+
+    (calc.ok?'':'<div class="gen-al">⚠ L\'échéancier ne tombe pas juste : corrigez-le avant d\'enregistrer la signature.</div>')+
+    '<div class="fld"><label>PDF signé (facultatif, vous pourrez le joindre plus tard)</label><input type="file" id="sig-pdf" accept=".pdf,application/pdf,image/*"></div>'+
+    '<div class="rel-note">À l\'enregistrement : le montant et l\'échéancier sont verrouillés, les tranches « Signature » passent « À facturer » et le dossier passe en « À faire » s\'il était en « Prospects » ou « Propositions ».</div>'+
+    '<div class="mbtns"><button class="mb-c" onclick="closeSub(\'m-sig\')">Annuler</button><button class="mb-s" onclick="sigValider()"'+(calc.ok?'':' disabled')+'>Enregistrer la signature</button></div>';
+  document.getElementById('sig-body').innerHTML=h;showM('m-sig');
+}
+function sigValider(){
+  var k=actK,c=act;if(!k||!c)return;
+  var date=document.getElementById('sig-date').value,num=document.getElementById('sig-ver').value,pdf=document.getElementById('sig-pdf').files[0];
+  if(!date){alert('Indiquez la date de signature.');return;}
+  var calc=echCalc(k);if(!calc.ok){alert('L\'échéancier ne tombe pas juste.');return;}
+  var v=(k.versions||[]).find(function(x){return x.num===num;});
+  if(v&&v.montant!==calc.total&&!confirm('Le montant actuel du contrat ('+fmtE(calc.total)+' €) diffère de celui de la version '+num+' ('+fmtE(v.montant)+' €).\nLe montant figé sera '+fmtE(calc.total)+' € HT. Continuer ?'))return;
+  (k.ech||[]).forEach(function(l,i){l.fige=calc.mt[i];l.reduc=0;l.etat=l.dec==='signature'?'a_facturer':'prevue';});
+  k.signature={date:date,num:num,montant:calc.total,fichier:null};k.statut='signe';k.avenants=k.avenants||[];
+  var bouge=['prospects','propositions'].indexOf(c.col)>=0;
+  if(bouge)changerColonne(c,'afaire');
+  c.upd=Date.now();sv();render();closeSub('m-sig');renderCtr();
+  toast('Contrat signé — montant figé : '+fmtE(calc.total)+' € HT'+(bouge?' · dossier passé en « À faire »':''));
+  if(pdf)envoyerPdfSigne(c,k,null,pdf);
+}
+function changerColonne(c,col){
+  c.col=col;
+  if(act&&act.id===c.id){
+    var sel=document.getElementById('d-col-sel');if(sel)sel.value=col;
+    var ci=COLS.findIndex(function(x){return x.id===col;});
+    document.getElementById('btn-prev').disabled=ci<=0;document.getElementById('btn-next').disabled=ci>=COLS.length-1;
+    if(typeof renderActions==='function')renderActions();
+  }
+}
+// PDF signé du contrat (a = null) ou d'un avenant : renommé puis rangé dans Google Drive
+function envoyerPdfSigne(c,k,a,f){
+  var num=(k.signature&&k.signature.num)||ctrNumero(k);
+  var nom=nomDocFichier(c,a?'AvenantSigne'+a.n:'ContratSigne',num,extDe(f),a?a.date:k.signature.date);
+  toast('Envoi du PDF signé…');
+  uploadUn(c,renommer(f,nom)).then(function(fi){
+    var ref={id:fi.id,name:fi.name,url:fi.url};
+    if(a)a.fichier=ref;else k.signature.fichier=ref;
+    c.upd=Date.now();sv();if(actK===k)renderCtr();toast('PDF signé rangé dans le dossier du client');
+  }).catch(function(e){alert('La signature est bien enregistrée, mais le PDF n\'a pas pu être envoyé ('+(e&&e.message||e)+').\nUtilisez « Joindre le PDF signé » plus tard.');});
+}
+function joindrePdf(avId){
+  var k=actK,c=act;if(!k||!c)return;
+  var a=avId?(k.avenants||[]).find(function(x){return x.id===avId;}):null;
+  var inp=document.createElement('input');inp.type='file';inp.accept='.pdf,application/pdf,image/*';
+  inp.onchange=function(){if(inp.files[0])envoyerPdfSigne(c,k,a,inp.files[0]);};inp.click();
+}
+function annulerSig(){
+  var k=actK;if(!k||!k.signature)return;
+  if((k.factures||[]).length){alert('Impossible : ce contrat a déjà une facture.');return;}
+  if((k.avenants||[]).length){alert('Supprimez d\'abord les avenants de ce contrat.');return;}
+  if(!confirm('Annuler la signature de ce contrat ?\nLe montant et l\'échéancier redeviennent modifiables. Le PDF signé reste dans les documents du dossier, et le dossier reste dans sa colonne actuelle.'))return;
+  (k.ech||[]).forEach(function(l){delete l.fige;delete l.reduc;delete l.etat;});
+  delete k.signature;k.statut=k.repris?'signe':((k.versions||[]).some(function(v){return !v.echec;})?'propose':'brouillon');
+  ctrSave();renderCtr();toast('Signature annulée');
+}
+var ETATS={a_facturer:'À facturer',prevue:'Prévue'};
+function renderCtrSigne(k){
+  var t=ctrMontant(k),calc=echCalc(k),s=k.signature,av=k.avenants||[],sAv=av.reduce(function(a,x){return a+x.montant;},0);
+  var h='<div class="mn-ttl">'+CTR_ICO[k.type]+' '+esc(k.intitule||CTR_TYPES[k.type])+' <span class="ctr-st st-signe">'+ctrStatut(k)+'</span></div>';
+  if(!s){
+    h+='<div class="ctr-total">Contrat repris de vos anciens honoraires : <b>'+fmtE(t)+' € HT</b>.<br>Complétez la signature (date, PDF) pour figer l\'échéancier et préparer la facturation.</div>'+
+      '<div class="mbtns"><button class="mb-c" onclick="closeSub(\'m-ctr\')">Fermer</button><button class="mb-s" onclick="openSig()">✍️ Compléter la signature</button></div>'+
+      '<div class="sec-lbl" style="margin-top:12px">Échéancier (modifiable jusqu\'à la signature)</div>'+echHtml(k.ech,calc,'echSet');
+    document.getElementById('ctr-body').innerHTML=h;return;
+  }
+  h+='<div class="ctr-total">Signé le <b>'+dateFr(s.date)+'</b>'+(s.num?' · version '+esc(s.num):' · hors Kanban')+
+    '<br>Montant signé : <b>'+fmtE(s.montant)+' € HT</b>'+(av.length?' '+signeMt(sAv)+' € ('+av.length+' avenant'+(av.length>1?'s':'')+') = <b>'+fmtE(t)+' € HT</b>':'')+'</div>'+
+    '<div class="ctr-bar">'+(s.fichier?'<a class="sml-btn" style="width:auto;margin:0;text-decoration:none" href="'+escA(s.fichier.url)+'" target="_blank">📎 '+esc(s.fichier.name)+'</a>':'<button class="sml-btn" style="width:auto;margin:0" onclick="joindrePdf(0)">📎 Joindre le PDF signé</button>')+'</div>'+
+    '<div class="sec-lbl" style="margin-top:12px">Échéancier (figé à la signature)</div><div class="ech-w"><table class="ech-t ech-ro"><tr><th>Étape</th><th>Étape déclenchante</th><th>%</th><th>Montant</th><th>État</th></tr>'+
+    k.ech.map(function(l,i){return '<tr><td>'+esc(l.lib)+'</td><td>'+esc(DECL[l.dec]||'')+'</td><td class="num">'+(l.pct!==null&&l.pct!==undefined?pctStr(l.pct)+' %':'')+'</td><td class="num">'+fmtE(calc.mt[i])+' €'+(l.reduc?'<br><i>'+signeMt(-l.reduc)+' € (avenant)</i>':'')+'</td><td><span class="etat et-'+(l.etat||'prevue')+'">'+(ETATS[l.etat]||'Prévue')+'</span></td></tr>';}).join('')+
+    '</table></div><div class="ech-sum '+(calc.ok?'ok':'ko')+'">Total : '+fmtE(calc.somme)+' € sur '+fmtE(t)+' € '+(calc.ok?'✓':'— incohérent')+'</div>'+
+    '<div class="sec-lbl" style="margin-top:12px">Avenants</div>'+
+    (av.length?'<div class="ver-l">'+av.map(function(a,i){return '<div><b>Avenant n°'+a.n+'</b> · '+dateFr(a.date)+' · '+esc(a.lib)+' · <b>'+signeMt(a.montant)+' € HT</b><br>'+
+      (a.fichier?'<a href="'+escA(a.fichier.url)+'" target="_blank">📎 '+esc(a.fichier.name)+'</a>':'<a class="lnk" onclick="joindrePdf('+a.id+')">📎 Joindre le PDF signé</a>')+
+      ' · <a class="lnk" onclick="genAvenant('+a.id+')">📄 Générer le Word</a>'+((a.word||[]).length?' <i>('+esc(a.word[a.word.length-1])+')</i>':'')+
+      (i===av.length-1&&!(k.factures||[]).length?' · <a class="lnk" style="color:var(--red)" onclick="supprAv('+a.id+')">Supprimer</a>':'')+'</div>';}).join('')+'</div>':'<div class="rel-note">Aucun avenant.</div>')+
+    '<div class="mbtns">'+(!(k.factures||[]).length&&!av.length?'<button class="del-btn" style="flex:1;margin:0" onclick="annulerSig()">Annuler la signature</button>':'')+
+    '<button class="mb-c" onclick="closeSub(\'m-ctr\')">Fermer</button><button class="mb-s" onclick="openAv()">＋ Avenant</button></div>';
+  document.getElementById('ctr-body').innerHTML=h;
+}
+
+// ── Avenants ──
+function openAv(){
+  var k=actK;if(!k||!k.signature)return;
+  var calc=echCalc(k),n=(k.avenants||[]).length+1,der=-1;
+  k.ech.forEach(function(l,i){if(calc.mt[i]>0)der=i;});
+  var h='<div class="mn-ttl">＋ Avenant n°'+n+' — '+esc(k.intitule)+'</div>'+
+    '<div class="fld"><label>Libellé (objet court, ex : Ajout d\'un garage au programme)</label><input id="av-lib"></div>'+
+    '<div class="fld"><label>Description (reprise dans l\'avenant Word — laisser une ligne vide entre deux paragraphes)</label><textarea id="av-objet" rows="4"></textarea></div>'+
+    '<div class="fg" style="grid-template-columns:1fr 1fr 1fr"><div class="fld"><label>Date de l\'avenant</label><input type="date" id="av-date" value="'+isoAuj()+'"></div>'+
+    '<div class="fld"><label>Sens</label><select id="av-sens" onchange="avSens()"><option value="plus">En plus (+)</option><option value="moins">En moins (−)</option></select></div>'+
+    '<div class="fld"><label>Montant HT (€)</label><input id="av-mt" placeholder="0"></div></div>'+
+    '<div id="av-plus" class="fg"><div class="fld"><label>Étape déclenchante de la nouvelle tranche</label><select id="av-dec">'+Object.keys(DECL).map(function(d){return '<option value="'+d+'"'+(d==='avenant'?' selected':'')+'>'+DECL[d]+'</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>Modalité de facturation (texte de l\'avenant)</label><input id="av-decl" value="signature de l\'avenant"></div></div>'+
+    '<div id="av-moins" class="fld" style="display:none"><label>Tranche réduite</label><select id="av-tranche">'+k.ech.map(function(l,i){return '<option value="'+i+'"'+(i===der?' selected':'')+'>'+esc(l.lib)+' — reste '+fmtE(calc.mt[i])+' €</option>';}).join('')+'</select></div>'+
+    '<div class="fld"><label>PDF de l\'avenant signé (facultatif, vous pourrez le joindre plus tard)</label><input type="file" id="av-pdf" accept=".pdf,application/pdf,image/*"></div>'+
+    '<label class="sd-chk"><input type="checkbox" id="av-word" checked><label for="av-word">Générer l\'avenant en Word (enregistré dans le dossier choisi)</label></label>'+
+    '<label class="sd-chk"><input type="checkbox" id="av-drive"'+(remoteReady?' checked':' disabled')+'><label for="av-drive">Ranger aussi une copie du Word dans Google Drive</label></label>'+
+    '<div class="mbtns"><button class="mb-c" onclick="closeSub(\'m-av\')">Annuler</button><button class="mb-s" id="av-go" onclick="avValider()">Enregistrer l\'avenant</button></div>';
+  document.getElementById('av-body').innerHTML=h;showM('m-av');
+}
+function avSens(){var m=document.getElementById('av-sens').value==='moins';document.getElementById('av-plus').style.display=m?'none':'';document.getElementById('av-moins').style.display=m?'':'none';}
+function avValider(){
+  var k=actK,c=act;if(!k||!c||!k.signature)return;
+  var lib=document.getElementById('av-lib').value.trim(),mt=cts(document.getElementById('av-mt').value),moins=document.getElementById('av-sens').value==='moins';
+  if(!lib){alert('Indiquez le libellé de l\'avenant.');return;}
+  if(!(mt>0)){alert('Indiquez un montant supérieur à 0 (le sens + ou − se choisit à côté).');return;}
+  var calc=echCalc(k),n=(k.avenants||[]).length+1,id=nouvelId(),a={id:id,n:n,lib:lib,objet:document.getElementById('av-objet').value,date:document.getElementById('av-date').value||isoAuj(),montant:moins?-mt:mt,fichier:null,word:[]};
+  if(moins){
+    var i=parseInt(document.getElementById('av-tranche').value,10),l=k.ech[i];
+    if(!l){alert('Choisissez la tranche à réduire.');return;}
+    if(mt>calc.mt[i]){alert('Impossible : la tranche « '+l.lib+' » ne vaut plus que '+fmtE(calc.mt[i])+' €. Une tranche ne peut pas devenir négative.');return;}
+    l.reduc=(l.reduc||0)+mt;a.tranche=i;
+  }else{
+    var dec=document.getElementById('av-dec').value;a.dec=dec;a.decl=document.getElementById('av-decl').value.trim()||DECL[dec];
+    k.ech.push({lib:'Avenant n°'+n+' — '+lib,dec:dec,decl:a.decl,pct:null,mt:null,fige:mt,reduc:0,etat:dec==='avenant'?'a_facturer':'prevue',avenant:id});
+  }
+  k.avenants=k.avenants||[];k.avenants.push(a);
+  var word=document.getElementById('av-word').checked,drive=document.getElementById('av-drive').checked,pdf=document.getElementById('av-pdf').files[0];
+  c.upd=Date.now();sv();render();closeSub('m-av');renderCtr();
+  toast('Avenant n°'+n+' enregistré — nouveau total : '+fmtE(ctrMontant(k))+' € HT');
+  if(pdf)envoyerPdfSigne(c,k,a,pdf);
+  if(word)genAvenant(id,drive);
+}
+function supprAv(id){
+  var k=actK;if(!k)return;var av=k.avenants||[],a=av[av.length-1];
+  if(!a||a.id!==id){alert('Seul le dernier avenant peut être supprimé.');return;}
+  if((k.factures||[]).length){alert('Impossible : ce contrat a déjà une facture.');return;}
+  if(!confirm('Supprimer l\'avenant n°'+a.n+' ('+signeMt(a.montant)+' €) ?\nÀ utiliser seulement en cas d\'erreur de saisie.'))return;
+  if(a.montant<0){var l=k.ech[a.tranche];if(l)l.reduc=Math.max(0,(l.reduc||0)+a.montant);}
+  else k.ech=k.ech.filter(function(l){return l.avenant!==id;});
+  av.pop();ctrSave();renderCtr();toast('Avenant supprimé');
+}
+function donneesAvenant(c,k,a){
+  var s=k.signature,prec=(k.avenants||[]).filter(function(x){return x.n<a.n;}),sp=prec.reduce(function(t,x){return t+x.montant;},0);
+  var client=c.desig||c.nom||'',decl=String(a.decl||DECL[a.dec]||'');
+  return {av_n:String(a.n),intitule:k.intitule||CTR_TYPES[k.type],client:client,soc:c.soc||'',adr_client:c.cadr||'',Projet:majuscule(c.projet||c.nat||''),adr_projet:c.addr||'',
+    contrat_ref:s.num?'proposition d\'honoraires n°'+s.num:'contrat « '+(k.intitule||CTR_TYPES[k.type])+' »',date_signature:dateFr(s.date),av_date:dateFr(a.date),
+    av_lib:a.lib,av_objet:paras(a.objet),montant_initial:fmtE(s.montant),a_avant_prec:prec.length>0,avenants_prec:signeMt(sp),av_montant:signeMt(a.montant),
+    nouveau_total:fmtE(s.montant+sp+a.montant),av_plus:a.montant>0,av_moins:a.montant<0,av_decl:decl.charAt(0).toLowerCase()+decl.slice(1),
+    av_tranche:a.tranche!==undefined&&k.ech[a.tranche]?k.ech[a.tranche].lib:'',annee:String(a.date||isoAuj()).slice(0,4),sig_client:c.soc?c.soc+' — '+client:client};
+}
+function genAvenant(id,drive){
+  var k=actK,c=act;if(!k||!c)return;
+  var a=(k.avenants||[]).find(function(x){return x.id===id;});if(!a)return;
+  if(drive===undefined)drive=remoteReady;
+  var nom=nomDocFichier(c,'Avenant'+a.n,(k.signature&&k.signature.num)||ctrNumero(k),'.docx',a.date);
+  var choix=window.showDirectoryPicker?window.showDirectoryPicker({id:'a2m-client',mode:'readwrite'}).catch(function(e){if(e&&e.name==='AbortError')throw e;return null;}):Promise.resolve(null);
+  var dossier=null,blob;
+  choix.then(function(dir){dossier=dir;return chargerLibs();})
+  .then(function(){return remplirModele('avenant.docx',donneesAvenant(c,k,a));})
+  .then(function(b){blob=b;return enregistrerFichiers([{nom:nom,blob:b}],dossier);})
+  .then(function(mode){
+    a.word=a.word||[];if(a.word.indexOf(nom)<0)a.word.push(nom);c.upd=Date.now();sv();
+    if(drive&&remoteReady)uploadUn(c,new File([blob],nom,{type:blob.type})).catch(function(){toast('Copie Drive de l\'avenant impossible');});
+    if(actK===k)renderCtr();
+    toast('Avenant n°'+a.n+' '+(mode==='dossier'?'enregistré dans le dossier choisi':'téléchargé'));
+  })
+  .catch(function(e){if(e&&e.name==='AbortError')return;alert('L\'avenant Word n\'a pas pu être généré : '+(e&&e.message||e));});
 }
 
 // ── Paramètres : banque, délai, échéanciers par défaut, numéros, reprise ──

@@ -37,6 +37,10 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   Ils sont **fabriqués** par `outils/modeles/generer.js` (`cd outils/modeles && npm install && node generer.js`) :
   modifier le générateur puis relancer, ne pas éditer les .docx à la main. `essai.js` les remplit avec
   un client fictif pour vérification (sortie dans `outils/modeles/essais/`, non versionnée).
+- **Signature** (`k.signature` = date, version signée, montant figé, PDF) : l'échéancier est figé
+  (`fige` par tranche, `etat` : `a_facturer` / `prevue`). **Avenants** (`k.avenants`) : un « plus »
+  ajoute une tranche, un « moins » réduit une tranche (`reduc`). Total = montant signé + avenants
+  (`ctrMontant`). Avenant Word : modèle `public/modeles/avenant.docx`, sans numéro P/F.
 - **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
   uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
   Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le
