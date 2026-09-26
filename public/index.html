@@ -1242,6 +1242,7 @@ function renderTelLink(){
 function openDet(id){
   infosOuvert=null;
   act=DB.cards.find(function(c){return c.id===id;});if(!act)return;
+  if((act.contrats||[]).length&&preremplirInfos(act))sv(); // champs vides des documents : valeurs de départ tirées de la fiche
   document.getElementById('d-ref').textContent=act.ref||'';
   document.getElementById('d-name').textContent=act.nom;
   document.getElementById('d-nom-e').value=act.nom||'';
@@ -1976,12 +1977,33 @@ function renderCtrs(){
 }
 var infosOuvert=null; // bloc « Informations pour les documents » : reste tel que l'utilisateur l'a laissé
 var INFOS=[['desig','Désignation complète du client','ex : Monsieur Jean DUPONT et Madame Marie DURAND'],['soc','Société (SCI…) — facultatif','ex : SCI DUPONT ; vide pour un particulier'],['signataire','Signataire','ex : M. Dupont et Mme Durand'],['projet','Description du projet (reprise dans les documents)','ex : construction d\'une maison individuelle de plain-pied…',3],['commune','Commune du projet','ex : Brive-la-Gaillarde'],['contenance','Contenance du terrain','ex : 1 500 m²'],['lot','Lot — facultatif','ex : Lot n° 1 du plan de division']];
+// Pré-remplissage des « Informations pour les documents » à partir de la fiche :
+// seuls les champs VIDES sont remplis (jamais d'écrasement d'une valeur saisie). Retourne true si un champ a changé.
+function communeDe(adr){
+  var m=String(adr||'').match(/\b\d{5}\s+([^,\n]+)/g);if(!m)return '';
+  return m[m.length-1].replace(/^\d{5}\s+/,'').replace(/[\s.;]+$/,'').trim();
+}
+function preremplirInfos(c){
+  if(!c)return false;var chg=false,vide=function(k){return !String(c[k]||'').trim();};
+  if(vide('desig')&&String(c.nom||'').trim()){c.desig=c.nom.trim();chg=true;}
+  if(vide('signataire')&&!vide('desig')){c.signataire=c.desig;chg=true;}
+  if(vide('projet')){var p=String(c.resume||'').trim()||String(c.nat||'').trim();if(p){c.projet=p;chg=true;}}
+  if(vide('commune')){var v=communeDe(c.addr);if(v){c.commune=v;chg=true;}}
+  return chg;
+}
+// Désignation modifiée : le signataire suit tant qu'il est resté la copie de l'ancienne désignation
+function setDesig(v){
+  if(!act)return;
+  if(!String(act.signataire||'').trim()||act.signataire===act.desig)act.signataire=v;
+  sf('desig',v);renderCtrs();
+}
 function infosHtml(c){
   return '<div class="inf-l">Désignation dans les documents</div><select class="sd-inp" onchange="sf(\'moLabel\',this.value)"><option'+(c.moLabel!=='Maîtres d\'ouvrage'?' selected':'')+'>Maître d\'ouvrage</option><option'+(c.moLabel==='Maîtres d\'ouvrage'?' selected':'')+'>Maîtres d\'ouvrage</option></select>'+
     INFOS.map(function(f){
       var v=escA(c[f[0]]||'');
-      return '<div class="inf-l">'+esc(f[1])+'</div>'+(f[3]?'<textarea class="sd-inp pj-area" placeholder="'+escA(f[2])+'" onchange="sf(\''+f[0]+'\',this.value);renderCtrs()">'+esc(c[f[0]]||'')+'</textarea>'
-        :'<input class="sd-inp" placeholder="'+escA(f[2])+'" value="'+v+'" onchange="sf(\''+f[0]+'\',this.value);renderCtrs()">');
+      var ch=f[0]==='desig'?'setDesig(this.value)':'sf(\''+f[0]+'\',this.value);renderCtrs()';
+      return '<div class="inf-l">'+esc(f[1])+'</div>'+(f[3]?'<textarea class="sd-inp pj-area" placeholder="'+escA(f[2])+'" onchange="'+ch+'">'+esc(c[f[0]]||'')+'</textarea>'
+        :'<input class="sd-inp" placeholder="'+escA(f[2])+'" value="'+v+'" onchange="'+ch+'">');
     }).join('')+'<div class="rel-note">Adresse du client, adresse du chantier et parcelle : champs de la fiche (colonne de droite et « Projet »).</div>';
 }
 function infosManquantes(c){
@@ -1998,7 +2020,7 @@ function creerContrat(type){
   if(type==='LIBRE'){intitule=prompt('Intitulé de la mission libre (ex : Vues 3D, Relevé et plans existants) :','');if(!intitule)return;}
   var k=nouveauContrat(type,intitule);
   if(type==='LIBRE')k.docs=confirm('Documents « comme la mission complète » (proposition + lettre de mission détaillées) ?\nOK = comme la mission complète · Annuler = comme les missions séparées (PC / suivi)')?'A':'B';
-  act.contrats=act.contrats||[];act.contrats.push(k);act.upd=Date.now();sv();render();renderCtrs();renderHono();openCtr(k.id);
+  act.contrats=act.contrats||[];act.contrats.push(k);preremplirInfos(act);act.upd=Date.now();sv();render();renderCtrs();renderHono();openCtr(k.id);
 }
 
 // ── Éditeur de contrat ──
