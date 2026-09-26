@@ -327,14 +327,16 @@ const budget = () => [
   grand('BUDGET GLOBAL PRÉVISIONNEL : {budget} € TTC'),
   note('({budget_note})', { a: 'c', ap: 160 })
 ];
+// Titres de l'estimatif : en gras, orange foncé, 12 pt (comme le chiffrage estimatif de référence)
+const HE = t => H(t, { b: true, c: 'C85A1E', s: 24 });
 // Sections facultatives : titre et contenu disparaissent si les champs sont vides
 const debutEstimatif = () => [
   ...si('a_presentation', [
-    H('Présentation générale du projet'),
+    HE('Présentation générale du projet'),
     ...paragraphes('presentation', { a: 'j' })
   ]),
   ...si('a_est_objet', [
-    H('Objet de la mission'),
+    HE('Objet de la mission'),
     ...si('est_objet_intro', [P('{est_objet_intro}', { a: 'j' })]),
     ...liste('est_objet'),
     ...si('a_est_ctr', [note('Le détail de cette mission et son chiffrage font l\'objet du document « Proposition d\'honoraires » joint au présent dossier.', { av: 60 })])
@@ -342,14 +344,14 @@ const debutEstimatif = () => [
 ];
 const finEstimatif = () => [
   ...si('a_vigilance', [
-    H('Points de vigilance à instruire en phase diagnostic'),
+    HE('Points de vigilance à instruire en phase diagnostic'),
     ...liste('vigilance')
   ]),
-  H('Nature de l\'estimation'),
+  HE('Nature de l\'estimation'),
   ...paragraphes('nature', { a: 'j' })
 ];
 const baseDeCalcul = () => [
-  H('Base de calcul — estimatif prévisionnel des travaux'),
+  HE('Base de calcul — estimatif prévisionnel des travaux'),
   grand('{total_ttc} € TTC'),
   note('soit un ratio d\'environ {ratio} € TTC / m² sur les {surf_hab} m² de surface habitable {ratio_note}', { a: 'c', ap: 160 }),
   ...paragraphes('hypothese', { a: 'j' })
@@ -378,7 +380,7 @@ const corpsEstimatif = (totalOrange) => [
   ...debutEstimatif(),
   ...baseDeCalcul(),
   tableauLots(),
-  H('Budget global prévisionnel — Travaux et annexes financières'),
+  HE('Budget global prévisionnel — Travaux et annexes financières'),
   ...paragraphes('annexes_intro', { a: 'j' }),
   tableauAnnexes(totalOrange),
   ...budget(),

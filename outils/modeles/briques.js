@@ -40,8 +40,8 @@ const puce = (t, o = {}) => new Paragraph({
 });
 const titre = t => P(t, { a: 'c', s: 36, c: TEXTE, av: 120, ap: 60, line: 250 });
 const sousTitre = t => P(t, { a: 'c', s: 23, c: ORANGE, ap: 200 });
-const H = t => new Paragraph({
-  children: [run(t, { c: ORANGE, s: 23 })],
+const H = (t, o = {}) => new Paragraph({
+  children: [run(t, { c: o.c || ORANGE, s: o.s || 23, b: o.b })],
   spacing: { before: 220, after: 120 }, keepNext: true,
   border: { bottom: { style: BorderStyle.SINGLE, size: 6, color: ORANGE, space: 1 } }
 });

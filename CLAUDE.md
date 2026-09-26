@@ -77,6 +77,10 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   dans le tableau des lots ; annexes avec « € / m² hab. » et « Observation ». Champs : `estTextesHaut()` /
   `estTextesVig()` (fenêtre Estimatif et bloc « Textes du Word » de l'assistant) ; listes stockées en texte,
   une ligne par puce (`e.objet`, `e.vigilance`).
+  Titres de l'estimatif en gras (`HE()`, orange foncé C85A1E, 12 pt). Avertissement avant le Word si une section
+  est vide (`sectionsVides()`). Postes annexes : « Coût d'acquisition du terrain » et « Frais de notaire » en tête
+  (0 €, hors base de la provision, `ANNEXES_TERRAIN()`), ajoutés une fois aux estimatifs existants
+  (`ajouterAnnexesTerrain()`, marqueur `e.annexesTerrain`).
 - **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
   uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
   Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le

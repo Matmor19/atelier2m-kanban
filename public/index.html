@@ -921,12 +921,12 @@ window.addEventListener('pagehide',function(){
 });
 
 function setDB(p){DB=p;if(!DB.cards)DB.cards=[];if(!DB.archived)DB.archived=[];}
-function takeRemote(p){setDB(p);DB.dirty=false;var mm=corrigerMenusMm();migrateDB();saveLocal();if(mm){sv();toast('Menuiseries saisies en millimètres corrigées dans '+mm+' dossier(s)');}}
+function takeRemote(p){setDB(p);DB.dirty=false;var mm=corrigerMenusMm()+ajouterAnnexesTerrain();migrateDB();saveLocal();if(mm)sv();}
 
 function load(){
   setDB({cards:[],archived:[]});
   try{var ls=localStorage.getItem('a2m_kanban');if(ls){var p=JSON.parse(ls);if(p&&p.cards)setDB(p);}}catch(e){}
-  var mm=corrigerMenusMm();
+  var mm=corrigerMenusMm()+ajouterAnnexesTerrain();
   if(migrateDB()||mm)saveLocal();
   render();
   if(window.location.protocol==='file:')return;
@@ -2126,10 +2126,22 @@ function estDefaut(c){
     surf:c.surf||'',ratio_note:'(hors garage, terrasses et piscine)',
     hypothese:'Cette estimation, détaillée par postes de travaux dans le tableau ci-dessous, constitue une hypothèse de travail établie à partir du programme transmis par le maître d\'ouvrage et de ratios de marché observés sur des opérations comparables ('+new Date().getFullYear()+'). Elle sera affinée et actualisée à l\'issue de la phase APD, sur la base d\'un estimatif détaillé par lots (DPGF).',
     tva:2000,lots:[],alea_lib:'Aléas / imprévus de chantier',alea:500,
-    annexes_intro:'Au-delà du montant des travaux, un projet de construction comprend un certain nombre de postes annexes (taxes, raccordements, études réglementaires). Ce tableau récapitule l\'ensemble du budget prévisionnel pour une vision complète.',
-    annexes:[['Étude thermique réglementaire RE2020 (calcul complet)',25000,'Estimation, tarif de marché courant'],['Attestation RE2020 (PCMI 14-1)',18500,'Estimation, tarif de marché courant'],['Taxe d\'aménagement',null,'Estimation indicative — à confirmer auprès du service urbanisme'],['Raccordement eau potable',160000,'Estimation, tarif de marché courant'],['Raccordement électricité (Enedis)',95000,'Estimation, tarif de marché courant'],['Raccordement télécom / fibre',15000,'Estimation, tarif de marché courant'],['Assainissement',null,'']].map(function(x){return {lib:x[0],mt:x[1],obs:x[2],hp:false};}),
+    annexesTerrain:1,annexes_intro:'Au-delà du montant des travaux, un projet de construction comprend un certain nombre de postes annexes (taxes, raccordements, études réglementaires). Ce tableau récapitule l\'ensemble du budget prévisionnel pour une vision complète.',
+    annexes:ANNEXES_TERRAIN().concat([['Étude thermique réglementaire RE2020 (calcul complet)',25000,'Estimation, tarif de marché courant'],['Attestation RE2020 (PCMI 14-1)',18500,'Estimation, tarif de marché courant'],['Taxe d\'aménagement',null,'Estimation indicative — à confirmer auprès du service urbanisme'],['Raccordement eau potable',160000,'Estimation, tarif de marché courant'],['Raccordement électricité (Enedis)',95000,'Estimation, tarif de marché courant'],['Raccordement télécom / fibre',15000,'Estimation, tarif de marché courant'],['Assainissement',null,'']].map(function(x){return {lib:x[0],mt:x[1],obs:x[2],hp:false};})),
     prov_lib:'Provision pour aléas / imprévus',prov:600,budget_note:'travaux + annexes — hors honoraires de maîtrise d\'œuvre',vigilance:'',
     nature:'L\'estimation présentée constitue une évaluation prévisionnelle basée sur le programme transmis par le maître d\'ouvrage et des prix moyens de marché constatés en '+new Date().getFullYear()+' pour des opérations de construction neuve comparables. Elle pourra évoluer en fonction des relevés complémentaires, des choix techniques définitifs et des résultats de l\'étude de sol.'};
+}
+// Terrain et notaire : en tête des postes annexes, 0 € par défaut, hors base de la provision
+function ANNEXES_TERRAIN(){return [{lib:'Coût d\'acquisition du terrain',mt:0,obs:'Terrain déjà en possession du maître d\'ouvrage',hp:true},{lib:'Frais de notaire sur le terrain',mt:0,obs:'Terrain déjà en possession du maître d\'ouvrage',hp:true}];}
+// Ajout de ces deux lignes aux estimatifs existants (une seule fois : e.annexesTerrain)
+function ajouterAnnexesTerrain(){
+  var n=0;
+  (DB.cards||[]).concat(DB.archived||[]).forEach(function(c){
+    var e=c.est;if(!e||e.annexesTerrain)return;e.annexesTerrain=1;n++;
+    var A=e.annexes=e.annexes||[],a=/acquisition du terrain|achat du terrain|co[uû]t du terrain/i,b=/notaire/i;
+    ANNEXES_TERRAIN().reverse().forEach(function(x){if(!A.some(function(y){return (x.lib.indexOf('notaire')>=0?b:a).test(y.lib||'');}))A.unshift(x);});
+  });
+  return n;
 }
 function surfNum(s){var v=parseFloat(String(s||'').replace(/\s/g,'').replace(',','.'));return v>0?v:0;}
 function estTotaux(c){
@@ -2565,7 +2577,7 @@ function renderBibMenu(){
 // Les listes restent enregistrées comme texte, une ligne par puce (e.objet, e.vigilance).
 var OBJET_INTRO_DEF='La mission confiée porte sur l\'ensemble du projet, de la conception jusqu\'à la réception des travaux :';
 var OBJET_PHASES=['Relevé de l\'existant et étude de faisabilité','Esquisse (ESQ), avant-projet sommaire (APS) et avant-projet définitif (APD)','Constitution et dépôt du dossier de permis de construire (PC)','Dossier de consultation des entreprises (DCE) et analyse des offres','Direction de l\'exécution des travaux (DET) et assistance aux opérations de réception (AOR)'];
-var dpgfTOuvert=false;
+var dpgfTOuvert=true;
 function estReafficher(){if(document.getElementById('m-est').classList.contains('open'))renderEst();if(document.getElementById('m-dpgf').classList.contains('open')&&act.est.dpgf)renderDpgf();}
 function estTexte(champ,v){if(!act||!act.est)return;act.est[champ]=v;ctrSave();estReafficher();}
 function listeDe(t){return lignes(t);}
@@ -2588,7 +2600,8 @@ function editeurListe(e,champ,exemple){
 }
 function estTextesHaut(e){
   return '<div class="sec-lbl" style="margin-top:10px">Présentation générale du projet <i class="lst-fac">facultatif</i></div>'+
-    '<div class="fld"><label>Nature, composition, particularités (laisser une ligne vide entre deux paragraphes)</label><textarea rows="4" onchange="estTexte(\'presentation\',this.value)">'+esc(e.presentation||'')+'</textarea></div>'+
+    '<div class="fld"><label>Nature, composition, particularités (laisser une ligne vide entre deux paragraphes)</label><textarea rows="4" placeholder="ex : Construction d\'une maison individuelle de plain-pied de 100 m² environ, 3 chambres, garage accolé…" onchange="estTexte(\'presentation\',this.value)">'+esc(e.presentation||'')+'</textarea>'+
+      (!String(e.presentation||'').trim()&&String(act.resume||'').trim()?'<a class="lnk" onclick="estTexte(\'presentation\',act.resume)">Reprendre le résumé de la fiche</a>':'')+'</div>'+
     '<div class="sec-lbl">Objet de la mission <i class="lst-fac">facultatif</i></div>'+
     '<div class="fld"><label>Introduction</label><textarea rows="2" onchange="estTexte(\'objet_intro\',this.value)">'+esc(e.objet_intro||'')+'</textarea></div>'+
     '<div class="fld"><label>Phases de la mission (une puce par ligne)</label>'+editeurListe(e,'objet','Dépôt du permis de construire')+'</div>'+
@@ -2600,8 +2613,10 @@ function estTextesVig(e){
 // Dans l'assistant : bloc repliable avec les mêmes champs
 function dpgfTextes(e){
   var n=(paras(e.presentation).length?1:0)+(estObjetVisible(e)?1:0)+(lignes(e.vigilance).length?1:0);
-  return '<details class="ctr-tx"'+(dpgfTOuvert?' open':'')+' ontoggle="dpgfTOuvert=this.open"><summary>📄 Textes du Word « Estimatif » (facultatifs) — '+n+' / 3 section(s) remplie(s)</summary>'+estTextesHaut(e)+estTextesVig(e)+'</details>';
+  return '<details class="ctr-tx"'+(dpgfTOuvert?' open':'')+' ontoggle="dpgfTOuvert=this.open"><summary>📄 Textes du Word « Estimatif » — '+n+' / 3 section(s) remplie(s)</summary>'+
+    '<div class="rel-note" style="margin-bottom:6px">Une section laissée vide n\'apparaît pas dans le Word (titre compris).</div>'+estTextesHaut(e)+estTextesVig(e)+'</details>';
 }
+function sectionsVides(e){var v=[];if(!paras(e.presentation).length)v.push('Présentation générale du projet');if(!estObjetVisible(e))v.push('Objet de la mission (aucune phase)');if(!lignes(e.vigilance).length)v.push('Points de vigilance');return v;}
 function estObjetVisible(e){var intro=String(e.objet_intro||'').trim();return lignes(e.objet).length>0||(!!intro&&intro!==OBJET_INTRO_DEF);}
 // Bandeau en haut de la fenêtre « Estimatif »
 function estDpgfBandeau(e){
@@ -2635,10 +2650,9 @@ function renderDpgf(){
             '<td><button class="rm" title="Retirer la ligne" onclick="dpgfLigne('+l.id+',\'suppr\')">×</button></td></tr>';
         }).join('');
     }).join('')+'</table></div>';
-  document.getElementById('dpgf-body').innerHTML='<div class="mn-ttl">🧮 Assistant d\'estimation des travaux (DPGF)</div>'+q+renderMenus(d)+
+  document.getElementById('dpgf-body').innerHTML='<div class="mn-ttl">🧮 Assistant d\'estimation des travaux (DPGF)</div>'+q+dpgfTextes(e)+renderMenus(d)+
     '<div class="ctr-bar"><label class="sd-chk" style="margin:0"><input type="checkbox"'+(dpgfExclus?' checked':'')+' onchange="dpgfExclus=this.checked;renderDpgf()"><label>Afficher les lignes exclues par le questionnaire</label></label></div>'+tab+
     '<div class="fac-rec"><div><span>Travaux HT (lots)</span><b>'+fmtE(t.base||0)+' €</b></div><div><span>Aléas '+pctStr(e.alea)+' %</span><b>'+fmtE(t.alea||0)+' €</b></div><div class="cette"><span>Total travaux HT</span><b>'+fmtE(t.ht||0)+' €</b></div><div><span>TVA '+pctStr(e.tva)+' %</span><b>'+fmtE(t.tva||0)+' €</b></div><div><span>Total TTC</span><b>'+fmtE(t.ttc||0)+' €</b></div></div>'+
-    dpgfTextes(e)+
     '<div class="rel-note">Le taux d\'aléas, la TVA, les postes annexes et les autres textes se règlent dans la fenêtre « Estimatif ». '+(v.S?'Ratio : '+fmtE(Math.round((t.ht||0)/100/v.S)*100)+' € HT / m².':'')+'</div>'+
     '<div class="mbtns" style="flex-wrap:wrap"><button class="mb-c" onclick="dpgfPrix()" title="Prix, notes, nouvelles lignes et tarifs des menuiseries">Mettre à jour depuis la bibliothèque</button><button class="mb-c" onclick="exporterDpgf()">⬇ DPGF détaillé (Excel/CSV)</button><button class="mb-c" onclick="dpgfVersContrat()">➜ Envoyer vers le contrat…</button><button class="mb-c" onclick="genEstimatifSeul()">📄 Word Estimatif</button><button class="mb-s" onclick="closeSub(\'m-dpgf\');if(document.getElementById(\'m-est\').classList.contains(\'open\'))renderEst()">Fermer</button></div>';
 }
@@ -2668,6 +2682,8 @@ function dpgfVersContrat(){
 // Word « Estimatif » seul (sans générer de proposition) — même modèle que dans la génération des documents
 function genEstimatifSeul(){
   var c=act;if(!c||!c.est)return;if(!estRempli(c)){alert('L\'estimatif n\'a pas de lots chiffrés.');return;}
+  var vides=sectionsVides(c.est);
+  if(vides.length&&!confirm('Ces sections sont vides et n\'apparaîtront pas dans le Word :\n- '+vides.join('\n- ')+'\n\n(Remplissez-les dans « Textes du Word » de l\'assistant ou dans la fenêtre Estimatif.)\n\nGénérer quand même ?'))return;
   var K=(c.contrats||[]).filter(function(k){return k.statut!=='abandonne';}),k=K[K.length-1]||nouveauContrat('A');
   var num=ctrNumero(k)||c.ref||'Estimatif',nom=nomDocFichier(c,'Estimatif',num,'.docx'),blob;
   var choix=window.showDirectoryPicker?window.showDirectoryPicker({id:'a2m-client',mode:'readwrite'}).catch(function(e){if(e&&e.name==='AbortError')throw e;return null;}):Promise.resolve(null),dossier=null;
@@ -2727,7 +2743,7 @@ function donneesDoc(c,k,num,dateIso){
       total_ttc:fmtE(et.ttc||0),ratio:s&&et.ttc?fmtE(Math.round(et.ttc/100/s)*100):'—',surf_hab:e.surf||'—',ratio_note:rep(e.ratio_note),hypothese:paras(rep(e.hypothese)),
       lots:paires(lots.map(function(l,i){return {n:String(i+1),lib:l.lib,part:et.ht?partPct(l.ht,et.ht)+' %':'',ht:fmtE(l.ht)+' €',ttc:fmtE(l.ht+partDe(l.ht,e.tva||0))+' €'};})),
       total_ht:fmtE(et.ht||0),tva_taux:pctStr(e.tva),tva:fmtE(et.tva||0),annexes_intro:paras(rep(e.annexes_intro)),
-      annexes:paires(ann.map(function(x){return {lib:x.lib,mt:fmtE(x.mt)+' €',m2:s&&x.mt?fmtE(Math.round(x.mt/s))+' €':'',obs:x.obs};})),
+      annexes:paires(ann.map(function(x){return {lib:x.lib,mt:fmtE(x.mt)+' €',m2:s?fmtE(Math.round(x.mt/s))+' €':'',obs:x.obs};})),
       annexes_total:fmtE(et.annexes||0),budget:fmtE(et.budget||0),budget_note:rep(e.budget_note),a_vigilance:lignes(e.vigilance).length>0,vigilance:lignes(rep(e.vigilance)),nature:paras(rep(e.nature))});
   }
   var p=c.plu;
@@ -2752,7 +2768,8 @@ function alertesDoc(c,k,d,docs){
   if(!(k.ech||[]).some(function(l){return l.dec==='signature';}))a.push('Aucune tranche « Signature » : l\'acompte sera de 0 €.');
   if((k.ech||[]).some(function(l){return /\[commune\]/.test(l.decl||'');})&&!c.commune)a.push('La commune est vide alors qu\'elle est citée dans l\'échéancier (« Dépôt du dossier en mairie de … »).');
   if(docs.indexOf('est')>=0&&!estRempli(c))a.push('L\'estimatif n\'a pas de lots chiffrés.');
-  if(docs.indexOf('est')>=0&&c.est){var sans=(c.est.annexes||[]).filter(function(x){return !x.mt;}).map(function(x){return x.lib;});if(sans.length)a.push('Postes annexes sans montant (ils afficheront 0 €) : '+sans.join(', ')+'.');
+  if(docs.indexOf('est')>=0&&c.est&&sectionsVides(c.est).length)a.push('Estimatif — sections vides, absentes du Word : '+sectionsVides(c.est).join(', ')+'.');
+  if(docs.indexOf('est')>=0&&c.est){var sans=(c.est.annexes||[]).filter(function(x){return x.mt===null||x.mt===undefined;}).map(function(x){return x.lib;});if(sans.length)a.push('Postes annexes sans montant (ils afficheront 0 €) : '+sans.join(', ')+'.');
     var lv=(c.est.lots||[]).filter(function(l){return !l.ht;}).length;if(lv)a.push(lv+' lot(s) de travaux sans montant.');}
   return a;
 }
