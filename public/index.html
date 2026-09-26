@@ -373,13 +373,20 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .fac-rec>div{background:var(--surface2);border:1px solid var(--brd);border-radius:10px;padding:7px 9px;display:flex;flex-direction:column;gap:2px}
 .fac-rec span{font-size:8.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3)}.fac-rec b{font-size:14px;color:var(--txt)}
 .fac-rec .cette{border-color:var(--or);background:color-mix(in srgb,var(--or) 8%,var(--surface))}
+.dp-band{background:var(--surface2);border:1px solid var(--brd);border-left:3px solid var(--or);border-radius:10px;padding:8px 10px;margin:0 0 10px;font-size:11px;color:var(--txt2);line-height:1.45}
+.dp-q{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:4px 10px;align-items:end}.dp-q .sd-chk{margin:0 0 10px}
+.dp-t tr.dp-lot td{background:color-mix(in srgb,var(--or) 10%,var(--surface));font-weight:800;font-size:10.5px;color:var(--txt);padding:6px 4px}
+.dp-t td:nth-child(2){min-width:220px}.dp-q-c{white-space:nowrap}.dp-t input.man{border-color:var(--or);font-weight:700}.bib-t input.err{border-color:var(--red);color:var(--red)}
+@media(max-width:600px){.dp-t td:nth-child(2),.bib-t td:nth-child(2){min-width:150px}}
+.bib-grp{display:block;font-size:9px;color:var(--txt3);font-style:normal;padding:1px 2px}.bib-t td:nth-child(2){min-width:220px}
+.bib-lot{border:1px solid var(--brd);border-radius:10px;padding:6px 8px;margin-bottom:6px}.bib-lot summary{cursor:pointer;font-size:11.5px;color:var(--txt)}.bib-lot summary i{font-size:10px;color:var(--txt3);font-style:normal;margin-left:6px}
 .ech-t tr.off td{opacity:.45}.fac-t td{font-size:11px}.fac-act{white-space:normal;min-width:150px}
 .et-facturee{background:color-mix(in srgb,var(--m-v3d) 15%,transparent);color:var(--m-v3d)}.et-payee{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}.et-partielle{background:color-mix(in srgb,var(--amber) 15%,transparent);color:var(--amber)}
 .et-f-payee{background:color-mix(in srgb,var(--green) 15%,transparent);color:var(--green)}.et-f-retard{background:color-mix(in srgb,var(--red) 15%,transparent);color:var(--red)}.et-f-partielle{background:color-mix(in srgb,var(--amber) 15%,transparent);color:var(--amber)}.et-f-envoyee{background:color-mix(in srgb,var(--m-v3d) 15%,transparent);color:var(--m-v3d)}.et-f-avoir{background:color-mix(in srgb,var(--purple) 15%,transparent);color:var(--purple)}
 .reg-t td{white-space:nowrap}
 .ver-l a{color:var(--or);text-decoration:none}.ver-l a:hover{text-decoration:underline}
 .inf-l{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);margin:4px 0 2px}
-#m-ctr,#m-est,#m-plu,#m-gen,#m-echdef,#m-rep{z-index:210}#m-sig,#m-av,#m-fac,#m-avo,#m-paie,#m-reg{z-index:220} /* au-dessus de la fiche et des Paramètres */
+#m-ctr,#m-est,#m-plu,#m-gen,#m-echdef,#m-rep{z-index:210}#m-sig,#m-av,#m-fac,#m-avo,#m-paie,#m-reg,#m-dpgf,#m-bib{z-index:220} /* au-dessus de la fiche et des Paramètres */
 
 /* TÉLÉPHONE */
 @media (max-width:760px){
@@ -660,6 +667,8 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 <!-- MODALES CONTRATS -->
 <div class="mov" id="m-ctr"><div class="mn large"><button class="mx" onclick="closeSub('m-ctr')">×</button><div class="mn-in" id="ctr-body"></div></div></div>
 <div class="mov" id="m-est"><div class="mn large"><button class="mx" onclick="closeSub('m-est')">×</button><div class="mn-in" id="est-body"></div></div></div>
+<div class="mov" id="m-dpgf"><div class="mn large"><button class="mx" onclick="closeSub('m-dpgf');if(document.getElementById('m-est').classList.contains('open'))renderEst()">×</button><div class="mn-in" id="dpgf-body"></div></div></div>
+<div class="mov" id="m-bib"><div class="mn large"><button class="mx" onclick="closeSub('m-bib')">×</button><div class="mn-in" id="bib-body"></div></div></div>
 <div class="mov" id="m-plu"><div class="mn large"><button class="mx" onclick="closeSub('m-plu')">×</button><div class="mn-in" id="plu-body"></div></div></div>
 <div class="mov" id="m-gen"><div class="mn" style="max-width:640px"><button class="mx" onclick="closeSub('m-gen')">×</button><div class="mn-in" id="gen-body"></div></div></div>
 <div class="mov" id="m-echdef"><div class="mn large"><button class="mx" onclick="closeSub('m-echdef')">×</button><div class="mn-in" id="echdef-body"></div></div></div>
@@ -2142,15 +2151,16 @@ function lotsTypes(){var e=act&&act.est;if(!e)return;LOTS_TYPES.forEach(function
 function renderEst(){
   var e=act.est,t=estTotaux(act),s=surfNum(e.surf);
   var inp=function(ch,lib,o){o=o||{};return '<div class="fld"'+(o.st?' style="'+o.st+'"':'')+'><label>'+lib+'</label>'+(o.ta?'<textarea rows="'+o.ta+'" onchange="estSet(\''+ch+'\',this.value)">'+esc(e[ch]||'')+'</textarea>':'<input value="'+escA(o.v!==undefined?o.v:(e[ch]||''))+'" onchange="estSet(\''+ch+'\',this.value)">')+'</div>';};
-  var h='<div class="mn-ttl">📊 Estimatif des travaux</div>'+
+  var ro=!!e.dpgf,h='<div class="mn-ttl">📊 Estimatif des travaux</div>'+estDpgfBandeau(e)+
     '<div class="fg"><div class="fld"><label>Mise en page</label><select onchange="estSet(\'mise\',this.value)"><option value="A"'+(e.mise==='A'?' selected':'')+'>Comme la mission complète (colonne € / m²)</option><option value="B"'+(e.mise!=='A'?' selected':'')+'>Comme les missions séparées (colonne Observation)</option></select></div>'+inp('surf','Surface habitable (m²)')+'</div>'+
     inp('titre','Titre')+inp('sous_titre','Sous-titre (ex : Maison contemporaine plain-pied — 150 m² avec piscine)')+
     inp('presentation','Présentation du projet (laisser une ligne vide entre deux paragraphes)',{ta:5})+
     (e.mise==='A'?inp('objet_intro','Objet de la mission : phrase d\'introduction')+inp('objet','Objet de la mission — une ligne par puce (vide = section absente)',{ta:4}):'')+
     inp('ratio_note','Précision après le ratio € / m² (ex : (hors garage, cave et piscine))')+inp('hypothese','Paragraphe d\'hypothèse',{ta:3})+
     '<div class="sec-lbl" style="margin-top:10px">Lots de travaux (montants HT)</div><div class="ech-w"><table class="ech-t"><tr><th>N°</th><th>Poste de travaux</th><th>Montant HT €</th><th>Part</th><th>TTC</th><th></th></tr>'+
-    e.lots.map(function(l,i){var ttc=(l.ht||0)+partDe(l.ht||0,e.tva||0);return '<tr><td class="num">'+(i+1)+'</td><td><input value="'+escA(l.lib)+'" onchange="estLigne(\'lots\','+i+',\'lib\',this.value)"></td><td><input class="num" value="'+(l.ht!==null&&l.ht!==undefined?fmtE(l.ht):'')+'" onchange="estLigne(\'lots\','+i+',\'ht\',this.value)"></td><td class="num">'+(t.ht?partPct(l.ht||0,t.ht)+' %':'')+'</td><td class="num">'+fmtE(ttc)+' €</td><td><button class="rm" onclick="estLigne(\'lots\','+i+',\'haut\')" title="Monter">↑</button><button class="rm" onclick="estLigne(\'lots\','+i+',\'suppr\')" title="Supprimer">×</button></td></tr>';}).join('')+
-    '</table></div><div class="ctr-bar"><button class="sml-btn" style="width:auto;margin:0" onclick="estLigne(\'lots\',0,\'ajout\')">＋ Ajouter un lot</button>'+(e.lots.length?'':'<button class="sml-btn" style="width:auto;margin:0" onclick="lotsTypes()">Insérer les lots types (sans montants)</button>')+'</div>'+
+    e.lots.map(function(l,i){var ttc=(l.ht||0)+partDe(l.ht||0,e.tva||0);if(ro)return '<tr class="ech-ro"><td class="num">'+(i+1)+'</td><td>'+esc(l.lib)+'</td><td class="num">'+fmtE(l.ht||0)+' €</td><td class="num">'+(t.ht?partPct(l.ht||0,t.ht)+' %':'')+'</td><td class="num">'+fmtE(ttc)+' €</td><td></td></tr>';
+      return '<tr><td class="num">'+(i+1)+'</td><td><input value="'+escA(l.lib)+'" onchange="estLigne(\'lots\','+i+',\'lib\',this.value)"></td><td><input class="num" value="'+(l.ht!==null&&l.ht!==undefined?fmtE(l.ht):'')+'" onchange="estLigne(\'lots\','+i+',\'ht\',this.value)"></td><td class="num">'+(t.ht?partPct(l.ht||0,t.ht)+' %':'')+'</td><td class="num">'+fmtE(ttc)+' €</td><td><button class="rm" onclick="estLigne(\'lots\','+i+',\'haut\')" title="Monter">↑</button><button class="rm" onclick="estLigne(\'lots\','+i+',\'suppr\')" title="Supprimer">×</button></td></tr>';}).join('')+
+    '</table></div>'+(ro?'':'<div class="ctr-bar"><button class="sml-btn" style="width:auto;margin:0" onclick="estLigne(\'lots\',0,\'ajout\')">＋ Ajouter un lot</button>'+(e.lots.length?'':'<button class="sml-btn" style="width:auto;margin:0" onclick="lotsTypes()">Insérer les lots types (sans montants)</button>')+'</div>')+
     '<div class="fg" style="grid-template-columns:2fr 1fr 1fr">'+inp('alea_lib','Ligne d\'aléas (libellé)')+inp('alea','Aléas (% des lots)',{v:pctStr(e.alea)})+inp('tva','TVA (%)',{v:pctStr(e.tva)})+'</div>'+
     '<div class="ctr-total">Travaux : <b>'+fmtE(t.ht||0)+' € HT</b> · TVA '+fmtE(t.tva||0)+' € · <b>'+fmtE(t.ttc||0)+' € TTC</b>'+(s&&t.ttc?' · ratio '+fmtE(Math.round(t.ttc/100/s)*100)+' € TTC / m²':'')+'</div>'+
     inp('annexes_intro','Budget global : texte d\'introduction',{ta:2})+
@@ -2160,7 +2170,7 @@ function renderEst(){
     '<div class="fg">'+inp('prov_lib','Ligne de provision (libellé)')+inp('prov','Provision (%)',{v:pctStr(e.prov)})+'</div>'+
     '<div class="ctr-total">Annexes : '+fmtE(t.annexes||0)+' € TTC · <b>Budget global prévisionnel : '+fmtE(t.budget||0)+' € TTC</b></div>'+
     inp('budget_note','Précision sous le budget global')+inp('vigilance','Points de vigilance — une ligne par puce',{ta:4})+inp('nature','Nature de l\'estimation',{ta:3})+
-    '<div class="mbtns"><button class="mb-s" onclick="closeSub(\'m-est\')">Fermer</button></div>';
+    '<div class="mbtns" style="flex-wrap:wrap"><button class="mb-c" onclick="dpgfVersContrat()">➜ Envoyer vers le contrat…</button><button class="mb-c" onclick="genEstimatifSeul()">📄 Word Estimatif</button><button class="mb-s" onclick="closeSub(\'m-est\')">Fermer</button></div>';
   document.getElementById('est-body').innerHTML=h;
 }
 
@@ -2194,6 +2204,232 @@ function pluSections(p){
 }
 function estRempli(c){return !!(c.est&&(c.est.lots||[]).length&&estTotaux(c).ht>0);}
 function pluRempli(c){return !!(c.plu&&(c.plu.sections||[]).some(function(s){return lignes(s.texte).length;}));}
+
+// ════════════════════════════════════════════════════════════
+// ÉTAPE 4 : ASSISTANT D'ESTIMATION DES TRAVAUX (DPGF)
+// Bibliothèque de prix commune (DB.bib, sinon BIB_ORIGINE tirée du gabarit « Maison ossature bois »),
+// questionnaire + tableau détaillé par dossier (c.est.dpgf). Les totaux par lot alimentent c.est.lots,
+// donc l'estimatif Word existant. Prix en centimes ; quantités = nombres (2 décimales).
+// Règles de quantité : petites formules avec les variables ci-dessous, ex. « S*1.7 », « P*3.06 », « CH*2 ».
+// ════════════════════════════════════════════════════════════
+var BIB_ORIGINE=[{"n":"1","nom":"Terrassement & VRD","cond":"","lignes":[{"art":"1.01","lib":"Implantation de la construction","u":"For","pu":35000,"f":"1","grp":"","id":"1.01"},{"art":"1.02","lib":"Décapage de la terre végétale sur l'emprise du bâtiment.","u":"m2","pu":600,"f":"E*1.6975","grp":"","id":"1.02"},{"art":"1.03","lib":"Évacuation des déblais et mise en décharge.","u":"For","pu":85000,"f":"0","grp":"","id":"1.03"},{"art":"1.04","lib":"Fouilles en rigoles (50x35) pour semelles filantes.","u":"ml","pu":1800,"f":"P*0.9998","grp":"","id":"1.04"},{"art":"1.05","lib":"Tranchées réseaux (EU, EP, AEP, électricité, télécom).","u":"ml","pu":4200,"f":"5","grp":"","id":"1.05"},{"art":"1.06","lib":"Raccordement au réseau d'assainissement collectif (regard, boîte de branchement).","u":"For","pu":80000,"f":"1","cond":"EGOUT","grp":"","id":"1.06"},{"art":"1.07","lib":"Cuve de récupération des eaux pluviales enterrée, avec pompe et filtration — alimentation lave-linge et WC.","u":"For","pu":460000,"f":"1","cond":"CUVE","grp":"","id":"1.07"}],"id":"L1"},{"n":"2","nom":"Maçonnerie & Fondations","cond":"","lignes":[{"art":"2.01","lib":"Béton de fondations dosé à 350 kg/m3 pour semelles filantes (50x35), fourni et posé.","u":"ml","pu":7100,"f":"P*0.9995","grp":"","id":"2.01"},{"art":"2.02","lib":"Regard(s) et attentes évacuations EU sous dalle avant coulage.","u":"For","pu":65000,"f":"1","grp":"","id":"2.02"},{"art":"2.03","lib":"Mur de soutènement enterré, maçonnerie d'agglos, sur 1 à 2 rangs.","u":"m2","pu":4500,"f":"P*0.406","grp":"","id":"2.03"},{"art":"2.04","lib":"Enduit hydrofuge de protection sur mur enterré, 2 couches.","u":"m2","pu":3400,"f":"P*0.406","grp":"","id":"2.04"},{"art":"2.05","lib":"Dallage béton armé sur terre-plein (film polyane + treillis soudé + béton).","u":"m2","pu":10500,"f":"E*0.8165","grp":"","id":"2.05"},{"art":"2.06","lib":"Regard de branchement eaux usées, avec tampon, fourni et posé.","u":"u","pu":18000,"f":"1","grp":"","id":"2.06"},{"art":"2.07","lib":"Regard de branchement eaux pluviales, avec tampon, fourni et posé.","u":"u","pu":15000,"f":"2","grp":"","id":"2.07"}],"id":"L2"},{"n":"3","nom":"Ossature Bois","cond":"","lignes":[{"art":"3.01","lib":"Murs ossature bois porteurs 145x45, montage (hors isolation).","u":"m2","pu":8800,"f":"P*3.0625","grp":"","id":"3.01"},{"art":"3.02","lib":"Murs acrotères ossature bois 95x45 en périphérie de toiture.","u":"ml","pu":7800,"f":"P*1.0148","grp":"","id":"3.02"}],"id":"L3"},{"n":"4","nom":"Charpente & Couverture","cond":"","lignes":[{"art":"4.01","lib":"Charpente fermettes industrielles, pentes 3,5 %, fourniture et pose.","u":"m2","pu":4000,"f":"E*1.1492","grp":"","id":"4.01"},{"art":"4.02","lib":"Plaques OSB en support d'étanchéité de toiture.","u":"m2","pu":2400,"f":"E*1.1492","grp":"","id":"4.02"},{"art":"4.03","lib":"Membrane d'étanchéité PVC avec relevés en périphérie et pénétrations.","u":"m2","pu":4200,"f":"E*1.4558","grp":"","id":"4.03"},{"art":"4.04","lib":"Couvertine aluminium sur acrotères, fourniture et pose.","u":"ml","pu":3800,"f":"P*1.0208","grp":"","id":"4.04"},{"art":"4.05","lib":"Coiffes d'acrotère aluminium (angles et abouts), fourniture et pose.","u":"u","pu":4500,"f":"4","grp":"","id":"4.05"},{"art":"4.06","lib":"Boîte à eau / dauphin de raccordement de descente EP.","u":"u","pu":18500,"f":"2","grp":"","id":"4.06"},{"art":"4.07","lib":"Descente d'eaux pluviales aluminium, fourniture et pose.","u":"ml","pu":2800,"f":"7","grp":"","id":"4.07"}],"id":"L4"},{"n":"5","nom":"Isolation, Bardage & Enduit","cond":"","lignes":[{"art":"5.01","lib":"Isolation entre ossature en laine de bois, épaisseur 145 mm.","u":"m2","pu":2550,"f":"P*2.3063","grp":"","id":"5.01"},{"art":"5.02","lib":"Panneau OSB 12 mm intérieur, faisant contreventement et pare-vapeur.","u":"m2","pu":1450,"f":"P*3.8303","grp":"","id":"5.02"},{"art":"5.03","lib":"Panneau de liège 30 mm en isolation extérieure, support d'enduit.","u":"m2","pu":3400,"f":"P*4.0517","grp":"","id":"5.03"},{"art":"5.04","lib":"Enduit monocouche taloché sur liège, teinte au choix.","u":"m2","pu":4600,"f":"P*3.8303","grp":"","id":"5.04"},{"art":"5.05","lib":"Appuis de fenêtre aluminium, fourniture et pose.","u":"ml","pu":2500,"f":"10","grp":"","id":"5.05"}],"id":"L5"},{"n":"6","nom":"Doublages & Cloisons","cond":"","lignes":[{"art":"6.01","lib":"Doublage périphérique intérieur système Optima, sans isolation (vide d'air + BA13).","u":"m2","pu":2700,"f":"P*2.5378","grp":"","id":"6.01"},{"art":"6.02","lib":"Cloisons rail/montant 48, isolation 45 mm, BA13 deux faces.","u":"m2","pu":4400,"f":"S*1.168","grp":"","id":"6.02"},{"art":"6.03","lib":"Doublage BA13 sur murs de refend porteurs intérieurs (si existants).","u":"Fft","pu":85000,"f":"0","grp":"","id":"6.03"},{"art":"6.04","lib":"Faux plafond suspendu BA13 sur ossature métallique (rails/suspentes).","u":"m2","pu":2800,"f":"E*1.0296","grp":"","id":"6.04"},{"art":"6.05","lib":"Trappe de visite/accès combles, isolée.","u":"u","pu":28500,"f":"1","grp":"","id":"6.05"},{"art":"6.06","lib":"Isolation en plénum de plafond par soufflage de ouate de cellulose. Ép. 350","u":"m2","pu":2200,"f":"E*1.0296","grp":"","id":"6.06"},{"art":"6.07","lib":"Traitement des joints (bandes à joints, enduit de rebouchage), murs, cloisons et plafond BA13.","u":"m2","pu":600,"f":"S*4.6265","grp":"","id":"6.07"},{"art":"6.08","lib":"Ponçage et lissage de finition avant peinture.","u":"m2","pu":300,"f":"S*4.6265","grp":"","id":"6.08"}],"id":"L6"},{"n":"7","nom":"Fourniture Menuiseries","cond":"","lignes":[{"art":"7.01","lib":"Coulissant 2 vantaux 2 rails H 2150 mm x L 2400 mm, avec volet roulant électrique.","u":"u","pu":165000,"f":"1","grp":"","id":"7.01"},{"art":"7.02","lib":"Porte d'entrée BEL'M ACIER,  H 2150mm X L 900mm","u":"u","pu":111500,"f":"1","grp":"","id":"7.02"},{"art":"7.03","lib":"Porte de service, pvc pleine, H 2150mm X L 900mm","u":"u","pu":87500,"f":"1","grp":"","id":"7.03"},{"art":"7.04","lib":"Fenêtre 1 vantail 90x135, aluminium, avec volet roulant électrique.","u":"u","pu":76500,"f":"2","grp":"","id":"7.04"},{"art":"7.05","lib":"Fenêtre 1 vantail 70x105, aluminium, avec volet roulant électrique.","u":"u","pu":95550,"f":"1","grp":"","id":"7.05"},{"art":"7.06","lib":"Fenêtre 1 vantail 60x85, aluminium, vitrage sécurité (sans volet roulant).","u":"u","pu":41000,"f":"3","grp":"","id":"7.06"},{"art":"7.07","lib":"Fenêtre 1 vantail 120x105, aluminium, avec volet roulant électrique.","u":"u","pu":163800,"f":"1","grp":"","id":"7.07"}],"id":"L7"},{"n":"8","nom":"Pose Menuiseries","cond":"","lignes":[{"art":"8.01","lib":"Pose de la baie vitrée et des portes, y compris étanchéités selon DTU et réglages.","u":"u","pu":15000,"f":"3","grp":"","id":"8.01"},{"art":"8.02","lib":"Pose des fenêtres, y compris étanchéités selon DTU et réglages.","u":"u","pu":9000,"f":"6","grp":"","id":"8.02"},{"art":"8.03","lib":"Mise en œuvre de joints silicone + mousse précomprimée selon DTU.","u":"For","pu":25000,"f":"1","grp":"","id":"8.03"},{"art":"8.04","lib":"Pose et réglages des volets roulants électriques.","u":"u","pu":6500,"f":"8","grp":"","id":"8.04"},{"art":"8.05","lib":"Alimentation et raccordement des volets roulants électriques.","u":"u","pu":9500,"f":"8","grp":"","id":"8.05"}],"id":"L8"},{"n":"9","nom":"Menuiseries Intérieures","cond":"","lignes":[{"art":"9.01","lib":"Bloc-porte fin de chantier 83x204, huisserie et quincaillerie comprises, fourni posé.","u":"u","pu":23500,"f":"6","grp":"","id":"9.01"},{"art":"9.02","lib":"Placard coulissant (2 chambres + entrée), fourni posé, non aménagé intérieurement.","u":"u","pu":58000,"f":"3","grp":"","id":"9.02"}],"id":"L9"},{"n":"10","nom":"Électricité","cond":"","lignes":[{"art":"10.01","lib":"Mise à la terre générale.","u":"u","pu":15000,"f":"1","grp":"","id":"10.01"},{"art":"10.02","lib":"Tableau de distribution électrique (disjoncteurs, rangée modulaire), y compris raccordements.","u":"u","pu":143000,"f":"1","grp":"","id":"10.02"},{"art":"10.03","lib":"Conformité et attestation CONSUEL.","u":"u","pu":7000,"f":"1","grp":"","id":"10.03"},{"art":"10.04","lib":"Liaison équipotentielle.","u":"u","pu":8500,"f":"1","grp":"","id":"10.04"},{"art":"10.05","lib":"Tableau de communication, grade 1.","u":"u","pu":35500,"f":"1","grp":"","id":"10.05"},{"art":"10.06","lib":"Branchement/alimentation chauffe-eau ou ballon thermodynamique.","u":"u","pu":13500,"f":"1","grp":"","id":"10.06"},{"art":"10.07","lib":"Centre commandé en va-et-vient (éclairage).","u":"u","pu":10500,"f":"1","grp":"Entrée avec placard","id":"10.07"},{"art":"10.08","lib":"Prise de courant 16A+T.","u":"u","pu":7000,"f":"1","grp":"Entrée avec placard","id":"10.08"},{"art":"10.09","lib":"Point sonnette/interphone.","u":"u","pu":9000,"f":"1","grp":"Entrée avec placard","id":"10.09"},{"art":"10.10","lib":"Centre commandé par 3 boutons-poussoirs (télérupteur).","u":"u","pu":13500,"f":"1","grp":"Salon-séjour","id":"10.10"},{"art":"10.11","lib":"Centre en va-et-vient.","u":"u","pu":10500,"f":"1","grp":"Salon-séjour","id":"10.11"},{"art":"10.12","lib":"Prise de courant 16A+T.","u":"u","pu":7000,"f":"6","grp":"Salon-séjour","id":"10.12"},{"art":"10.13","lib":"Prise TV (coaxial).","u":"u","pu":7500,"f":"1","grp":"Salon-séjour","id":"10.13"},{"art":"10.14","lib":"Prise RJ45.","u":"u","pu":7500,"f":"1","grp":"Salon-séjour","id":"10.14"},{"art":"10.15","lib":"Centre en simple allumage.","u":"u","pu":7800,"f":"1","grp":"Cuisine","id":"10.15"},{"art":"10.16","lib":"Centre en va-et-vient.","u":"u","pu":10500,"f":"1","grp":"Cuisine","id":"10.16"},{"art":"10.17","lib":"Prise de courant 16A+T.","u":"u","pu":7000,"f":"6","grp":"Cuisine","id":"10.17"},{"art":"10.18","lib":"Prise de courant 16A+T dédiée hotte.","u":"u","pu":7000,"f":"1","grp":"Cuisine","id":"10.18"},{"art":"10.19","lib":"Alimentation lave-vaisselle (prise 16A+T dédiée).","u":"u","pu":7500,"f":"1","grp":"Cuisine","id":"10.19"},{"art":"10.20","lib":"Attente cuisinière (sortie de câble 32A+T).","u":"u","pu":9000,"f":"1","grp":"Cuisine","id":"10.20"},{"art":"10.21","lib":"Alimentation four (prise 20A+T dédiée).","u":"u","pu":7500,"f":"1","grp":"Cuisine","id":"10.21"},{"art":"10.22","lib":"Centre en va-et-vient.","u":"u","pu":10500,"f":"1","grp":"Cellier-buanderie","id":"10.22"},{"art":"10.23","lib":"Prise de courant 16A+T.","u":"u","pu":7000,"f":"3","grp":"Cellier-buanderie","id":"10.23"},{"art":"10.24","lib":"Prise lave-linge/sèche-linge (16A+T dédiées).","u":"u","pu":7500,"f":"2","grp":"Cellier-buanderie","id":"10.24"},{"art":"10.25","lib":"Centre en va-et-vient.","u":"u","pu":10500,"f":"CH*1","grp":"Par chambre","id":"10.25"},{"art":"10.26","lib":"Prise de courant 16A+T.","u":"u","pu":7000,"f":"CH*3","grp":"Par chambre","id":"10.26"},{"art":"10.27","lib":"Prise RJ45.","u":"u","pu":7500,"f":"CH*1","grp":"Par chambre","id":"10.27"},{"art":"10.28","lib":"Prise TV (coaxial).","u":"u","pu":7500,"f":"CH*1","grp":"Par chambre","id":"10.28"},{"art":"10.37","lib":"Centre en simple allumage (éclairage étanche IP44).","u":"u","pu":7800,"f":"SDE*1","grp":"Par salle d'eau","id":"10.37"},{"art":"10.38","lib":"Alimentation applique/miroir au-dessus vasque.","u":"u","pu":10500,"f":"SDE*1","grp":"Par salle d'eau","id":"10.38"},{"art":"10.39","lib":"Prise de courant 16A+T (hors volumes, avec protection dédiée).","u":"u","pu":7000,"f":"SDE*3","grp":"Par salle d'eau","id":"10.39"},{"art":"10.40","lib":"Alimentation sèche-serviette électrique.","u":"u","pu":6500,"f":"SDE*1","grp":"Par salle d'eau","id":"10.40"},{"art":"10.41","lib":"Mise à la terre / liaison équipotentielle du receveur.","u":"u","pu":4500,"f":"SDE*1","grp":"Par salle d'eau","id":"10.41"},{"art":"10.47","lib":"Centre en simple allumage.","u":"u","pu":7800,"f":"1","grp":"WC suspendu séparé (avec lave-main)","id":"10.47"},{"art":"10.48","lib":"Centre en va-et-vient.","u":"u","pu":10500,"f":"1","grp":"Dégagement","id":"10.48"},{"art":"10.49","lib":"Prise de courant 16A+T.","u":"u","pu":7000,"f":"1","grp":"Dégagement","id":"10.49"},{"art":"10.50","lib":"Détecteur avertisseur autonome de fumée (DAAF).","u":"u","pu":5500,"f":"1","grp":"Dégagement","id":"10.50"},{"art":"10.51","lib":"Point lumineux avec détecteur de mouvement/crépusculaire.","u":"u","pu":11000,"f":"2","grp":"Extérieur","id":"10.51"},{"art":"10.52","lib":"Prise de courant 16A+T étanche IP44.","u":"u","pu":7500,"f":"2","grp":"Extérieur","id":"10.52"},{"art":"10.53","lib":"Carillon/sonnette.","u":"u","pu":9000,"f":"1","grp":"Extérieur","id":"10.53"},{"art":"10.54","lib":"Raccordement et alimentation volet roulant électrique.","u":"u","pu":7500,"f":"8","grp":"Divers — volets roulants & équipements","id":"10.54"},{"art":"10.55","lib":"Alimentation climatisation réversible (PAC air/air).","u":"u","pu":15000,"f":"4","grp":"Divers — volets roulants & équipements","id":"10.55"},{"art":"10.56","lib":"Alimentation électrique de la VMC simple flux hygroréglable.","u":"u","pu":8000,"f":"1","grp":"VMC","id":"10.56"},{"art":"10.57","lib":"Bouche d'extraction supplémentaire (raccordement si motorisée).","u":"u","pu":6000,"f":"5","grp":"VMC","id":"10.57"}],"id":"L10"},{"n":"11","nom":"Fourniture Sanitaires","cond":"","lignes":[{"art":"11.01","lib":"Receveur extra-plat 90x90, blanc, avec bonde et kit de fixation.","u":"u","pu":32000,"f":"SDE*1","grp":"","id":"11.01"},{"art":"11.02","lib":"Meuble simple vasque avec miroir (salle d'eau).","u":"u","pu":45000,"f":"SDE*1","grp":"","id":"11.02"},{"art":"11.03","lib":"Sèche-serviette électrique.","u":"u","pu":28000,"f":"SDE*1","grp":"","id":"11.03"},{"art":"11.04","lib":"Robinetterie mitigeur thermostatique douche.","u":"u","pu":17000,"f":"SDE*1","grp":"","id":"11.04"},{"art":"11.05","lib":"WC suspendu complet, bâti-support inclus.","u":"u","pu":34000,"f":"WC","grp":"","id":"11.05"},{"art":"11.06","lib":"Lave-main complet avec robinetterie.","u":"u","pu":17500,"f":"1","grp":"","id":"11.06"},{"art":"11.07","lib":"WC à poser complet (salle d'eau séparée).","u":"u","pu":23000,"f":"1","grp":"","id":"11.07"}],"id":"L11"},{"n":"12","nom":"Plomberie & Pose Sanitaires","cond":"","lignes":[{"art":"12.01","lib":"Alimentation générale et nourrice (collecteur), y compris petites fournitures.","u":"ens","pu":98000,"f":"1","grp":"","id":"12.01"},{"art":"12.02","lib":"Cuisine — alimentation/évacuation évier, attente lave-vaisselle.","u":"For","pu":65000,"f":"1","grp":"","id":"12.02"},{"art":"12.03","lib":"Cellier-buanderie — alimentation/évacuation lave-linge, point d'eau.","u":"For","pu":42000,"f":"1","grp":"","id":"12.03"},{"art":"12.04","lib":"Salle d'eau — pose receveur, meuble, robinetterie, évacuation (par salle d'eau).","u":"ens","pu":48000,"f":"SDE*1","grp":"","id":"12.04"},{"art":"12.06","lib":"Pose WC suspendu séparé, y compris raccordement lave-main.","u":"ens","pu":32000,"f":"WC","grp":"","id":"12.06"},{"art":"12.07","lib":"Pose WC salle d'eau séparée, alimentation/évacuation.","u":"ens","pu":18000,"f":"1","grp":"","id":"12.07"},{"art":"12.08","lib":"Ventilation des chutes EU/EV avec raccordement en toiture.","u":"u","pu":20000,"f":"2","grp":"","id":"12.08"}],"id":"L12"},{"n":"13","nom":"Chauffage, Ventilation & ECS","cond":"","lignes":[{"art":"13.01","lib":"Climatisation réversible air/air, groupe extérieur + unités intérieures (fourniture).","u":"ens","pu":480000,"f":"1","grp":"","id":"13.01"},{"art":"13.02","lib":"Pose, mise en service et garantie de la climatisation réversible.","u":"ens","pu":200000,"f":"1","grp":"","id":"13.02"},{"art":"13.03","lib":"VMC simple flux hygroréglable (caisson, bouches, gaines).","u":"For","pu":64000,"f":"1","grp":"","id":"13.03"},{"art":"13.04","lib":"Ballon thermodynamique 200-270 L, fourni posé.","u":"u","pu":238500,"f":"1","grp":"","id":"13.04"}],"id":"L13"},{"n":"14","nom":"Revêtements de Sols","cond":"","lignes":[{"art":"14.01","lib":"Isolation sous chape en sol, épaisseur 6 cm.","u":"m2","pu":1600,"f":"S*1.0","grp":"","id":"14.01"},{"art":"14.02","lib":"Chape fluide (anhydrite), toute surface.","u":"m2","pu":2600,"f":"S*1.0","grp":"","id":"14.02"},{"art":"14.03","lib":"Parquet contrecollé collé, toute surface, fourni posé.","u":"m2","pu":8600,"f":"S*1.0","grp":"","id":"14.03"}],"id":"L14"},{"n":"15","nom":"Cuisine","cond":"","lignes":[{"art":"15.01","lib":"Linéaire d'ameublement cuisine (meubles bas/hauts, plan de travail), 2 linéaires face à face.","u":"ml","pu":108500,"f":"4.4","grp":"","id":"15.01"},{"art":"15.02","lib":"Électroménager complet (four, plaque, hotte, réfrigérateur, lave-vaisselle).","u":"For","pu":185000,"f":"1","grp":"","id":"15.02"},{"art":"15.03","lib":"Pose de l'ensemble (ameublement + électroménager).","u":"For","pu":120000,"f":"1","grp":"","id":"15.03"}],"id":"L15"},{"n":"16","nom":"Peinture & Finitions","cond":"","lignes":[{"art":"16.01","lib":"Peinture murs et plafonds, 2 couches, toute la maison.","u":"m2","pu":1500,"f":"S*4.6265","grp":"","id":"16.01"},{"art":"16.02","lib":"Plinthes bois, fournies posées.","u":"ml","pu":900,"f":"S*1.5095","grp":"","id":"16.02"}],"id":"L16"},{"n":"17","nom":"Aménagement Extérieur — Terrasse Bois","cond":"TER>0","lignes":[{"art":"17.01","lib":"Plots PVC réglables pour terrasse bois, hauteur réglable selon dénivelé.","u":"u","pu":1400,"f":"TER*3","cond":"TER>0","grp":"","id":"17.01"},{"art":"17.02","lib":"Lambourdes bois classe 4 traitées autoclave sur plots réglables, entraxe 40 à 50 cm.","u":"ml","pu":1600,"f":"TER*2.2","cond":"TER>0","grp":"","id":"17.02"},{"art":"17.03","lib":"Lames de terrasse bois exotique (ou composite au choix), fourniture et pose sur lambourdes, vis inox.","u":"m2","pu":7800,"f":"TER","cond":"TER>0","grp":"","id":"17.03"},{"art":"17.04","lib":"Plinthes / profilés de finition de rive en bois assorti.","u":"ml","pu":1800,"f":"4*rac(TER)","cond":"TER>0","grp":"","id":"17.04"},{"art":"17.05","lib":"Découpes, ajustages et fixations invisibles (clips inox).","u":"Fft","pu":35000,"f":"1","cond":"TER>0","grp":"","id":"17.05"}],"id":"L17"},{"n":"18","nom":"Piscine — bassin et équipements","cond":"PISC>0","lignes":[{"art":"18.01","lib":"Terrassement et bassin béton coque/maçonné (prix pour environ 50 m² de bassin)","u":"ens","f":"PISC/50","pu":3900867,"id":"18.01"},{"art":"18.02","lib":"Filtration, traitement de l'eau, local technique","u":"ens","f":"1","pu":789461,"id":"18.02"},{"art":"18.03","lib":"Margelles et plage périphérique","u":"m2","f":"PISC*1.2","pu":13467,"id":"18.03"},{"art":"18.04","lib":"Structure de couverture amovible/télescopique","u":"ens","f":"COUV","pu":5108278,"id":"18.04"},{"art":"18.05","lib":"Chauffage piscine (pompe à chaleur piscine dédiée)","u":"u","f":"1","pu":450000,"id":"18.05"},{"art":"18.06","lib":"Électricité piscine : pompe, filtration, éclairage subaquatique, mise à la terre (NF C 15-100 §702)","u":"ens","f":"1","pu":205030,"id":"18.06"}],"id":"L18"},{"n":"19","nom":"Photovoltaïque","cond":"PV>0","lignes":[{"art":"19.01","lib":"Panneaux photovoltaïques (fourniture + pose, hors onduleur/raccordement)","u":"kWc","f":"PV","pu":133299,"id":"19.01"},{"art":"19.02","lib":"Onduleur(s) + raccordement réseau / démarches Enedis","u":"ens","f":"1","pu":258519,"id":"19.02"},{"art":"19.03","lib":"Tableau électrique : intégration de la production photovoltaïque","u":"ens","f":"1","pu":190385,"id":"19.03"}],"id":"L19"},{"n":"20","nom":"Accessibilité PMR — dispositions transversales","cond":"PMR","lignes":[{"art":"20.01","lib":"Cheminements extérieurs sans ressaut, pente ≤ 5 %, largeur ≥ 1,20 m","u":"ml","f":"P","pu":9500,"id":"20.01"},{"art":"20.02","lib":"Élargissement des portes et dégagements (couloirs ≥ 1,20 m)","u":"ens","f":"1","pu":180000,"id":"20.02"},{"art":"20.03","lib":"Interrupteurs et prises à hauteur adaptée (0,90 à 1,30 m)","u":"ens","f":"1","pu":65000,"id":"20.03"},{"art":"20.04","lib":"Revêtements de sol antidérapants et sans seuil","u":"ens","f":"1","pu":120000,"id":"20.04"},{"art":"20.05","lib":"Douche à l'italienne PMR, receveur extra-plat, barres d'appui","u":"u","f":"1","pu":521258,"id":"20.05"},{"art":"20.06","lib":"WC suspendu PMR (hauteur rehaussée, barres d'appui) + lave-main","u":"u","f":"1","pu":154748,"id":"20.06"}],"id":"L20"},{"n":"21","nom":"Garage","cond":"GAR>0","lignes":[{"art":"21.01","lib":"Dalle béton sur terre-plein du garage","u":"m2","f":"GAR","pu":8306,"id":"21.01"},{"art":"21.02","lib":"Porte de garage sectionnelle motorisée","u":"u","f":"1","pu":426667,"id":"21.02"},{"art":"21.03","lib":"Sol garage (résine ou carrelage technique)","u":"m2","f":"GAR","pu":5767,"id":"21.03"},{"art":"21.04","lib":"Électricité garage : points lumineux, prises, portail motorisé","u":"ens","f":"1","pu":69564,"id":"21.04"}],"id":"L21"},{"n":"22","nom":"Aménagements extérieurs","cond":"EXT","lignes":[{"art":"22.01","lib":"Voirie d'accès / allée carrossable","u":"m2","f":"VOIRIE","pu":6500,"id":"22.01"},{"art":"22.02","lib":"Clôture et portail (accès véhicule + piéton)","u":"ens","f":"1","pu":650000,"id":"22.02"},{"art":"22.03","lib":"Espaces verts / plantations d'essences locales","u":"ens","f":"1","pu":450000,"id":"22.03"},{"art":"22.04","lib":"Réseau d'arrosage / points d'eau extérieurs","u":"ens","f":"1","pu":120000,"id":"22.04"}],"id":"L22"},{"n":"23","nom":"Assainissement non collectif","cond":"ANC","lignes":[{"art":"23.01","lib":"Étude de filière d'assainissement (avis SPANC)","u":"ens","f":"1","pu":60000,"id":"23.01"},{"art":"23.02","lib":"Installation d'assainissement autonome (micro-station ou filière agréée)","u":"ens","f":"1","pu":950000,"id":"23.02"}],"id":"L23"}];
+var DPGF_VARS=[
+  ['S','Surface habitable (m²)','n',100],['N','Nombre de niveaux (1 = plain-pied)','n',1],
+  ['E','Emprise au sol (m²) — vide = surface ÷ niveaux','a',null],['P','Périmètre des murs extérieurs (ml) — vide = estimé','a',null],
+  ['CH','Nombre de chambres','n',3],['SDE','Nombre de salles d\'eau / de bains','n',1],['WC','Nombre de WC suspendus séparés','n',1],
+  ['GAR','Garage : surface (m², 0 = aucun)','n',0],['TER','Terrasse bois : surface (m², 0 = aucune)','n',0],
+  ['PISC','Piscine : surface du bassin (m², 0 = aucune)','n',0],['COUV','Couverture de piscine amovible','c',0],
+  ['PV','Photovoltaïque (kWc, 0 = aucun)','n',0],['ANC','Assainissement autonome (pas de tout-à-l\'égout)','c',0],
+  ['CUVE','Cuve de récupération des eaux pluviales','c',0],['PMR','Accessibilité PMR','c',0],
+  ['EXT','Aménagements extérieurs (clôture, portail, espaces verts)','c',0],['VOIRIE','Voirie d\'accès : surface (m²)','n',0]];
+var DPGF_AIDE='Variables : S surface habitable · E emprise au sol · P périmètre des murs · N niveaux · CH chambres · SDE salles d\'eau · WC · GAR garage (m²) · TER terrasse (m²) · PISC bassin (m²) · COUV couverture piscine (0/1) · PV kWc · ANC assainissement autonome (0/1) · EGOUT tout-à-l\'égout (0/1) · CUVE · PMR · EXT (0/1) · VOIRIE (m²). Opérations : + − × (*) ÷ (/) et parenthèses, rac(x) racine carrée, arr(x) arrondi supérieur. Condition : ex. « PISC>0 », « CUVE », « N>1 » (vide = toujours).';
+
+// ── Lecture sécurisée des formules (aucun code exécuté : seulement nombres, variables, opérations) ──
+function evalExpr(src,vars){
+  var s=String(src===undefined||src===null?'':src).replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-'),i=0;
+  function sp(){while(i<s.length&&/\s/.test(s[i]))i++;}
+  function num(){
+    sp();var m=/^(\d+(?:[.,]\d+)?)/.exec(s.slice(i));if(m){i+=m[0].length;return parseFloat(m[1].replace(',','.'));}
+    m=/^([A-Za-z_]+)/.exec(s.slice(i));
+    if(m){i+=m[0].length;var id=m[1],idu=id.toUpperCase();sp();
+      if(s[i]==='('){i++;var v=cmp();sp();if(s[i]!==')')throw new Error('parenthèse manquante');i++;
+        if(id.toLowerCase()==='rac')return Math.sqrt(Math.max(0,v));if(id.toLowerCase()==='arr')return Math.ceil(v-1e-9);throw new Error('fonction inconnue : '+id);}
+      if(!(idu in vars))throw new Error('variable inconnue : '+id);return +vars[idu]||0;}
+    if(s[i]==='('){i++;var r=cmp();sp();if(s[i]!==')')throw new Error('parenthèse manquante');i++;return r;}
+    if(s[i]==='-'){i++;return -num();}
+    throw new Error('formule illisible');
+  }
+  function mul(){var v=num();for(;;){sp();if(s[i]==='*'){i++;v*=num();}else if(s[i]==='/'){i++;var d=num();v=d?v/d:0;}else return v;}}
+  function add(){var v=mul();for(;;){sp();if(s[i]==='+'){i++;v+=mul();}else if(s[i]==='-'){i++;v-=mul();}else return v;}}
+  function cmp(){var v=add();sp();var m=/^(>=|<=|>|<|==|=)/.exec(s.slice(i));if(!m)return v;i+=m[0].length;var w=add();
+    return {'>':v>w,'<':v<w,'>=':v>=w,'<=':v<=w,'==':v===w,'=':v===w}[m[1]]?1:0;}
+  if(!s.trim())return 0;
+  var r=cmp();sp();if(i<s.length)throw new Error('caractère inattendu « '+s[i]+' »');return r;
+}
+function condOK(cond,vars){if(!String(cond||'').trim())return true;try{return evalExpr(cond,vars)>0;}catch(e){return false;}}
+function formuleOK(f,cond){var v=varsDe({});try{evalExpr(f,v);if(cond)evalExpr(cond,v);return '';}catch(e){return e.message;}}
+function varsDe(rep){
+  var v={};DPGF_VARS.forEach(function(x){var r=rep[x[0]];v[x[0]]=x[2]==='c'?(r?1:0):(r===null||r===undefined||r===''?x[3]:+r);});
+  v.N=Math.max(1,v.N||1);v.S=v.S||0;
+  if(!(rep.E>0))v.E=Math.round(v.S/v.N*100)/100;
+  if(!(rep.P>0))v.P=Math.round(4.65*Math.sqrt(v.E)*100)/100;
+  v.EGOUT=v.ANC?0:1;return v;
+}
+function q2(x){return Math.round((+x||0)*100)/100;}
+function fmtQ(x){return String(q2(x)).replace('.',',');}
+function formuleFr(f){return String(f||'').replace(/\*/g,' × ').replace(/\//g,' ÷ ').replace(/(\d)\.(\d)/g,'$1,$2');}
+
+// ── Bibliothèque de prix (commune à tous les dossiers) ──
+function bib(){return DB.bib||BIB_ORIGINE;}
+function bibModifiable(){if(!DB.bib)DB.bib=JSON.parse(JSON.stringify(BIB_ORIGINE));return DB.bib;}
+function trierLots(L){return L.slice().sort(function(a,b){return (parseFloat(a.n)||999)-(parseFloat(b.n)||999);});}
+var bibOuverts={},dpgfQOuvert=true;
+function openBib(){renderBib();showM('m-bib');}
+function bibSet(li,xi,champ,v){
+  var B=bibModifiable(),lot=B[li];if(!lot)return;
+  if(xi<0){if(champ==='suppr'){if(!confirm('Supprimer le lot « '+lot.nom+' » et ses '+lot.lignes.length+' lignes de la bibliothèque ?'))return;B.splice(li,1);}
+    else if(champ==='ajout')lot.lignes.push({id:'x'+nouvelId(),art:lot.n+'.'+String(lot.lignes.length+1).padStart(2,'0'),lib:'Nouvelle ligne',u:'u',pu:0,f:'1'});
+    else lot[champ]=v;}
+  else{var x=lot.lignes[xi];if(!x)return;
+    if(champ==='suppr')lot.lignes.splice(xi,1);else if(champ==='pu')x.pu=cts(v)||0;else x[champ]=v;}
+  sv();renderBib();
+}
+function bibNouveauLot(){var B=bibModifiable(),n=String(B.reduce(function(m,l){return Math.max(m,parseFloat(l.n)||0);},0)+1);B.push({id:'L'+nouvelId(),n:n,nom:'Nouveau lot',cond:'',lignes:[]});sv();renderBib();}
+function bibOrigine(){if(!confirm('Remplacer toute la bibliothèque par celle d\'origine (gabarit « Maison ossature bois ») ?\nVos modifications de la bibliothèque seront perdues. Les estimatifs déjà faits dans les dossiers ne changent pas.'))return;delete DB.bib;sv();renderBib();}
+function renderBib(){
+  var B=bib(),n=B.reduce(function(a,l){return a+l.lignes.length;},0);
+  document.getElementById('bib-body').innerHTML='<div class="mn-ttl">📚 Bibliothèque de prix <span class="ctr-st">'+B.length+' lots · '+n+' lignes'+(DB.bib?' · modifiée':' · d\'origine')+'</span></div>'+
+    '<div class="rel-note" style="margin-bottom:8px">Commune à tous les dossiers et enregistrée avec vos données (Google Drive). Chaque nouvel estimatif part de cette bibliothèque ; modifier un prix ici ne change pas les estimatifs déjà faits (bouton « Mettre à jour les prix » dans l\'assistant).<br>'+esc(DPGF_AIDE)+'</div>'+
+    trierLots(B).map(function(lot){var li=B.indexOf(lot);
+      return '<details class="bib-lot"'+(bibOuverts[lot.id]?' open':'')+' ontoggle="bibOuverts[\''+escA(String(lot.id))+'\']=this.open"><summary><b>Lot '+esc(lot.n)+' — '+esc(lot.nom)+'</b> <i>'+lot.lignes.length+' ligne(s)'+(lot.cond?' · si '+esc(lot.cond):'')+'</i></summary>'+
+        '<div class="fg" style="grid-template-columns:70px 1fr 1fr auto;align-items:end"><div class="fld"><label>N°</label><input value="'+escA(lot.n)+'" onchange="bibSet('+li+',-1,\'n\',this.value)"></div><div class="fld"><label>Nom du lot</label><input value="'+escA(lot.nom)+'" onchange="bibSet('+li+',-1,\'nom\',this.value)"></div>'+
+        '<div class="fld"><label>Condition du lot (vide = toujours)</label><input value="'+escA(lot.cond||'')+'" onchange="bibSet('+li+',-1,\'cond\',this.value)"></div><button class="del-btn" style="width:auto;margin:0 0 10px" onclick="bibSet('+li+',-1,\'suppr\')">Supprimer le lot</button></div>'+
+        '<div class="ech-w"><table class="ech-t bib-t"><tr><th>Art.</th><th>Désignation</th><th>U</th><th>PU HT €</th><th>Règle de quantité</th><th>Condition</th><th></th></tr>'+
+        lot.lignes.map(function(x,xi){var err=formuleOK(x.f,x.cond),h='onchange="bibSet('+li+','+xi+',\'';
+          return '<tr><td><input style="width:52px" value="'+escA(x.art)+'" '+h+'art\',this.value)"></td><td><input value="'+escA(x.lib)+'" '+h+'lib\',this.value)" title="'+escA(x.lib)+'">'+(x.grp?'<i class="bib-grp">'+esc(x.grp)+'</i>':'')+'</td><td><input style="width:44px" value="'+escA(x.u)+'" '+h+'u\',this.value)"></td>'+
+            '<td><input class="num" value="'+fmtE(x.pu)+'" '+h+'pu\',this.value)"></td><td><input'+(err?' class="err" title="'+escA(err)+'"':'')+' value="'+escA(x.f)+'" '+h+'f\',this.value)"></td><td><input style="width:80px" value="'+escA(x.cond||'')+'" '+h+'cond\',this.value)"></td>'+
+            '<td><button class="rm" title="Supprimer la ligne" onclick="bibSet('+li+','+xi+',\'suppr\')">×</button></td></tr>';}).join('')+
+        '</table></div><button class="sml-btn" style="width:auto" onclick="bibSet('+li+',-1,\'ajout\')">＋ Ajouter une ligne</button></details>';}).join('')+
+    '<div class="mbtns"><button class="mb-c" onclick="bibOrigine()">Bibliothèque d\'origine</button><button class="mb-c" onclick="bibNouveauLot()">＋ Nouveau lot</button><button class="mb-s" onclick="closeSub(\'m-bib\')">Fermer</button></div>';
+}
+
+// ── Estimatif détaillé du dossier ──
+function dpgfCreer(c){
+  var rep={};DPGF_VARS.forEach(function(x){rep[x[0]]=x[2]==='c'?0:x[3];});rep.E=null;rep.P=null;
+  var s=surfNum((c.est&&c.est.surf)||c.surf);if(s)rep.S=s;
+  var L=[];
+  trierLots(bib()).forEach(function(lot){lot.lignes.forEach(function(x){
+    L.push({id:L.length+1,bib:x.id,lotId:lot.id,lot:lot.n,lotNom:lot.nom,lotCond:lot.cond||'',art:x.art,lib:x.lib,u:x.u,pu:x.pu,f:x.f,cond:x.cond||'',grp:x.grp||'',q:0,man:false,off:false});
+  });});
+  return {rep:rep,lignes:L,seq:L.length,cree:isoAuj()};
+}
+function dpgfCalc(c){
+  var d=c.est.dpgf,v=varsDe(d.rep);
+  d.lignes.forEach(function(l){
+    l.off=!(condOK(l.lotCond,v)&&(!l.bib||condOK(l.cond,v)));
+    if(l.bib&&!l.man){try{l.q=q2(evalExpr(l.f,v));l.err='';}catch(e){l.q=0;l.err=e.message;}}
+  });
+  // Les totaux par lot deviennent les lots de l'estimatif (Word « Estimatif » et lien avec le contrat)
+  var lots=[],idx={};
+  d.lignes.forEach(function(l){if(l.off)return;var k=l.lot+'|'+l.lotNom;if(!(k in idx)){idx[k]=lots.length;lots.push({n:l.lot,lib:l.lotNom,ht:0});}lots[idx[k]].ht+=Math.round(l.q*l.pu);});
+  lots.sort(function(a,b){return (parseFloat(a.n)||999)-(parseFloat(b.n)||999);});
+  c.est.lots=lots.filter(function(x){return x.ht>0;}).map(function(x){return {lib:x.lib,ht:x.ht};});
+  c.est.source='dpgf';c.est.surf=String(v.S).replace('.',',');
+  return v;
+}
+var dpgfExclus=false;
+function openDpgf(){
+  var c=act;if(!c)return;
+  if(!c.est)c.est=estDefaut(c);
+  if(!c.est.dpgf){
+    if((c.est.lots||[]).length&&c.est.source!=='dpgf'){
+      if(!confirm('Cet estimatif a déjà '+c.est.lots.length+' lot(s) saisi(s) à la main.\nL\'assistant va les remplacer par les totaux du DPGF détaillé (les lots actuels sont conservés de côté et pourront être restaurés).\nContinuer ?'))return;
+      c.est.lotsManuel=JSON.parse(JSON.stringify(c.est.lots));
+    }
+    if(c.est.dpgfCache){c.est.dpgf=c.est.dpgfCache;delete c.est.dpgfCache;}else c.est.dpgf=dpgfCreer(c);
+  }
+  dpgfCalc(c);ctrSave();renderDpgf();showM('m-dpgf');
+}
+function dpgfRep(k,v,type){var d=act.est.dpgf;d.rep[k]=type==='c'?(v?1:0):(v===''?null:(parseFloat(String(v).replace(',','.'))||0));dpgfCalc(act);ctrSave();renderDpgf();if(document.getElementById('m-est').classList.contains('open'))renderEst();}
+function dpgfLigne(id,champ,v){
+  var d=act.est.dpgf,l=d.lignes.find(function(x){return x.id===id;});if(!l)return;
+  if(champ==='q'){var n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));l.q=isNaN(n)?0:q2(n);l.man=true;}
+  else if(champ==='auto'){l.man=false;}
+  else if(champ==='pu')l.pu=cts(v)||0;
+  else if(champ==='suppr'){if(!confirm('Retirer la ligne « '+l.lib+' » de cet estimatif ?'))return;d.lignes=d.lignes.filter(function(x){return x.id!==id;});}
+  else l[champ]=v;
+  dpgfCalc(act);ctrSave();renderDpgf();
+}
+function dpgfAjout(refId){
+  var d=act.est.dpgf,r=d.lignes.find(function(x){return x.id===refId;});if(!r)return;var lot=r.lot,lotNom=r.lotNom,lotCond=r.lotCond||'';
+  var n=d.lignes.filter(function(x){return x.lot===lot;}).length+1;
+  d.seq=Math.max(d.seq||0,d.lignes.reduce(function(m,x){return Math.max(m,x.id);},0))+1;
+  d.lignes.push({id:d.seq,lotCond:lotCond,bib:null,lot:lot,lotNom:lotNom,art:lot+'.'+String(n).padStart(2,'0')+'b',lib:'Ligne ajoutée',u:'u',pu:0,f:'',cond:'',grp:'',q:1,man:true,off:false});
+  dpgfCalc(act);ctrSave();renderDpgf();
+}
+function dpgfPrix(){
+  var d=act.est.dpgf,idx={},n=0;bib().forEach(function(lot){lot.lignes.forEach(function(x){idx[x.id]=x;});});
+  d.lignes.forEach(function(l){var x=l.bib&&idx[l.bib];if(x&&x.pu!==l.pu){l.pu=x.pu;n++;}});
+  dpgfCalc(act);ctrSave();renderDpgf();toast(n?n+' prix mis à jour depuis la bibliothèque':'Les prix sont déjà ceux de la bibliothèque');
+}
+function dpgfManuel(){
+  var e=act.est;if(!confirm('Repasser l\'estimatif en saisie manuelle des lots ?\nLe DPGF détaillé est conservé de côté ; les lots actuels (totaux du DPGF) restent modifiables à la main.'))return;
+  e.dpgfCache=e.dpgf;delete e.dpgf;e.source='manuel';ctrSave();closeSub('m-dpgf');renderEst();
+}
+function estRestaurerManuel(){
+  var e=act.est;if(!e.lotsManuel)return;if(!confirm('Remettre les '+e.lotsManuel.length+' lot(s) saisis à la main avant l\'assistant ? Les lots actuels seront remplacés.'))return;
+  e.lots=e.lotsManuel;delete e.lotsManuel;ctrSave();renderEst();
+}
+// Bandeau en haut de la fenêtre « Estimatif »
+function estDpgfBandeau(e){
+  if(e.dpgf)return '<div class="dp-band"><b>🧮 Estimatif détaillé (DPGF)</b> — '+e.dpgf.lignes.filter(function(l){return !l.off;}).length+' lignes chiffrées. Les lots ci-dessous sont les totaux du tableau détaillé : pour les modifier, ouvrez l\'assistant.'+
+    '<div class="ctr-bar" style="margin:6px 0 0"><button class="sml-btn" style="width:auto;margin:0" onclick="openDpgf()">Ouvrir l\'assistant</button><button class="sml-btn" style="width:auto;margin:0" onclick="dpgfManuel()">Repasser en saisie manuelle des lots</button></div></div>';
+  return '<div class="dp-band">Chiffrer les travaux ligne par ligne à partir de la bibliothèque de prix : un questionnaire (surface, chambres, garage, piscine…) calcule les quantités.'+
+    '<div class="ctr-bar" style="margin:6px 0 0"><button class="sml-btn" style="width:auto;margin:0" onclick="openDpgf()">🧮 '+(e.dpgfCache?'Reprendre l\'estimatif détaillé (DPGF)':'Assistant d\'estimation (DPGF)…')+'</button>'+
+    (e.lotsManuel?'<button class="sml-btn" style="width:auto;margin:0" onclick="estRestaurerManuel()">Restaurer les lots saisis à la main</button>':'')+'</div></div>';
+}
+function renderDpgf(){
+  var c=act,d=c.est.dpgf,v=varsDe(d.rep),e=c.est,t=estTotaux(c);
+  var q='<details class="ctr-tx"'+(dpgfQOuvert?' open':'')+' ontoggle="dpgfQOuvert=this.open"><summary>Questionnaire du projet</summary><div class="dp-q">'+DPGF_VARS.map(function(x){
+    var val=d.rep[x[0]];
+    if(x[2]==='c')return '<label class="sd-chk"><input type="checkbox"'+(val?' checked':'')+' onchange="dpgfRep(\''+x[0]+'\',this.checked,\'c\')"><label>'+esc(x[1])+'</label></label>';
+    return '<div class="fld"><label>'+esc(x[1])+'</label><input type="number" min="0" step="any" value="'+(val===null||val===undefined?'':val)+'"'+(x[2]==='a'?' placeholder="'+fmtQ(v[x[0]])+' (auto)"':'')+' onchange="dpgfRep(\''+x[0]+'\',this.value,\''+x[2]+'\')"></div>';
+  }).join('')+'</div><div class="rel-note">Emprise retenue : '+fmtQ(v.E)+' m² · périmètre retenu : '+fmtQ(v.P)+' ml. Les quantités se recalculent à chaque réponse, sauf celles modifiées à la main (✎).</div></details>';
+  var lots=[],idx={};
+  d.lignes.forEach(function(l){var k=l.lot+'|'+l.lotNom;if(!(k in idx)){idx[k]=lots.length;lots.push({n:l.lot,nom:l.lotNom,L:[],ht:0,actives:0});}var g=lots[idx[k]];g.L.push(l);if(!l.off){g.ht+=Math.round(l.q*l.pu);g.actives++;}});
+  lots.sort(function(a,b){return (parseFloat(a.n)||999)-(parseFloat(b.n)||999);});
+  var tab='<div class="ech-w"><table class="ech-t dp-t"><tr><th>Art.</th><th>Désignation</th><th>U</th><th>Quantité</th><th>PU HT €</th><th>Montant HT</th><th></th></tr>'+
+    lots.filter(function(g){return g.actives||dpgfExclus;}).map(function(g){
+      return '<tr class="dp-lot"><td colspan="5">LOT '+esc(g.n)+' — '+esc(g.nom)+'</td><td class="num">'+fmtE(g.ht)+' €</td><td><button class="rm" title="Ajouter une ligne à ce lot" onclick="dpgfAjout('+g.L[0].id+')">＋</button></td></tr>'+
+        g.L.filter(function(l){return !l.off||dpgfExclus;}).map(function(l){
+          var h='onchange="dpgfLigne('+l.id+',\'';
+          return '<tr'+(l.off?' class="off"':'')+'><td>'+esc(l.art)+'</td><td><input value="'+escA(l.lib)+'" title="'+escA(l.lib)+'" '+h+'lib\',this.value)">'+(l.grp?'<i class="bib-grp">'+esc(l.grp)+'</i>':'')+'</td><td>'+esc(l.u)+'</td>'+
+            '<td class="dp-q-c"><input class="num'+(l.man?' man':'')+'" value="'+fmtQ(l.q)+'" '+h+'q\',this.value)" title="'+(l.bib?'Règle : '+escA(formuleFr(l.f)):'Ligne ajoutée')+(l.err?' — erreur : '+escA(l.err):'')+'">'+(l.man&&l.bib?'<a class="lnk" title="Revenir à la quantité calculée ('+escA(formuleFr(l.f))+')" onclick="dpgfLigne('+l.id+',\'auto\')">✎↺</a>':'')+'</td>'+
+            '<td><input class="num" value="'+fmtE(l.pu)+'" '+h+'pu\',this.value)"></td><td class="num">'+(l.off?'<i>exclue</i>':fmtE(Math.round(l.q*l.pu))+' €')+'</td>'+
+            '<td><button class="rm" title="Retirer la ligne" onclick="dpgfLigne('+l.id+',\'suppr\')">×</button></td></tr>';
+        }).join('');
+    }).join('')+'</table></div>';
+  document.getElementById('dpgf-body').innerHTML='<div class="mn-ttl">🧮 Assistant d\'estimation des travaux (DPGF)</div>'+q+
+    '<div class="ctr-bar"><label class="sd-chk" style="margin:0"><input type="checkbox"'+(dpgfExclus?' checked':'')+' onchange="dpgfExclus=this.checked;renderDpgf()"><label>Afficher les lignes exclues par le questionnaire</label></label></div>'+tab+
+    '<div class="fac-rec"><div><span>Travaux HT (lots)</span><b>'+fmtE(t.base||0)+' €</b></div><div><span>Aléas '+pctStr(e.alea)+' %</span><b>'+fmtE(t.alea||0)+' €</b></div><div class="cette"><span>Total travaux HT</span><b>'+fmtE(t.ht||0)+' €</b></div><div><span>TVA '+pctStr(e.tva)+' %</span><b>'+fmtE(t.tva||0)+' €</b></div><div><span>Total TTC</span><b>'+fmtE(t.ttc||0)+' €</b></div></div>'+
+    '<div class="rel-note">Le taux d\'aléas, la TVA, les postes annexes et les textes se règlent dans la fenêtre « Estimatif ». '+(v.S?'Ratio : '+fmtE(Math.round((t.ht||0)/100/v.S)*100)+' € HT / m².':'')+'</div>'+
+    '<div class="mbtns" style="flex-wrap:wrap"><button class="mb-c" onclick="dpgfPrix()">Mettre à jour les prix depuis la bibliothèque</button><button class="mb-c" onclick="exporterDpgf()">⬇ DPGF détaillé (Excel/CSV)</button><button class="mb-c" onclick="dpgfVersContrat()">➜ Envoyer vers le contrat…</button><button class="mb-c" onclick="genEstimatifSeul()">📄 Word Estimatif</button><button class="mb-s" onclick="closeSub(\'m-dpgf\');if(document.getElementById(\'m-est\').classList.contains(\'open\'))renderEst()">Fermer</button></div>';
+}
+function exporterDpgf(){
+  var c=act,d=c.est.dpgf,t=estTotaux(c),e=function(v){v=String(v===undefined?'':v);return /[;"\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;},m=function(x){return (x<0?'-':'')+Math.floor(Math.abs(x)/100)+','+String(Math.abs(x)%100).padStart(2,'0');};
+  var L=[['DPGF — '+(c.nom||'')+(c.ref?' ('+c.ref+')':'')],['Surface habitable (m²)',fmtQ(varsDe(d.rep).S)],[],['Lot','Article','Désignation','Unité','Quantité','Prix unitaire HT','Montant HT']],cur=null,st=0;
+  var actives=d.lignes.filter(function(l){return !l.off;}).slice().sort(function(a,b){return (parseFloat(a.lot)||999)-(parseFloat(b.lot)||999);});
+  actives.forEach(function(l,i){
+    if(cur!==l.lot){cur=l.lot;st=0;L.push(['LOT '+l.lot+' — '+l.lotNom]);}
+    var mt=Math.round(l.q*l.pu);st+=mt;L.push([l.lot,l.art,l.lib,l.u,fmtQ(l.q),m(l.pu),m(mt)]);
+    if(!actives[i+1]||actives[i+1].lot!==l.lot)L.push(['','','Total HT du lot '+l.lot,'','','',m(st)]);
+  });
+  L.push([],['','','Total travaux HT (lots)','','','',m(t.base||0)],['','','Aléas '+pctStr(c.est.alea)+' %','','','',m(t.alea||0)],['','','TOTAL TRAVAUX HT','','','',m(t.ht||0)],['','','TVA '+pctStr(c.est.tva)+' %','','','',m(t.tva||0)],['','','TOTAL TRAVAUX TTC','','','',m(t.ttc||0)]);
+  var csv='﻿'+L.map(function(r){return r.map(e).join(';');}).join('\r\n');
+  var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));a.download=nomDocFichier(c,'DPGF',c.ref||'Dossier','.csv');document.body.appendChild(a);a.click();a.remove();
+}
+function dpgfVersContrat(){
+  var c=act,t=estTotaux(c).ht;if(!t){alert('L\'estimatif est vide.');return;}
+  var K=(c.contrats||[]).filter(function(k){return !estSigne(k)&&k.statut!=='abandonne';});
+  if(!K.length){alert('Aucun contrat modifiable dans ce dossier (créez d\'abord un contrat ; un contrat signé est figé).');return;}
+  var k=K[0];
+  if(K.length>1){var ch=prompt('Montant des travaux : '+fmtE(t)+' € HT.\nÀ quel contrat l\'appliquer ?\n'+K.map(function(x,i){return (i+1)+'. '+x.intitule;}).join('\n'),'1');if(!ch)return;k=K[parseInt(ch,10)-1];if(!k){alert('Numéro de contrat invalide.');return;}}
+  else if(!confirm('Reprendre '+fmtE(t)+' € HT comme montant des travaux du contrat « '+k.intitule+' » ?\n(Le contrat passe en calcul « travaux × taux » ; les honoraires sont recalculés avec son taux.)'))return;
+  k.calc='taux';k.travaux=t;ctrSave();
+  toast('Contrat « '+k.intitule+' » : travaux '+fmtE(t)+' € HT'+(k.taux?' → honoraires '+fmtE(ctrMontant(k))+' € HT':' — indiquez le taux d\'honoraires dans le contrat'));
+}
+// Word « Estimatif » seul (sans générer de proposition) — même modèle que dans la génération des documents
+function genEstimatifSeul(){
+  var c=act;if(!c||!c.est)return;if(!estRempli(c)){alert('L\'estimatif n\'a pas de lots chiffrés.');return;}
+  var K=(c.contrats||[]).filter(function(k){return k.statut!=='abandonne';}),k=K[K.length-1]||nouveauContrat('A');
+  var num=ctrNumero(k)||c.ref||'Estimatif',nom=nomDocFichier(c,'Estimatif',num,'.docx'),blob;
+  var choix=window.showDirectoryPicker?window.showDirectoryPicker({id:'a2m-client',mode:'readwrite'}).catch(function(e){if(e&&e.name==='AbortError')throw e;return null;}):Promise.resolve(null),dossier=null;
+  choix.then(function(d){dossier=d;return chargerLibs();})
+  .then(function(){return remplirModele(TPL.est(k,c),donneesDoc(c,k,num,isoAuj()));})
+  .then(function(b){blob=b;return enregistrerFichiers([{nom:nom,blob:b}],dossier);})
+  .then(function(mode){if(remoteReady)uploadUn(c,new File([blob],nom,{type:blob.type})).catch(function(){});toast(nom+' '+(mode==='dossier'?'enregistré':'téléchargé'));})
+  .catch(function(e){if(e&&e.name!=='AbortError')alert('Word impossible : '+(e&&e.message||e));});
+}
 
 // ── Données envoyées aux modèles Word ──
 function paires(l){var r=[];for(var i=0;i<l.length;i+=2)r.push({o:l[i],e:l[i+1]||null});return r;}
@@ -2966,6 +3202,7 @@ function renderReglages(){
     '<div class="fld"><label>Émetteur des factures</label><input id="p-emet" value="'+escA(r.emetteur||EMETTEUR_DEF)+'"></div>'+
     '<div class="rel-note">Utilisés dans les lettres de mission et les factures. Enregistrés avec vos dossiers dans Google Drive, jamais dans le code du site.</div>'+
     '<div class="sec-lbl" style="margin-top:12px">Échéanciers par défaut</div><div class="ctr-bar">'+Object.keys(CTR_TYPES).map(function(t){return '<button class="sml-btn" style="width:auto;margin:0" onclick="openEchDef(\''+t+'\')">'+CTR_ICO[t]+' '+CTR_TYPES[t]+'</button>';}).join('')+'</div>'+
+    '<div class="sec-lbl" style="margin-top:12px">Estimation des travaux</div><button class="sml-btn" onclick="openBib()">📚 Bibliothèque de prix (DPGF)</button>'+
     '<div class="sec-lbl" style="margin-top:12px">Numérotation</div><div id="p-nums" class="rel-note">Prochains numéros : lecture…</div><button class="sml-btn" onclick="openRegistre()">📒 Registre des factures et avoirs</button>'+
     '<div class="sec-lbl" style="margin-top:12px">Reprise des dossiers existants</div><button class="sml-btn" onclick="repriseApercu()">Créer les contrats à partir des honoraires déjà saisis…</button>';
   lireCompteurs();

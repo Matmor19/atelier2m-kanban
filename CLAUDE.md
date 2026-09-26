@@ -48,6 +48,16 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   Les tranches passent « à facturer » via `majDeclencheurs()` (checklists, colonnes, dates) ou le bouton
   « Étape atteinte ». Modèle `public/modeles/facture.docx` (factures et avoirs). Un dossier facturé ne
   peut pas être supprimé.
+- **Estimation des travaux (DPGF)** : bibliothèque de prix commune `DB.bib` (sinon `BIB_ORIGINE`, tirée du
+  gabarit « Maison ossature bois » : 23 lots, 150 lignes ; lots 18 à 23 optionnels), modifiable dans
+  Paramètres → « Bibliothèque de prix ». Chaque ligne a une règle de quantité (`f`, ex. `P*3.0625`, `CH*2`)
+  et une condition (`cond`, ex. `PISC>0`), lues par `evalExpr()` (aucun `eval`). Variables : `DPGF_VARS`
+  (S, N, E, P, CH, SDE, WC, GAR, TER, PISC, COUV, PV, ANC, EGOUT, CUVE, PMR, EXT, VOIRIE). Par dossier :
+  `c.est.dpgf = {rep, lignes}` (copie des lignes ; `man` = quantité saisie à la main, `off` = exclue).
+  `dpgfCalc()` recalcule et remplit `c.est.lots` avec les totaux par lot (`est.source='dpgf'`) : le Word
+  « Estimatif » et les contrats utilisent donc le même total. Les lots saisis à la main avant l'assistant
+  sont gardés dans `est.lotsManuel`. Boutons : export CSV, « Envoyer vers le contrat » (`calc='taux'`,
+  `travaux`), Word Estimatif seul (`genEstimatifSeul`, sans numéro).
 - **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
   uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
   Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le
