@@ -49,7 +49,7 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   « Étape atteinte ». Modèle `public/modeles/facture.docx` (factures et avoirs). Un dossier facturé ne
   peut pas être supprimé.
 - **Estimation des travaux (DPGF)** : bibliothèque de prix commune `DB.bib` (sinon `BIB_ORIGINE`, tirée du
-  gabarit « Maison ossature bois » : 23 lots, 154 lignes ; lots 18 à 23 optionnels), modifiable dans
+  gabarit « Maison ossature bois » : 23 lots, 155 lignes ; lots 18 à 23 optionnels), modifiable dans
   Paramètres → « Bibliothèque de prix ». Chaque ligne a une règle de quantité (`f`, ex. `P*3.0625`, `CH*2`)
   et une condition (`cond`, ex. `PISC>0`), lues par `evalExpr()` (aucun `eval`). Variables : `DPGF_VARS`
   (S, N, E, P, CH, SDE, WC, GAR, TER, PISC, COUV, PV, ANC, EGOUT, CUVE, PMR, EXT, VOIRIE). Par dossier :
@@ -66,6 +66,9 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   (lignes `menu`, non modifiables dans le tableau). Tarifs : `DB.bibMenu` (sinon `MENU_ORIGINE`), copiés
   dans le dossier (`d.menuTarif`). « Mettre à jour depuis la bibliothèque » (`dpgfPrix`) reprend prix, notes,
   tarifs et nouvelles lignes (sauf celles retirées : `d.retirees`).
+  Version 3 (`BIB_MAJ_V3` / `bibMaj3()`, `BIB_V=3`) : prix vérifiés (double comptages PMR, photovoltaïque,
+  volets ; couverture piscine, porte de garage, fenêtres 7.05/7.07 ; faïence des salles d'eau 14.04). Une
+  mise à jour de version ne change une valeur que si elle est encore l'ancienne (`ancienPu`, `ancienF`).
 - **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
   uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
   Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le

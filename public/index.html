@@ -2269,7 +2269,7 @@ function formuleFr(f){return String(f||'').replace(/\*/g,' × ').replace(/\//g,'
 
 // Version 2 de la bibliothèque : lot 21 Garage complété (fondations, murs, charpente-couverture) et dalle au prix de la maison.
 // Appliquée à BIB_ORIGINE au chargement et, une seule fois, à une bibliothèque déjà modifiée (DB.bib) sans toucher aux prix changés.
-var BIB_V=2;
+var BIB_V=3;
 var BIB_MAJ_V2={lot:'L21',lignes:[
   {id:'21.01',art:'21.01',lib:'Dalle béton armé sur terre-plein du garage (film polyane + treillis soudé + béton).',u:'m2',pu:10500,ancienPu:8306,f:'GAR',obs:'Même composition et même prix que la dalle de la maison (2.05) : pas de raison de la compter moins cher (l\'isolation de la maison est dans le lot 14, pas dans la dalle).'},
   {id:'gar-fond',art:'21.02',lib:'Fondations du garage : fouilles en rigoles et semelles filantes béton 50x35 sous les murs.',u:'ml',pu:8900,f:'PGAR',obs:'Prix de la maison : fouilles 18 € (1.04) + béton de fondations 71 € (2.01) par mètre.'},
@@ -2291,10 +2291,37 @@ function bibMaj(B){
     prec=x;
   });
 }
-bibMaj(BIB_ORIGINE);
+// Version 3 : vérification des prix (double comptages, prix du grand projet de 300 m² ramenés à une maison courante, fenêtres du gabarit).
+// Un prix ou une règle n'est changé que s'il a encore l'ancienne valeur (les changements faits par l'utilisateur sont gardés).
+var BIB_MAJ_V3=[
+  {lot:'L18',id:'18.04',ancienPu:5108278,pu:1500000,lib:'Couverture de piscine : abri télescopique bas ou volet automatique.',obs:'Prix corrigé (avant : 51 083 €, grand abri spécial du projet de 300 m²). Une bâche 4 saisons coûte environ 2 000 € : à ajuster selon le projet.'},
+  {lot:'L20',id:'20.05',ancienPu:521258,pu:150000,lib:'Supplément douche PMR : receveur extra-plat de plain-pied, barres d\'appui, siège relevable.',obs:'Supplément par rapport à la douche standard déjà comptée (lots 11 et 12). Avant : 5 213 € (douche complète comptée deux fois).'},
+  {lot:'L20',id:'20.06',ancienPu:154748,pu:45000,lib:'Supplément WC PMR : cuvette rehaussée, barres d\'appui.',obs:'Supplément par rapport au WC standard déjà compté (lots 11 et 12). Avant : 1 547 €.'},
+  {lot:'L20',id:'20.01',ancienF:'P',f:'20',obs:'Longueur des cheminements accessibles (stationnement, entrée) : 20 ml par défaut, à ajuster. Avant : calculée avec le périmètre de la maison.'},
+  {lot:'L19',id:'19.03',ancienPu:190385,pu:50000,lib:'Protections et intégration de la production photovoltaïque au tableau électrique.',obs:'Le tableau électrique de la maison est déjà compté en 10.02. Avant : 1 904 € (tableau complet du projet de 300 m²).'},
+  {lot:'L10',id:'10.54',ancienF:'8',f:'0',obs:'Mis à 0 : l\'alimentation et le raccordement des volets roulants sont déjà comptés en 8.05.'},
+  {lot:'L21',id:'21.02',ancienPu:426667,pu:280000,lib:'Porte de garage sectionnelle motorisée (standard 2,40 × 2,00 m).',obs:'Porte standard. Grande porte de garage double : environ 4 300 €.'},
+  {lot:'L14',id:'14.03',ancienF:'S*1.0',f:'S-SDE*4',obs:'Surface habitable moins le sol des salles d\'eau (carrelé, ligne 14.04).'},
+  {lot:'L14',id:'sde-carr',apres:'14.03',nouvelle:{art:'14.04',lib:'Carrelage de sol et faïence murale des salles d\'eau (douche et murs humides), fourni posé.',u:'m2',pu:7000,f:'SDE*12',obs:'Environ 4 m² de sol + 8 m² de faïence par salle d\'eau.'}},
+  {lot:'L7',id:'7.05',ancienPu:95550,pu:67000,obs:'Prix corrigé (avant : 955,50 €, plus cher que la fenêtre 90x135).'},
+  {lot:'L7',id:'7.07',ancienPu:163800,pu:79000,obs:'Prix corrigé (avant : 1 638 €, le double de la fenêtre 90x135 pour la même surface).'}];
+function bibMaj3(B){
+  BIB_MAJ_V3.forEach(function(m){
+    var lot=B.find(function(l){return l.id===m.lot;});if(!lot)return;var x=lot.lignes.find(function(y){return y.id===m.id;});
+    if(m.nouvelle){if(x)return;var p=lot.lignes.findIndex(function(y){return y.id===m.apres;});lot.lignes.splice(p<0?lot.lignes.length:p+1,0,Object.assign({id:m.id,grp:''},m.nouvelle));return;}
+    if(!x)return;
+    if(m.ancienPu!==undefined){if(x.pu!==m.ancienPu)return;x.pu=m.pu;}
+    if(m.ancienF!==undefined){if(x.f!==m.ancienF)return;x.f=m.f;}
+    if(m.lib)x.lib=m.lib;if(m.obs)x.obs=m.obs;
+  });
+}
+// Anciennes désignations : dans un dossier, une désignation non retouchée suit la bibliothèque
+var LIB_AVANT={};
+BIB_ORIGINE.forEach(function(l){l.lignes.forEach(function(x){LIB_AVANT[x.id]=x.lib;});});
+bibMaj(BIB_ORIGINE);bibMaj3(BIB_ORIGINE);
 
 // ── Bibliothèque de prix (commune à tous les dossiers) ──
-function bib(){if(DB.bib&&(DB.bibV||1)<BIB_V){bibMaj(DB.bib);DB.bibV=BIB_V;}return DB.bib||BIB_ORIGINE;}
+function bib(){if(DB.bib&&(DB.bibV||1)<BIB_V){if((DB.bibV||1)<2)bibMaj(DB.bib);bibMaj3(DB.bib);DB.bibV=BIB_V;}return DB.bib||BIB_ORIGINE;}
 function bibModifiable(){if(!DB.bib){DB.bib=JSON.parse(JSON.stringify(BIB_ORIGINE));DB.bibV=BIB_V;}return bib();}
 function trierLots(L){return L.slice().sort(function(a,b){return (parseFloat(a.n)||999)-(parseFloat(b.n)||999);});}
 var bibOuverts={},dpgfQOuvert=true;
@@ -2338,7 +2365,7 @@ function dpgfCreer(c){
   });});
   return {rep:rep,lignes:L,seq:L.length,menus:[],cree:isoAuj()};
 }
-function ligneDeBib(x,lot,id){return {id:id,bib:x.id,lotId:lot.id,lot:lot.n,lotNom:lot.nom,lotCond:lot.cond||'',art:x.art,lib:x.lib,u:x.u,pu:x.pu,f:x.f,cond:x.cond||'',grp:x.grp||'',obs:x.obs||'',q:0,man:false,off:false};
+function ligneDeBib(x,lot,id){return {id:id,bib:x.id,lotId:lot.id,lot:lot.n,lotNom:lot.nom,lotCond:lot.cond||'',art:x.art,lib:x.lib,libBib:x.lib,u:x.u,pu:x.pu,f:x.f,cond:x.cond||'',grp:x.grp||'',obs:x.obs||'',q:0,man:false,off:false};
 }
 function dpgfCalc(c){
   var d=c.est.dpgf,v=varsDe(d.rep);
@@ -2391,7 +2418,8 @@ function dpgfPrix(){
   d.lignes.forEach(function(l){if(l.bib)dans[l.bib]=l;});(d.retirees||[]).forEach(function(x){ret[x]=1;});
   trierLots(bib()).forEach(function(lot){lot.lignes.forEach(function(x){
     var l=dans[x.id];
-    if(l){if(x.pu!==l.pu){l.pu=x.pu;n++;}l.obs=x.obs||'';if(l.art!==x.art&&l.lot===lot.n)l.art=x.art;if(!l.man){l.f=x.f;l.cond=x.cond||'';}return;}
+    if(l){if(x.pu!==l.pu){l.pu=x.pu;n++;}l.obs=x.obs||'';
+      if(l.lib!==x.lib&&(l.libBib!==undefined?l.lib===l.libBib:l.lib===LIB_AVANT[x.id]))l.lib=x.lib;l.libBib=x.lib;if(l.art!==x.art&&l.lot===lot.n)l.art=x.art;if(!l.man){l.f=x.f;l.cond=x.cond||'';}return;}
     if(ret[x.id])return;
     d.seq=Math.max(d.seq||0,d.lignes.reduce(function(m,y){return Math.max(m,y.id);},0))+1;
     var nl=ligneDeBib(x,lot,d.seq),pos=-1;
@@ -2418,11 +2446,14 @@ function estRestaurerManuel(){
 var MENU_TYPES=[['fen','Fenêtre','fen'],['pf','Porte-fenêtre','fen'],['baie','Baie coulissante','porte'],['fixe','Châssis fixe','fen'],['entree','Porte d\'entrée','porte'],['service','Porte de service','porte']];
 var MENU_MATS=[['alu','Alu','alu'],['pvc','PVC','PVC'],['bois','Bois','bois'],['mixte','Mixte (bois-alu)','mixte bois-alu']];
 var MENU_OCCS=[['','Aucune'],['vre','Volet roulant électrique'],['vrm','Volet roulant manuel'],['vb','Volet battant']];
-var MENU_ORIGINE={mat:{alu:48000,pvc:33000,bois:52000,mixte:70000},coef:{fen:100,pf:110,baie:80,fixe:75,entree:130,service:100},smin:1,
+var MENU_ORIGINE={mat:{alu:42000,pvc:33000,bois:52000,mixte:70000},coef:{fen:100,pf:110,baie:60,fixe:75,entree:130,service:100},smin:1,
   occF:{vre:22000,vrm:12000,vb:15000},occM:{vre:7000,vrm:6000,vb:18000},tele:8000,pose:{fen:9000,porte:15000,vre:16000,vrm:6500,vb:8000},poseOn:1};
 var MENU_CATALOGUE=['7.01','7.02','7.03','7.04','7.05','7.06','7.07','8.01','8.02','8.04','8.05']; // lignes fixes remplacées par le configurateur
 var dpgfMOuvert=true;
-function tarifMenu(){return DB.bibMenu||MENU_ORIGINE;}
+function tarifMenu(){
+  var T=DB.bibMenu;if(T&&!T.v3){if(T.mat.alu===48000)T.mat.alu=42000;if(T.coef.baie===80)T.coef.baie=60;T.v3=1;} // calage sur les prix du gabarit
+  return T||MENU_ORIGINE;
+}
 function lib2(liste,k){var x=liste.find(function(y){return y[0]===k;});return x?x[1]:'';}
 function menuPrix(m,T){
   var S=(+m.l||0)*(+m.h||0)/10000,Sf=Math.max(S,T.smin||0);
