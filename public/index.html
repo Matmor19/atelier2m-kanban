@@ -381,6 +381,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .dp-menu td{background:color-mix(in srgb,var(--or) 4%,transparent)}.dp-menu td:nth-child(2){font-size:11px;color:var(--txt)}.dp-obs{font-style:italic}
 .mn-c{border:1px solid var(--brd);border-radius:10px;padding:8px 10px 4px;margin-bottom:6px;background:var(--surface)}
 .mn-h{display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--txt);margin-bottom:6px}.mn-h span{font-size:11px;color:var(--txt2)}.mn-h .mn-b{margin-left:auto;white-space:nowrap}
+.mn-err{border-color:var(--red)}.mn-h .mn-alerte{flex-basis:100%;color:var(--red);font-weight:700}
 .mn-c .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:15px;padding:0 4px}.mn-c .rm:hover{color:var(--or)}
 .mn-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(125px,1fr));gap:0 8px}.mn-g .fld{margin-bottom:6px}.mn-g .fld input,.mn-g .fld select{padding:6px 8px;font-size:12px}
 .bib-grp{display:block;font-size:9px;color:var(--txt3);font-style:normal;padding:1px 2px}.bib-t td:nth-child(2){min-width:220px}
@@ -918,12 +919,13 @@ window.addEventListener('pagehide',function(){
 });
 
 function setDB(p){DB=p;if(!DB.cards)DB.cards=[];if(!DB.archived)DB.archived=[];}
-function takeRemote(p){setDB(p);DB.dirty=false;migrateDB();saveLocal();}
+function takeRemote(p){setDB(p);DB.dirty=false;var mm=corrigerMenusMm();migrateDB();saveLocal();if(mm){sv();toast('Menuiseries saisies en millimètres corrigées dans '+mm+' dossier(s)');}}
 
 function load(){
   setDB({cards:[],archived:[]});
   try{var ls=localStorage.getItem('a2m_kanban');if(ls){var p=JSON.parse(ls);if(p&&p.cards)setDB(p);}}catch(e){}
-  if(migrateDB())saveLocal();
+  var mm=corrigerMenusMm();
+  if(migrateDB()||mm)saveLocal();
   render();
   if(window.location.protocol==='file:')return;
   fetch(API,{cache:'no-store'})
@@ -2493,9 +2495,24 @@ function menuAct(fn){var d=act.est.dpgf;d.menus=d.menus||[];if(!d.menuTarif)d.me
 function menuAjout(){menuAct(function(d){var m=d.menus.length?Object.assign({},d.menus[d.menus.length-1]):menuNouveau();m.rep='';m.n=1;d.mseq=(d.mseq||0)+1;m.id=d.mseq;d.menus.push(m);});}
 function menuDup(id){menuAct(function(d){var i=d.menus.findIndex(function(x){return x.id===id;});if(i<0)return;var m=Object.assign({},d.menus[i]);d.mseq=(d.mseq||0)+1;m.id=d.mseq;d.menus.splice(i+1,0,m);});}
 function menuSuppr(id){var m=(act.est.dpgf.menus||[]).find(function(x){return x.id===id;});if(!m||!confirm('Supprimer « '+menuLib(m)+' » ?'))return;menuAct(function(d){d.menus=d.menus.filter(function(x){return x.id!==id;});});}
+// Dimensions en cm. Une valeur trop grande pour des cm (largeur > 600, hauteur > 350) a été tapée en mm : on la divise par 10.
+var MENU_MAX_CM={l:600,h:350};
+function cmDe(champ,n){return n>MENU_MAX_CM[champ]?Math.round(n)/10:Math.round(n*10)/10;}
 function menuSet(id,champ,v){menuAct(function(d){var m=d.menus.find(function(x){return x.id===id;});if(!m)return;
-  if(champ==='l'||champ==='h'||champ==='n'){var n=parseFloat(String(v).replace(',','.'));m[champ]=n>0?(champ==='n'?Math.round(n):Math.round(n*10)/10):0;}
+  if(champ==='l'||champ==='h'){var n=parseFloat(String(v).replace(/\s/g,'').replace(',','.'));m[champ]=n>0?cmDe(champ,n):0;
+    if(n>MENU_MAX_CM[champ])toast((champ==='l'?'Largeur':'Hauteur')+' '+n+' : valeur en millimètres convertie en '+String(m[champ]).replace('.',',')+' cm');}
+  else if(champ==='n'){var q=parseFloat(String(v).replace(',','.'));m.n=q>0?Math.round(q):0;}
   else m[champ]=v;});}
+// Réparation des dossiers enregistrés avec des dimensions en mm (au chargement des données)
+function corrigerMenusMm(){
+  var n=0;
+  (DB.cards||[]).concat(DB.archived||[]).forEach(function(c){
+    var d=c.est&&c.est.dpgf;if(!d||!(d.menus||[]).length)return;var ch=false;
+    d.menus.forEach(function(m){['l','h'].forEach(function(k){if(+m[k]>MENU_MAX_CM[k]){m[k]=cmDe(k,+m[k]);ch=true;}});});
+    if(ch){n++;try{if(c.est.dpgf===d&&c.est.source==='dpgf')dpgfCalc(c);else menuLignes(d);}catch(e){}c.upd=Date.now();}
+  });
+  return n;
+}
 function menuCatalogueZero(){
   if(!confirm('Mettre à 0 les menuiseries du catalogue fixe (7.01 à 7.07) et leur pose (8.01, 8.02, 8.04, 8.05) ?\nLes lignes restent dans le tableau : vous pourrez revenir à la quantité calculée avec ✎↺.'))return;
   menuAct(function(d){d.lignes.forEach(function(l){if(MENU_CATALOGUE.indexOf(l.bib)>=0){l.q=0;l.man=true;}});});
@@ -2508,9 +2525,10 @@ function renderMenus(d){
       fs=function(lib,ch,liste){return '<div class="fld"><label>'+lib+'</label><select '+h+ch+'\',this.value)">'+opts(liste,m[ch])+'</select></div>';},
       fi=function(lib,ch,o){return '<div class="fld"><label>'+lib+'</label><input'+(o?' type="number" min="1"':' placeholder="ex : Séjour"')+' value="'+escA(String(m[ch]||''))+'" '+h+ch+'\',this.value)"></div>';};
     tot+=mt;
-    return '<div class="mn-c"><div class="mn-h"><b>'+(i+1)+'. '+esc(menuLib(m))+'</b><span>'+(p.S?fmtQ(p.S)+' m² · '+fmtE(p.pu)+' € HT'+(m.n>1?' × '+m.n+' = <b>'+fmtE(mt)+' €</b>':''):'<i>dimensions à saisir</i>')+'</span>'+
+    var bizarre=p.S>12||p.pu>2000000;
+    return '<div class="mn-c'+(bizarre?' mn-err':'')+'"><div class="mn-h"><b>'+(i+1)+'. '+esc(menuLib(m))+'</b><span>'+(p.S?fmtQ(p.S)+' m² · '+fmtE(p.pu)+' € HT'+(m.n>1?' × '+m.n+' = <b>'+fmtE(mt)+' €</b>':''):'<i>dimensions à saisir</i>')+'</span>'+(bizarre?'<span class="mn-alerte">⚠ Surface de '+fmtQ(p.S)+' m² : vérifiez les dimensions (en centimètres)</span>':'')+
       '<span class="mn-b"><button class="rm" title="Dupliquer" onclick="menuDup('+m.id+')">⧉</button><button class="rm" title="Supprimer" onclick="menuSuppr('+m.id+')">×</button></span></div>'+
-      '<div class="mn-g">'+fs('Type','type',MENU_TYPES)+fi('Repère (facultatif)','rep')+fi('Largeur (cm)','l',1)+fi('Hauteur (cm)','h',1)+fi('Quantité','n',1)+
+      '<div class="mn-g">'+fs('Type','type',MENU_TYPES)+fi('Repère (facultatif)','rep')+fi('Largeur (cm, ex : 120)','l',1)+fi('Hauteur (cm, ex : 135)','h',1)+fi('Quantité','n',1)+
       fs('Matériau','mat',MENU_MATS)+fs('Occultation','occ',MENU_OCCS)+(m.occ==='vre'?fs('Commande du volet','cmd',[['fil','Filaire'],['tele','Télécommande']]):'')+'</div></div>';
   }).join('');
   var nb=M.reduce(function(a,m){return a+(m.n||0);},0);

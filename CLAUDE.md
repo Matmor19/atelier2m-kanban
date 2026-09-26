@@ -66,6 +66,8 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   (lignes `menu`, non modifiables dans le tableau). Tarifs : `DB.bibMenu` (sinon `MENU_ORIGINE`), copiés
   dans le dossier (`d.menuTarif`). « Mettre à jour depuis la bibliothèque » (`dpgfPrix`) reprend prix, notes,
   tarifs et nouvelles lignes (sauf celles retirées : `d.retirees`).
+  Dimensions des menuiseries en **cm** : une largeur > 600 ou une hauteur > 350 est considérée comme des mm et
+  divisée par 10 (`cmDe`, à la saisie et au chargement des données via `corrigerMenusMm()`) ; alerte si > 12 m².
   Version 3 (`BIB_MAJ_V3` / `bibMaj3()`, `BIB_V=3`) : prix vérifiés (double comptages PMR, photovoltaïque,
   volets ; couverture piscine, porte de garage, fenêtres 7.05/7.07 ; faïence des salles d'eau 14.04). Une
   mise à jour de version ne change une valeur que si elle est encore l'ancienne (`ancienPu`, `ancienF`).
