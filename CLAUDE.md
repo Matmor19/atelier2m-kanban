@@ -88,6 +88,13 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   suit les changements tant qu'il est identique au dernier texte automatique (`e.objetAuto`, `e.introAuto`,
   `e.presAuto`) ; retouché par l'utilisateur, il n'est plus jamais modifié (boutons « ↻ » pour régénérer).
   Points de vigilance : saisie manuelle uniquement.
+- **Étude de faisabilité** (niveau 1, sans IA) : bouton « 🔎 Étude de faisabilité » sous la parcelle cadastrale de
+  la fiche (actif si commune + au moins une parcelle). Le Kanban envoie `action:'faisabilite'` au script Google
+  (`faisabilite_()` dans le .gs, version 5) qui interroge api-adresse (code INSEE), apicarto IGN (cadastre,
+  GPU zone-urba / document / secteur-cc / municipality pour le RNU) et Géorisques. Lecture des références :
+  `refsCadastre()` (« Section AB n°12 », « 240 - 242 et 244 AI »…). Résultat mémorisé dans `c.faisa` (avec
+  `cad` au moment de l'étude), affiché par `renderFaisa()`, bouton « Actualiser ». Donnée brute indicative
+  (`FAISA_MENTION`), aucune interprétation automatique.
 - **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
   uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
   Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le

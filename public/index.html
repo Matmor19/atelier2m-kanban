@@ -381,6 +381,9 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .dp-menu td{background:color-mix(in srgb,var(--or) 4%,transparent)}.dp-menu td:nth-child(2){font-size:11px;color:var(--txt)}.dp-obs{font-style:italic}
 .mn-c{border:1px solid var(--brd);border-radius:10px;padding:8px 10px 4px;margin-bottom:6px;background:var(--surface)}
 .mn-h{display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--txt);margin-bottom:6px}.mn-h span{font-size:11px;color:var(--txt2)}.mn-h .mn-b{margin-left:auto;white-space:nowrap}
+.faisa-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-2px 0 8px}.faisa-bar .sml-btn:disabled{opacity:.45;cursor:not-allowed}.faisa-res{font-size:10.5px;color:var(--txt2)}
+.faisa-bloc{font-size:11.5px;color:var(--txt);line-height:1.55;margin-bottom:10px}.faisa-zone{margin:2px 0}.faisa-code{display:inline-block;min-width:34px;text-align:center;font-weight:800;color:#fff;background:var(--or);border-radius:6px;padding:1px 6px;margin-right:4px}
+.faisa-ul{margin:0;padding-left:18px}.faisa-att{font-size:11.5px;color:var(--txt2);padding:10px;background:var(--surface2);border-radius:10px;margin-bottom:8px}.faisa-mention{font-size:10px;font-style:italic;color:var(--txt3);border-top:1px solid var(--brd);padding-top:6px;margin-top:8px}
 .lst-it{display:flex;gap:4px;align-items:center;margin-bottom:4px}.lst-it .sd-inp{margin:0;flex:1}.lst-p{color:var(--or);font-size:9px;width:12px;text-align:center}.lst-nv .sd-inp{border-style:dashed}.lst-st .sd-inp{font-weight:700}.est-auto{font-size:10px;color:var(--txt3);margin:3px 0 6px}
 .lst-it .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:14px;padding:0 3px}.lst-it .rm:hover{color:var(--or)}.lst-fac{font-weight:600;text-transform:none;letter-spacing:0;color:var(--txt3);font-size:9.5px}
 .mn-err{border-color:var(--red)}.mn-h .mn-alerte{flex-basis:100%;color:var(--red);font-weight:700}
@@ -394,7 +397,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .reg-t td{white-space:nowrap}
 .ver-l a{color:var(--or);text-decoration:none}.ver-l a:hover{text-decoration:underline}
 .inf-l{font-size:8.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--txt3);margin:4px 0 2px}
-#m-ctr,#m-est,#m-plu,#m-gen,#m-echdef,#m-rep{z-index:210}#m-sig,#m-av,#m-fac,#m-avo,#m-paie,#m-reg,#m-dpgf,#m-bib{z-index:220} /* au-dessus de la fiche et des Paramètres */
+#m-ctr,#m-est,#m-plu,#m-faisa,#m-gen,#m-echdef,#m-rep{z-index:210}#m-sig,#m-av,#m-fac,#m-avo,#m-paie,#m-reg,#m-dpgf,#m-bib{z-index:220} /* au-dessus de la fiche et des Paramètres */
 
 /* TÉLÉPHONE */
 @media (max-width:760px){
@@ -487,7 +490,8 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
         <input class="sd-inp" id="d-nat-e" placeholder="Nature du projet (ex : extension 40 m², maison neuve…)" onchange="sf('nat',this.value)">
         <input class="sd-inp" id="d-surf-e" placeholder="Surface (m²)" onchange="sf('surf',this.value)">
       </div>
-      <input class="sd-inp" id="d-cad-e" placeholder="Parcelle cadastrale (ex : Section AB n°12)" onchange="sf('cad',this.value)">
+      <input class="sd-inp" id="d-cad-e" placeholder="Parcelle(s) cadastrale(s) (ex : Section AB n°12, ou 240 - 242 et 244 AI)" onchange="sf('cad',this.value)">
+      <div id="d-faisa" class="faisa-bar"></div>
       <textarea class="sd-inp pj-area" id="d-res-e" placeholder="Résumé du projet envisagé / en cours…" onchange="sf('resume',this.value)"></textarea>
       <div class="sec-lbl" style="margin-top:14px">Contrats et documents Word</div>
       <div id="d-ctrs"></div>
@@ -677,6 +681,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 <div class="mov" id="m-est"><div class="mn large"><button class="mx" onclick="closeSub('m-est')">×</button><div class="mn-in" id="est-body"></div></div></div>
 <div class="mov" id="m-dpgf"><div class="mn large"><button class="mx" onclick="closeSub('m-dpgf');if(document.getElementById('m-est').classList.contains('open'))renderEst()">×</button><div class="mn-in" id="dpgf-body"></div></div></div>
 <div class="mov" id="m-bib"><div class="mn large"><button class="mx" onclick="closeSub('m-bib')">×</button><div class="mn-in" id="bib-body"></div></div></div>
+<div class="mov" id="m-faisa"><div class="mn large"><button class="mx" onclick="closeSub('m-faisa')">×</button><div class="mn-in" id="faisa-body"></div></div></div>
 <div class="mov" id="m-plu"><div class="mn large"><button class="mx" onclick="closeSub('m-plu')">×</button><div class="mn-in" id="plu-body"></div></div></div>
 <div class="mov" id="m-gen"><div class="mn" style="max-width:640px"><button class="mx" onclick="closeSub('m-gen')">×</button><div class="mn-in" id="gen-body"></div></div></div>
 <div class="mov" id="m-echdef"><div class="mn large"><button class="mx" onclick="closeSub('m-echdef')">×</button><div class="mn-in" id="echdef-body"></div></div></div>
@@ -1269,6 +1274,7 @@ function openDet(id){
   document.getElementById('d-date-e').value=act.date||'';
   document.getElementById('d-addr-e').value=act.addr||'';
   ['cadr','nat','surf','cad'].forEach(function(k){document.getElementById('d-'+k+'-e').value=act[k]||'';});
+  renderFaisaBar();
   document.getElementById('d-res-e').value=act.resume||'';
   renderHono();
   document.getElementById('d-due-e').value=act.due||'';
@@ -1629,6 +1635,7 @@ function setCont(on){
 function sf(k,v){if(!act)return;act[k]=v;act.upd=Date.now();
   if(['nom','addr','resume','nat'].indexOf(k)>=0&&preremplirInfos(act)&&document.getElementById('d-ctrs'))renderCtrs(); // complète les champs encore vides
   if(['addr','resume','nat','surf','commune'].indexOf(k)>=0)preremplirEst(act);
+  if(['cad','addr','commune'].indexOf(k)>=0)renderFaisaBar();
   sv();render();}
 
 function moveTo(colId){if(!act)return;if(colId==='instruction')onEnterInstruction(act);if(colId==='termines'&&act.col!=='termines')setTimeout(celebrate,100);act.col=colId;act.upd=Date.now();sv();render();openDet(act.id);}
@@ -2117,6 +2124,105 @@ function supprCtr(){
     act.contrats=act.contrats.filter(function(x){return x.id!==k.id;});
   }
   ctrSave();closeSub('m-ctr');
+}
+
+// ════════════════════════════════════════════════════════════
+// ÉTUDE DE FAISABILITÉ (niveau 1, sans IA) : cadastre, zone PLU, risques
+// Les services publics sont interrogés par le script Google (action 'faisabilite') : le navigateur ne peut pas
+// les appeler directement. Résultat mémorisé sur la carte (c.faisa), donnée brute et indicative.
+// ════════════════════════════════════════════════════════════
+var FAISA_MENTION='Donnée indicative issue de sources publiques (cadastre, Géoportail de l\'Urbanisme, Géorisques), à vérifier auprès du service urbanisme de la commune. Elle ne constitue pas une garantie juridique.';
+// « Section AB n°12 et 13 », « 240 - 242 et 244 AI », « AB0012 », « AI 240, BL 12 » → [{section, numero}]
+function refsCadastre(t){
+  var x=String(t||'').replace(/\b(0?[A-Za-z]{1,2})(\d{1,4})\b/g,'$1 $2').replace(/\bn\s*[°o]\s*/gi,' ').replace(/\b(lot|feuille|f°|plan)\s*(n\s*[°o])?\s*\d+/gi,' ');
+  var toks=(x.match(/\b\d{1,4}\b|\b0?[A-Za-z]{1,2}\b/g)||[]).map(function(t){return t.toUpperCase();}),STOP=['ET','OU','LE','LA','DE','DU','N','NO','AU','EN','CA','HA','M'];
+  var res=[],cur=null,att=[],vu={};
+  var ajout=function(sec,n){var k=sec+'-'+(+n);if(!vu[k]){vu[k]=1;res.push({section:sec,numero:String(+n)});}};
+  toks.forEach(function(tk){
+    if(/^\d+$/.test(tk)){if(cur)ajout(cur,tk);else att.push(tk);return;}
+    if(STOP.indexOf(tk)>=0)return;
+    cur=tk;att.forEach(function(n){ajout(cur,n);});att=[];
+  });
+  return res;
+}
+// « 1 000 m² », « 12 a 50 ca », « 0,5 ha » → m²
+function surfaceM2(t){
+  var x=String(t||'').toLowerCase().replace(/[  ]/g,' ');if(!x.trim())return 0;
+  if(/\d\s*(ha|a|ca)\b/.test(x)){var tot=0;x.replace(/(\d+(?:[.,]\d+)?)\s*(ha|ca|a)\b/g,function(_,n,u){n=parseFloat(n.replace(',','.'));tot+=u==='ha'?n*10000:u==='a'?n*100:n;});return Math.round(tot);}
+  var m=/(\d+(?:[.,]\d+)?)/.exec(x.replace(/\s/g,''));return m?parseFloat(m[1].replace(',','.')):0;
+}
+function faisaParams(c){
+  var com=String(c.commune||communeDe(c.addr)||'').trim(),m=/\((\d[\dAB]\d{3})\)/.exec(com);
+  return {commune:com.replace(/\s*\(.*?\)\s*/g,' ').trim(),insee:m?m[1]:'',cp:(String(c.addr||'').match(/\b(\d{5})\b/)||[])[1]||'',refs:refsCadastre(c.cad),adresse:String(c.addr||'').replace(/\n/g,' ')};
+}
+function renderFaisaBar(){
+  var el=document.getElementById('d-faisa');if(!el||!act)return;
+  var p=faisaParams(act),ok=p.commune&&p.refs.length,f=act.faisa,r='';
+  if(f&&f.ok){var z=(f.zones||[]).map(function(x){return x.code;}).filter(Boolean);
+    r=(z.length?'Zone '+z.join(', '):f.rnu?'RNU':'Zone ?')+' · '+fmtM2(f.surface)+' · '+(f.risques||[]).length+' risque(s) — '+dateFr(f.date.slice(0,10))+(f.cad!==act.cad?' <b style="color:var(--amber)">· parcelles modifiées : à actualiser</b>':'');}
+  el.innerHTML='<button class="sml-btn" style="width:auto;margin:0"'+(ok?'':' disabled title="Renseignez la commune (adresse du chantier ou « Informations pour les documents ») et au moins une parcelle (section + numéro)"')+' onclick="openFaisa()">🔎 Étude de faisabilité</button>'+
+    '<span class="faisa-res">'+(r||(ok?'Parcelle(s) : '+p.refs.map(function(x){return x.section+' '+x.numero;}).join(', ')+' — '+esc(p.commune):'<i>Commune et parcelle (section + numéro) nécessaires</i>'))+'</span>';
+}
+function fmtM2(n){return n?fmtE(Math.round(n)*100)+' m²':'—';}
+var faisaEnCours=false,faisaErreur='';
+function openFaisa(){if(!act)return;faisaErreur='';renderFaisa();showM('m-faisa');if(!act.faisa)faisaLancer();}
+function faisaLancer(){
+  var c=act,p=faisaParams(c);if(faisaEnCours)return;
+  if(!p.commune||!p.refs.length){faisaErreur='Renseignez la commune et au moins une parcelle cadastrale (section + numéro).';renderFaisa();return;}
+  if(location.protocol==='file:'||!remoteReady){faisaErreur='Connexion au serveur Google nécessaire.';renderFaisa();return;}
+  faisaEnCours=true;faisaErreur='';renderFaisa();
+  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'faisabilite'},p))})
+  .then(function(r){return r.json();})
+  .then(function(res){
+    faisaEnCours=false;
+    if(!res||!res.ok){
+      faisaErreur=res&&res.erreur==='Données invalides'?'Votre script Google n\'est pas encore à jour : recopiez le nouveau code (apps-script/Kanban_Sauvegarde.gs) dans Google Apps Script, puis publiez une nouvelle version du déploiement.':((res&&res.erreur)||'Réponse inattendue du script Google.');
+      if(res&&res.avert&&res.avert.length)faisaErreur+='\n'+res.avert.join('\n');
+    } else {res.cad=c.cad||'';res.communeSaisie=p.commune;c.faisa=res;c.upd=Date.now();sv();}
+    if(act===c){renderFaisa();renderFaisaBar();}
+  })
+  .catch(function(e){faisaEnCours=false;faisaErreur='Service indisponible ('+(e&&e.message||e)+'). Réessayez dans quelques minutes.';if(act===c)renderFaisa();});
+}
+function faisaContenance(){var f=act.faisa;if(!f||!f.surface)return;act.contenance=fmtE(Math.round(f.surface)*100)+' m²';act.upd=Date.now();sv();renderFaisa();if(document.getElementById('d-ctrs'))renderCtrs();toast('Contenance du terrain : '+act.contenance);}
+function renderFaisa(){
+  var c=act,f=c.faisa,p=faisaParams(c),h='<div class="mn-ttl">🔎 Étude de faisabilité <span class="ctr-st">cadastre · PLU · risques</span></div>';
+  h+='<div class="rel-note" style="margin-bottom:8px">Commune : <b>'+esc(p.commune||'—')+'</b>'+(p.insee?' ('+p.insee+')':'')+' · parcelle(s) lue(s) : <b>'+(p.refs.map(function(x){return x.section+' '+x.numero;}).join(', ')||'—')+'</b> <i>(depuis « '+esc(c.cad||'')+' »)</i></div>';
+  if(faisaEnCours)h+='<div class="faisa-att">⏳ Interrogation du cadastre, du Géoportail de l\'Urbanisme et de Géorisques… (jusqu\'à une minute)</div>';
+  if(faisaErreur)h+='<div class="gen-al">⚠ '+esc(faisaErreur).replace(/\n/g,'<br>')+'</div>';
+  if(f&&f.ok){
+    if(f.cad!==c.cad)h+='<div class="gen-al">Les références cadastrales ont changé depuis cette étude (« '+esc(f.cad)+' ») : cliquez sur « Actualiser ».</div>';
+    // Urbanisme
+    h+='<div class="sec-lbl">Urbanisme</div><div class="faisa-bloc">';
+    if(f.document)h+='<div>Document d\'urbanisme : <b>'+esc(f.document.type||'')+'</b> '+esc(f.document.nom||'')+'</div>';
+    if((f.zones||[]).length)h+=f.zones.map(function(z){return '<div class="faisa-zone"><span class="faisa-code">'+esc(z.code||'?')+'</span> '+esc(String(z.libelle||'').replace(new RegExp('^'+String(z.code||'').replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*:\\s*'),''))+
+      (z.reglement?' · <a class="lnk" href="'+escA(z.reglement)+'" target="_blank" rel="noopener">Règlement (PDF)</a>':'')+(z.doc?' · <a class="lnk" href="'+escA(z.doc)+'" target="_blank" rel="noopener">Fiche du document</a>':'')+'</div>';}).join('');
+    else if(f.rnu)h+='<div><b>RNU</b> — la commune n\'a pas de document d\'urbanisme : le Règlement National d\'Urbanisme s\'applique.</div>';
+    else h+='<div><i>Aucune zone trouvée (document d\'urbanisme non numérisé sur le Géoportail de l\'Urbanisme ?).</i></div>';
+    h+='</div>';
+    // Parcelles
+    var cont=surfaceM2(c.contenance);
+    h+='<div class="sec-lbl">Parcelle(s)</div><div class="faisa-bloc"><table class="gen-t">'+(f.parcelles||[]).map(function(x){return '<tr'+(x.trouvee?'':' class="vide"')+'><td>'+esc(x.ref)+'</td><td>'+(x.trouvee?fmtM2(x.contenance)+' <i style="color:var(--txt3)">('+esc(x.idu||'')+')</i>':'introuvable au cadastre')+'</td></tr>';}).join('')+
+      '<tr><td><b>Surface cadastrale totale</b></td><td><b>'+fmtM2(f.surface)+'</b></td></tr></table>';
+    if(cont&&f.surface){var ec=Math.round(f.surface-cont),pc=Math.abs(ec)/f.surface*100;
+      h+='<div class="'+(pc>1?'gen-al':'rel-note')+'">Contenance saisie : '+esc(c.contenance)+(pc>1?' — écart de '+fmtE(Math.abs(ec)*100)+' m² ('+String(Math.round(pc*10)/10).replace('.',',')+' %) avec le cadastre : à vérifier.':' — cohérente avec le cadastre ✓')+'</div>';}
+    else if(f.surface)h+='<div class="rel-note">Contenance du terrain non saisie. <a class="lnk" onclick="faisaContenance()">Reprendre '+fmtM2(f.surface)+' comme contenance</a></div>';
+    h+='</div>';
+    // Risques
+    h+='<div class="sec-lbl">Risques recensés</div><div class="faisa-bloc">';
+    var R=(f.risques||[]).map(function(x){return '<li>'+esc(x)+'</li>';}).join('');
+    var geoKo=(f.avert||[]).some(function(a){return /Géorisques/.test(a);});
+    h+=R?'<ul class="faisa-ul">'+R+'</ul>':'<div><i>'+(geoKo?'Risques non disponibles (service Géorisques indisponible).':'Aucun risque recensé à cet endroit.')+'</i></div>';
+    var comp=[];if(f.sismicite)comp.push('Sismicité : <b>'+esc(f.sismicite)+'</b>');if(f.radon)comp.push('Potentiel radon : <b>catégorie '+esc(f.radon)+'</b>');if(f.argile)comp.push('Retrait-gonflement des argiles : <b>'+esc(f.argile)+'</b>');
+    if(comp.length)h+='<div style="margin-top:4px">'+comp.join(' · ')+'</div>';
+    h+='</div>';
+    if((f.avert||[]).length)h+='<div class="gen-al">'+f.avert.map(esc).join('<br>')+'</div>';
+    if(f.depuisAdresse)h+='<div class="rel-note">Position établie d\'après l\'adresse « '+esc(f.depuisAdresse)+' » (parcelle introuvable).</div>';
+    if(f.lon)h+='<div class="rel-note" style="margin-top:6px">Voir sur une carte : <a class="lnk" href="https://www.geoportail-urbanisme.gouv.fr/map/#tile=1&lon='+f.lon+'&lat='+f.lat+'&zoom=17" target="_blank" rel="noopener">Géoportail de l\'Urbanisme</a> · <a class="lnk" href="'+escA(f.georisquesUrl||'https://www.georisques.gouv.fr/mes-risques/connaitre-les-risques-pres-de-chez-moi')+'" target="_blank" rel="noopener">Géorisques</a> · <a class="lnk" href="https://www.geoportail.gouv.fr/carte?c='+f.lon+','+f.lat+'&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes" target="_blank" rel="noopener">Cadastre</a></div>';
+    h+='<div class="rel-note" style="margin-top:4px">Étude du '+dateFr(f.date.slice(0,10))+' — commune '+esc(f.commune||'')+' (INSEE '+esc(f.insee||'')+').</div>';
+  }
+  h+='<div class="faisa-mention">ⓘ '+esc(FAISA_MENTION)+'</div>';
+  h+='<div class="mbtns"><button class="mb-c" onclick="faisaLancer()"'+(faisaEnCours?' disabled':'')+'>↻ '+(f?'Actualiser':'Lancer la recherche')+'</button><button class="mb-s" onclick="closeSub(\'m-faisa\')">Fermer</button></div>';
+  document.getElementById('faisa-body').innerHTML=h;
 }
 
 // ── Estimatif des travaux (commun aux contrats du dossier) ──
