@@ -95,6 +95,12 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   stationnement extérieures (× 2 000 €, `TA_STAT_DEF`), sans abattement, au même taux. `annexesAuto()` remplit les lignes annexes terrain et
   taxe (marqueur `auto`) ; une ligne dont le montant est retouché à la main perd `auto` et n'est plus modifiée.
   Valeur forfaitaire par défaut : Paramètres (`DB.reglages.taVf`, `taVfAnnee`), à mettre à jour chaque année.
+  **Taux votés** : `chercherTauxTA()` interroge directement depuis le navigateur (CORS autorisé) le jeu
+  data.economie.gouv.fr `delta_deliberation_tam_17_01_23` (API explore v2.1 ; code commune sans zéros initiaux ;
+  priorité parcelle > section > droit commun ; part départementale ; taux 99 = non défini ; valeur de stationnement
+  votée). Lancée après une étude de faisabilité réussie ou par le bouton de l'estimatif. Résultat dans `c.taTaux` ;
+  `appliquerTauxTA()` pré-remplit tc / td / vstat s'ils sont vides ou déjà issus de la source (`…Src='data'`),
+  jamais s'ils ont été saisis à la main (`…Manuel`). Mention « source : data.economie.gouv.fr, à vérifier ».
 - **Étude de faisabilité** (niveau 1, sans IA) : bouton « 🔎 Étude de faisabilité » sous la parcelle cadastrale de
   la fiche (actif si commune + au moins une parcelle). Le Kanban envoie `action:'faisabilite'` au script Google
   (`faisabilite_()` dans le .gs, version 5) qui interroge api-adresse (code INSEE), apicarto IGN (cadastre,

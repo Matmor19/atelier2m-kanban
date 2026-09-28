@@ -381,6 +381,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .dp-menu td{background:color-mix(in srgb,var(--or) 4%,transparent)}.dp-menu td:nth-child(2){font-size:11px;color:var(--txt)}.dp-obs{font-style:italic}
 .mn-c{border:1px solid var(--brd);border-radius:10px;padding:8px 10px 4px;margin-bottom:6px;background:var(--surface)}
 .mn-h{display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--txt);margin-bottom:6px}.mn-h span{font-size:11px;color:var(--txt2)}.mn-h .mn-b{margin-left:auto;white-space:nowrap}
+.ta-src{font-weight:600;text-transform:none;letter-spacing:0;color:var(--amber)}
 .faisa-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-2px 0 8px}.faisa-bar .sml-btn:disabled{opacity:.45;cursor:not-allowed}.faisa-res{font-size:10.5px;color:var(--txt2)}
 .faisa-bloc{font-size:11.5px;color:var(--txt);line-height:1.55;margin-bottom:10px}.faisa-zone{margin:2px 0}.faisa-code{display:inline-block;min-width:34px;text-align:center;font-weight:800;color:#fff;background:var(--or);border-radius:6px;padding:1px 6px;margin-right:4px}
 .faisa-ul{margin:0;padding-left:18px}.faisa-att{font-size:11.5px;color:var(--txt2);padding:10px;background:var(--surface2);border-radius:10px;margin-bottom:8px}.faisa-mention{font-size:10px;font-style:italic;color:var(--txt3);border-top:1px solid var(--brd);padding-top:6px;margin-top:8px}
@@ -2178,7 +2179,8 @@ function faisaLancer(){
     if(!res||!res.ok){
       faisaErreur=res&&res.erreur==='Données invalides'?'Votre script Google n\'est pas encore à jour : recopiez le nouveau code (apps-script/Kanban_Sauvegarde.gs) dans Google Apps Script, puis publiez une nouvelle version du déploiement.':((res&&res.erreur)||'Réponse inattendue du script Google.');
       if(res&&res.avert&&res.avert.length)faisaErreur+='\n'+res.avert.join('\n');
-    } else {res.cad=c.cad||'';res.communeSaisie=p.commune;c.faisa=res;c.upd=Date.now();sv();}
+    } else {res.cad=c.cad||'';res.communeSaisie=p.commune;c.faisa=res;c.upd=Date.now();sv();
+      chercherTauxTA(c).then(function(){if(c.est)preremplirEst(c);sv();if(act===c){renderFaisa();estReafficher();}}).catch(function(){});}
     if(act===c){renderFaisa();renderFaisaBar();}
   })
   .catch(function(e){faisaEnCours=false;faisaErreur='Service indisponible ('+(e&&e.message||e)+'). Réessayez dans quelques minutes.';if(act===c)renderFaisa();});
@@ -2216,6 +2218,7 @@ function renderFaisa(){
     if(comp.length)h+='<div style="margin-top:4px">'+comp.join(' · ')+'</div>';
     h+='</div>';
     if((f.avert||[]).length)h+='<div class="gen-al">'+f.avert.map(esc).join('<br>')+'</div>';
+    h+='<div class="sec-lbl">Taxe d\'aménagement — taux votés</div><div class="faisa-bloc">'+(c.taTaux?tauxTAHtml(c):'<i>Recherche en cours ou indisponible.</i>')+'<a class="lnk" onclick="btnTauxTA()">↻ Rechercher les taux</a></div>';
     if(f.depuisAdresse)h+='<div class="rel-note">Position établie d\'après l\'adresse « '+esc(f.depuisAdresse)+' » (parcelle introuvable).</div>';
     if(f.lon)h+='<div class="rel-note" style="margin-top:6px">Voir sur une carte : <a class="lnk" href="https://www.geoportail-urbanisme.gouv.fr/map/#tile=1&lon='+f.lon+'&lat='+f.lat+'&zoom=17" target="_blank" rel="noopener">Géoportail de l\'Urbanisme</a> · <a class="lnk" href="'+escA(f.georisquesUrl||'https://www.georisques.gouv.fr/mes-risques/connaitre-les-risques-pres-de-chez-moi')+'" target="_blank" rel="noopener">Géorisques</a> · <a class="lnk" href="https://www.geoportail.gouv.fr/carte?c='+f.lon+','+f.lat+'&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes" target="_blank" rel="noopener">Cadastre</a></div>';
     h+='<div class="rel-note" style="margin-top:4px">Étude du '+dateFr(f.date.slice(0,10))+' — commune '+esc(f.commune||'')+' (INSEE '+esc(f.insee||'')+').</div>';
@@ -2783,6 +2786,7 @@ function presentationAuto(c){
 }
 function preremplirEst(c){
   var e=c&&c.est;if(!e)return false;var ch=false;
+  appliquerTauxTA(c); // taux votés trouvés (data.economie.gouv.fr), si les champs sont vides
   annexesAuto(c,true); // terrain et taxe d'aménagement suivent la surface et le garage
   var g=objetAuto(c),txt=g?g.texte:'';
   if((e.objetAuto===undefined&&!lignes(e.objet).length)||(e.objetAuto!==undefined&&e.objet===e.objetAuto)){if(e.objet!==txt||e.objetAuto!==txt){e.objet=txt;e.objetAuto=txt;ch=true;}}
@@ -2802,6 +2806,84 @@ function estRegenerer(quoi){
     if(String(e.presentation||'').trim()&&e.presentation!==e.presAuto&&!confirm('Remplacer la présentation actuelle par celle composée depuis la fiche ?'))return;
     e.presentation=p;e.presAuto=p;}
   ctrSave();estReafficher();
+}
+// ── Taux de taxe d'aménagement votés (data.economie.gouv.fr, jeu « delta_deliberation_tam ») ──
+// Appel direct depuis le navigateur (le service l'autorise). Priorité : taux de la parcelle, puis de la section,
+// puis taux de droit commun de la commune ; part départementale en plus. Le taux 99 = « non défini » est ignoré.
+// Résultat mémorisé sur la carte (c.taTaux) ; les champs de l'estimatif sont pré-remplis seulement s'ils sont vides
+// ou déjà issus de cette source (tcSrc / tdSrc / vstatSrc = 'data'), jamais s'ils ont été saisis à la main.
+var TA_API='https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/delta_deliberation_tam_17_01_23/records';
+var TA_SOURCE='source : data.economie.gouv.fr, à vérifier';
+function taRequete(where,groupe){
+  return fetch(TA_API+'?where='+encodeURIComponent(where)+'&group_by='+encodeURIComponent(groupe)+'&limit=100').then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(j){return j.results||[];});
+}
+function taApplicable(rows){ // délibérations en vigueur aujourd'hui, la plus récente d'abord
+  var auj=isoAuj();
+  return rows.filter(function(r){var d=String(r.date_effet||'').slice(0,10),f=String(r.date_fin||'').slice(0,10);return d&&d<=auj&&(!f||f>=auj);})
+    .sort(function(a,b){return String(b.date_effet).localeCompare(String(a.date_effet));});
+}
+function inseeDe(c){
+  var i=(c.faisa&&c.faisa.insee)||faisaParams(c).insee;if(i)return Promise.resolve(i);
+  var p=faisaParams(c);if(!p.commune)return Promise.reject(new Error('commune inconnue'));
+  var cherche=function(cp){return fetch('https://api-adresse.data.gouv.fr/search/?type=municipality&limit=1&q='+encodeURIComponent(p.commune)+(cp?'&postcode='+cp:'')).then(function(r){return r.json();}).then(function(j){return j.features&&j.features[0];});};
+  return cherche(p.cp).then(function(f){return f||(p.cp?cherche(''):null);}) // code postal erroné : nouvel essai sans
+    .then(function(f){if(!f)throw new Error('commune introuvable');return f.properties.citycode;});
+}
+function chercherTauxTA(c){
+  var refs=refsCadastre(c.cad),insee;
+  return inseeDe(c).then(function(i){
+    insee=i;var dom=/^97/.test(i),dep=i.slice(0,dom?3:2),com=i.slice(dom?3:2),comSans=String(parseInt(com,10));
+    var secs=[];refs.forEach(function(r){var x=String(r.section).toUpperCase();[x,x.length===1?'0'+x:x.replace(/^0/,'')].forEach(function(y){if(secs.indexOf(y)<0)secs.push(y);});});
+    var wCom='departement="'+dep+'" and (commune="'+com+'" or commune="'+comSans+'") and zone_application="Communale"'+
+      (secs.length?' and (section is null or '+secs.map(function(x){return 'section="'+x+'"';}).join(' or ')+')':' and section is null');
+    return Promise.all([
+      taRequete(wCom,'taux,date_effet,date_fin,prefixe,section,parcelle,valeur_forfaitaire_stationnement,libelle_commune'),
+      taRequete('departement="'+dep+'" and zone_application="Départementale"','taux,date_effet,date_fin')
+    ]);
+  }).then(function(res){
+    var C=taApplicable(res[0]),D=taApplicable(res[1]),det=[],inconnu=false;
+    var normS=function(x){return String(x||'').toUpperCase().replace(/^0+(?=[A-Z])/,'');};
+    // taux applicable à chaque parcelle : parcelle > section > droit commun
+    var parTaux=refs.map(function(r){
+      var p=C.find(function(x){return x.section&&normS(x.section)===normS(r.section)&&x.parcelle&&+x.parcelle===+r.numero;}),
+          s=C.find(function(x){return x.section&&normS(x.section)===normS(r.section)&&!x.parcelle;}),
+          d=C.find(function(x){return !x.section&&!x.parcelle;}),t=p||s||d;
+      return t?{ref:r.section+' '+r.numero,taux:t.taux,zone:p?'parcelle':s?'secteur '+normS(t.section):'droit commun',effet:String(t.date_effet).slice(0,4)}:null;
+    }).filter(Boolean);
+    if(!refs.length){var d0=C.find(function(x){return !x.section&&!x.parcelle;});if(d0)parTaux.push({ref:'',taux:d0.taux,zone:'droit commun',effet:String(d0.date_effet).slice(0,4)});}
+    var connus=parTaux.filter(function(x){if(x.taux===99){inconnu=true;return false;}return true;});
+    var tc=connus.length?Math.max.apply(null,connus.map(function(x){return x.taux;})):null;
+    var dp=D.length&&D[0].taux!==99?D[0].taux:null,st=C.find(function(x){return x.valeur_forfaitaire_stationnement;});
+    c.taTaux={date:isoAuj(),insee:insee,cad:c.cad||'',commune:tc,communeDetail:connus,inconnu:inconnu,departement:dp,depEffet:D.length?String(D[0].date_effet).slice(0,4):'',
+      stationnement:st?Math.round(st.valeur_forfaitaire_stationnement*100):null,nom:(res[0][0]&&res[0][0].libelle_commune)||''};
+    c.upd=Date.now();appliquerTauxTA(c);sv();
+    return c.taTaux;
+  });
+}
+function appliquerTauxTA(c){
+  var e=c.est,T=c.taTaux;if(!e||!T)return false;e.ta=e.ta||{rp:1};var t=e.ta,ch=false;
+  var mettre=function(ch_,val){if(val===null||val===undefined||t[ch_+'Manuel'])return;if((t[ch_]===null||t[ch_]===undefined||t[ch_+'Src']==='data')&&t[ch_]!==val){t[ch_]=val;t[ch_+'Src']='data';ch=true;}else if(t[ch_]===val&&t[ch_+'Src']==='data'){}};
+  mettre('tc',T.commune!==null?Math.round(T.commune*100):null);
+  mettre('td',T.departement!==null?Math.round(T.departement*100):null);
+  mettre('vstat',T.stationnement);
+  if(ch){var x=annexeCherche(e.annexes||[],'ta',/taxe d.am[ée]nagement/i);annexesAuto(c,!(!x||x.auto==='ta'||x.mt===null||x.mt===undefined),'ta');}
+  return ch;
+}
+function tauxTAHtml(c){
+  var T=c.taTaux;if(!T)return '';
+  var dt=T.communeDetail||[],mixte=dt.length>1&&dt.some(function(x){return x.taux!==dt[0].taux;});
+  return '<div class="rel-note" style="margin:4px 0 6px">Taux votés trouvés ('+esc(TA_SOURCE)+', recherche du '+dateFr(T.date)+') : '+
+    (T.commune!==null?'communal <b>'+String(T.commune).replace('.',',')+' %</b> ('+dt.map(function(x){return (x.ref?x.ref+' : ':'')+String(x.taux).replace('.',',')+' % — '+x.zone+', depuis '+x.effet;}).join(' ; ')+')'+(mixte?' — taux le plus élevé retenu':''):'communal : <i>aucune délibération trouvée</i>')+
+    ' · '+(T.departement!==null?'départemental <b>'+String(T.departement).replace('.',',')+' %</b> (depuis '+T.depEffet+')':'départemental : <i>aucune délibération trouvée</i>')+
+    (T.stationnement?' · stationnement '+fmtE(T.stationnement)+' € / place':'')+(T.inconnu?' · <b>taux non défini sur une zone</b> (à demander à la mairie)':'')+
+    (T.cad!==(c.cad||'')?' · <b>parcelles modifiées depuis : relancez la recherche</b>':'')+'</div>';
+}
+function btnTauxTA(){
+  var c=act;if(!c)return;toast('Recherche des taux votés…');
+  chercherTauxTA(c).then(function(T){
+    if(c.est)ctrSave();estReafficher();if(document.getElementById('m-faisa').classList.contains('open'))renderFaisa();
+    toast(T.commune===null&&T.departement===null?'Aucun taux trouvé : saisissez-les à la main':'Taux pré-remplis ('+TA_SOURCE+')');
+  }).catch(function(e){alert('Recherche des taux impossible : '+(e&&e.message||e)+'\nSaisissez les taux à la main.');});
 }
 // ── Terrain et taxe d'aménagement (assistant DPGF et fenêtre Estimatif) ──
 // Les champs remplissent les lignes annexes « Coût d'acquisition du terrain » et « Taxe d'aménagement »
@@ -2848,7 +2930,7 @@ function estFin(champ,v){
   var c=act,e=c&&c.est;if(!e)return;e.ta=e.ta||{rp:1};v=String(v===undefined?'':v).trim();
   if(champ==='terrain'){e.terrain=v===''?null:cts(v);e.terrainSet=1;}
   else if(champ==='rp')e.ta.rp=v==='true'?1:0;
-  else if(champ==='tc'||champ==='td'||champ==='vf'||champ==='vpisc'||champ==='vstat')e.ta[champ]=v===''?null:cts(v);
+  else if(champ==='tc'||champ==='td'||champ==='vf'||champ==='vpisc'||champ==='vstat'){e.ta[champ]=v===''?null:cts(v);if(champ!=='vf'&&champ!=='vpisc'){delete e.ta[champ+'Src'];e.ta[champ+'Manuel']=1;}}
   else e.ta[champ]=v===''?null:(parseFloat(v.replace(/\s/g,'').replace(',','.'))||0);
   annexesAuto(c,false,champ==='terrain'?'terrain':'ta');ctrSave();estReafficher();
 }
@@ -2858,16 +2940,19 @@ function estFinHtml(c){
   var det=k.complet?(k.S?'Construction — base taxable : '+(k.rp&&k.H>0?(k.H>100?'100 m² × 50 % + '+num(Math.round((k.H-100)*100)/100)+' m²':num(k.H)+' m² × 50 %'):num(k.H)+' m²')+(k.G?' + garage '+num(k.G)+' m² × 50 %':'')+' = <b>'+num(k.base)+' m²</b> → '+num(k.base)+' × '+fmtE(k.vf)+' € × '+pctStr(k.taux)+' % = '+fmtE(k.tBat)+' €':'')+
       (k.pisc?'<br>Piscine : '+num(k.pisc)+' m² × '+fmtE(k.vp)+' € × '+pctStr(k.taux)+' % = '+fmtE(k.tPisc)+' €':'')+
       (k.np?'<br>Stationnement extérieur : '+k.np+' place'+(k.np>1?'s':'')+' × '+fmtE(k.vs)+' € × '+pctStr(k.taux)+' % = '+fmtE(k.tStat)+' €':'')+
-      '<br><b>Taxe d\'aménagement estimée : '+fmtE(k.taxe)+' €</b>':'Saisissez le taux communal et/ou départemental pour calculer la taxe.';
+      '<br><b>Taxe d\'aménagement estimée : '+fmtE(k.taxe)+' €</b>'+
+      (t.tc===null||t.tc===undefined?'<br><i style="color:var(--amber)">Taux communal non renseigné : ce montant ne comprend que la part départementale.</i>':'')+
+      (t.td===null||t.td===undefined?'<br><i style="color:var(--amber)">Taux départemental non renseigné : ce montant ne comprend que la part communale.</i>':''):'Saisissez le taux communal et/ou départemental pour calculer la taxe.';
   return '<details class="ctr-tx"'+(estFinOuvert?' open':'')+' ontoggle="estFinOuvert=this.open"><summary>💶 Terrain et taxe d\'aménagement'+(e.terrain>0?' — terrain '+fmtE(e.terrain)+' €':'')+(k.complet?' — taxe '+fmtE(k.taxe)+' €':'')+'</summary>'+
     '<div class="fg">'+f('terrain','Valeur d\'achat du terrain (€) — vide ou 0 = terrain déjà possédé',e.terrain?fmtE(e.terrain):'','ex : 45 000')+'</div>'+
     '<div class="sec-lbl">Estimation de la taxe d\'aménagement</div>'+
     '<div class="dp-q">'+f('surf','Surface taxable (m²)',num(t.surf),num(k.S)+' (auto : habitable + garage)')+f('gar','dont garage (m²)',num(t.gar),num(k.G)+' (auto)')+
-      f('tc','Taux communal (%)',t.tc!==null&&t.tc!==undefined?pctStr(t.tc):'','à saisir')+f('td','Taux départemental (%)',t.td!==null&&t.td!==undefined?pctStr(t.td):'','à saisir')+
+      f('tc','Taux communal (%)'+(t.tcSrc==='data'?' <i class="ta-src">('+TA_SOURCE+')</i>':''),t.tc!==null&&t.tc!==undefined?pctStr(t.tc):'','à saisir')+f('td','Taux départemental (%)'+(t.tdSrc==='data'?' <i class="ta-src">('+TA_SOURCE+')</i>':''),t.td!==null&&t.td!==undefined?pctStr(t.td):'','à saisir')+
       f('vf','Valeur forfaitaire (€ / m²)',t.vf?fmtE(t.vf):'',fmtE(taVfGlobal())+' (barème '+(r.taVfAnnee||TA_VF_ANNEE_DEF)+')')+
       '<label class="sd-chk"><input type="checkbox"'+(k.rp?' checked':'')+' onchange="estFin(\'rp\',this.checked)"><label>Résidence principale (abattement de 50 % sur les 100 premiers m²)</label></label>'+
       f('pisc','Piscine : surface du bassin (m²)',num(t.pisc),num(k.pisc)+(t.pisc===null||t.pisc===undefined?' (auto : questionnaire)':''))+f('vpisc','Piscine : valeur forfaitaire (€ / m²)',t.vpisc?fmtE(t.vpisc):'',fmtE(TA_PISC_DEF)+' (valeur légale)')+
-      f('np','Places de stationnement extérieures',num(t.np),'0')+f('vstat','Stationnement : valeur par place (€)',t.vstat?fmtE(t.vstat):'',fmtE(TA_STAT_DEF)+' (jusqu\'à 5 000 selon la commune)')+'</div>'+
+      f('np','Places de stationnement extérieures',num(t.np),'0')+f('vstat','Stationnement : valeur par place (€)'+(t.vstatSrc==='data'?' <i class="ta-src">('+TA_SOURCE+')</i>':''),t.vstat?fmtE(t.vstat):'',fmtE(TA_STAT_DEF)+' (jusqu\'à 5 000 selon la commune)')+'</div>'+
+    tauxTAHtml(c)+'<div class="ctr-bar" style="margin:0 0 6px"><button class="sml-btn" style="width:auto;margin:0" onclick="btnTauxTA()">🔎 Chercher les taux votés par la commune (data.economie.gouv.fr)</button></div>'+
     '<div class="faisa-bloc">'+det+'</div>'+
     '<div class="rel-note">Le résultat remplit les lignes « Coût d\'acquisition du terrain » et « Taxe d\'aménagement » des postes annexes (Word Estimatif). '+esc(TA_MENTION)+' Valeur forfaitaire par défaut : Paramètres.</div></details>';
 }
