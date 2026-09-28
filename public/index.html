@@ -2294,9 +2294,10 @@ function faisaLancer(){
   var fin=function(){faisaEnCours=false;busyEnd(jeton);if(act===c){try{renderFaisa();renderFaisaBar();}catch(e){console.error(e);}}};
   var etape=function(n){
     faisaProgres={pct:n*25,lib:FAISA_ETAPES[n][1]};if(act===c)majFaisaProgres();
-    return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'faisabilite',etape:FAISA_ETAPES[n][0],etat:etat},p))})
-    .then(function(r){return r.json();}).then(function(res){
-      if(!res||!res.ok)return res;
+    if(FAISA_ETAPES[n][0]==='risques'&&etat&&etat.lon)return risquesEtape(etat,p);
+    return avecDelai(fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'faisabilite',etape:FAISA_ETAPES[n][0],etat:etat},p))})
+    .then(function(r){return r.json();}),120000,'le script Google n\'a pas répondu à temps').then(function(res){
+      if(!res||!res.ok)return res||{ok:false,erreur:'Réponse vide du script Google.'};
       if(!res.etape||n===FAISA_ETAPES.length-1){delete res.geoms;delete res.etape;return res;} // terminé (ou script version 5 : tout en une fois)
       etat=res;return etape(n+1);
     });
@@ -2313,6 +2314,33 @@ function faisaLancer(){
     chercherTauxTA(c).then(function(){if(c.est)preremplirEst(c);sv();if(act===c){renderFaisa();estReafficher();}}).catch(function(){});
     setTimeout(fin,350);
   }).catch(function(e){faisaErreur='Service indisponible ('+(e&&e.message||e)+'). Réessayez dans quelques minutes.';fin();});
+}
+// Risques : d'abord directement depuis le navigateur (Géorisques), sinon par le script Google (avec délai) ;
+// si Géorisques ne répond pas, l'étude se termine quand même sans les risques (message « non disponibles »).
+function avecDelai(pr,ms,msg){return Promise.race([pr,new Promise(function(ok,ko){setTimeout(function(){ko(new Error(msg||'délai dépassé'));},ms);})]);}
+function geoJson(u,ms){return avecDelai(fetch(u,{headers:{Accept:'application/json'}}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}),ms);}
+function risquesNavigateur(st){
+  var G='https://georisques.gouv.fr/api/v1/',ll=st.lon+','+st.lat;
+  return geoJson(G+'resultats_rapport_risque?latlon='+ll,25000).then(function(rap){
+    var res={risques:[]};
+    ['risquesNaturels','risquesTechnologiques'].forEach(function(k){var o=rap&&rap[k];if(o)Object.keys(o).forEach(function(n){var x=o[n];if(x&&x.present)res.risques.push(x.libelle||n);});});
+    if(rap&&rap.url)res.georisquesUrl=rap.url;
+    var opt=function(u,f){return geoJson(u,10000).then(f).catch(function(){});};
+    return Promise.all([
+      opt(G+'zonage_sismique?latlon='+ll,function(j){var x=j.data&&j.data[0];if(x)res.sismicite=x.zone_sismicite||x.code_zone||'';}),
+      opt(G+'radon?code_insee='+st.insee,function(j){var x=j.data&&j.data[0];if(x)res.radon=String(x.classe_potentiel||'');}),
+      opt(G+'rga?latlon='+ll,function(j){var x=(j&&j.data&&j.data[0])||j;if(x&&x.exposition)res.argile=x.exposition;})
+    ]).then(function(){return res;});
+  });
+}
+function risquesEtape(etat,p){
+  var fini=function(r){r=Object.assign({},r);r.ok=true;delete r.geoms;delete r.etape;return r;};
+  return risquesNavigateur(etat).then(function(x){return fini(Object.assign({},etat,x));})
+  .catch(function(){
+    return avecDelai(fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'faisabilite',etape:'risques',etat:etat},p))}).then(function(r){return r.json();}),100000)
+      .then(function(res){if(res&&res.ok)return fini(res);throw new Error((res&&res.erreur)||'réponse inattendue');});
+  })
+  .catch(function(){var r=fini(etat);r.avert=(r.avert||[]).concat(['Géorisques n\'a pas répondu : risques non disponibles pour le moment (cliquez sur « Actualiser » plus tard).']);return r;});
 }
 function majFaisaProgres(){var el=document.getElementById('faisa-prog');if(el)el.innerHTML=anneauHtml(faisaProgres.pct,52)+'<div><b>'+esc(faisaProgres.lib)+'</b><br><span>Étape '+Math.min(4,Math.floor(faisaProgres.pct/25)+1)+' sur 4</span></div>';else if(document.getElementById('m-faisa').classList.contains('open'))renderFaisa();}
 function faisaContenance(){var f=act.faisa;if(!f||!f.surface)return;act.contenance=fmtE(Math.round(f.surface)*100)+' m²';act.upd=Date.now();sv();renderFaisa();if(document.getElementById('d-ctrs'))renderCtrs();toast('Contenance du terrain : '+act.contenance);}

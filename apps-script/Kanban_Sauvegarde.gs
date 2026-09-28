@@ -1,5 +1,5 @@
 /**
- * Atelier 2M — Sauvegarde du Kanban dans Google Drive  (version 6 : documents + Google Agenda + numérotation + faisabilité par étapes)
+ * Atelier 2M — Sauvegarde du Kanban dans Google Drive  (version 7 : documents + Google Agenda + numérotation + faisabilité par étapes)
  * -----------------------------------------------------------------------------------
  * - Enregistre les dossiers du Kanban dans "kanban-atelier2m-data.json"
  * - Copie de secours quotidienne dans "Kanban Atelier 2M - Sauvegardes" (30 jours)
@@ -303,26 +303,30 @@ function faisaUrbanisme_(d, r) {
   return null;
 }
 
-// 4. Risques (Géorisques)
+// 4. Risques (Géorisques) : toutes les requêtes partent en même temps (fetchAll), pour ne pas cumuler les attentes
 function faisaRisques_(d, r) {
   var ll = r.lon + ',' + r.lat;
   r.risques = [];
+  var urls = [GEORISQUES + 'resultats_rapport_risque?latlon=' + ll, GEORISQUES + 'gaspar/risques?latlon=' + ll,
+    GEORISQUES + 'zonage_sismique?latlon=' + ll, GEORISQUES + 'radon?code_insee=' + r.insee, GEORISQUES + 'rga?latlon=' + ll];
+  var rep;
   try {
-    var rap = json_(GEORISQUES + 'resultats_rapport_risque?latlon=' + ll);
+    rep = UrlFetchApp.fetchAll(urls.map(function (u) { return { url: u, muteHttpExceptions: true, headers: { Accept: 'application/json' } }; }));
+  } catch (e) { r.avert.push('Géorisques n\'a pas répondu : risques non disponibles pour le moment (' + e.message + ').'); return null; }
+  var lire = function (i) { try { return rep[i].getResponseCode() < 400 ? JSON.parse(rep[i].getContentText() || '{}') : null; } catch (e) { return null; } };
+  var rap = lire(0), gs = lire(1), sz = lire(2), rd = lire(3), rg = lire(4);
+  if (rap) {
     ['risquesNaturels', 'risquesTechnologiques'].forEach(function (k) {
-      var o = rap && rap[k];
+      var o = rap[k];
       if (o) Object.keys(o).forEach(function (n) { var x = o[n]; if (x && x.present) r.risques.push(x.libelle || n); });
     });
-    if (rap && rap.url) r.georisquesUrl = rap.url;
-  } catch (e) {
-    try {
-      var gs = json_(GEORISQUES + 'gaspar/risques?latlon=' + ll);
-      ((gs.data && gs.data[0] && gs.data[0].risques_detail) || []).forEach(function (x) { if (r.risques.indexOf(x.libelle_risque_long) < 0) r.risques.push(x.libelle_risque_long); });
-    } catch (e2) { r.avert.push('Géorisques indisponible : ' + e2.message); }
-  }
-  try { var sz = json_(GEORISQUES + 'zonage_sismique?latlon=' + ll); var s0 = sz.data && sz.data[0]; if (s0) r.sismicite = s0.zone_sismicite || s0.code_zone || ''; } catch (e) {}
-  try { var rd = json_(GEORISQUES + 'radon?code_insee=' + r.insee); var r0 = rd.data && rd.data[0]; if (r0) r.radon = String(r0.classe_potentiel || ''); } catch (e) {}
-  try { var rg = json_(GEORISQUES + 'rga?latlon=' + ll); var g0 = (rg && rg.data && rg.data[0]) || rg; if (g0 && g0.exposition) r.argile = g0.exposition; } catch (e) {}
+    if (rap.url) r.georisquesUrl = rap.url;
+  } else if (gs) {
+    ((gs.data && gs.data[0] && gs.data[0].risques_detail) || []).forEach(function (x) { if (r.risques.indexOf(x.libelle_risque_long) < 0) r.risques.push(x.libelle_risque_long); });
+  } else r.avert.push('Géorisques indisponible : risques non disponibles pour le moment.');
+  var s0 = sz && sz.data && sz.data[0]; if (s0) r.sismicite = s0.zone_sismicite || s0.code_zone || '';
+  var r0 = rd && rd.data && rd.data[0]; if (r0) r.radon = String(r0.classe_potentiel || '');
+  var g0 = rg && ((rg.data && rg.data[0]) || rg); if (g0 && g0.exposition) r.argile = g0.exposition;
   return null;
 }
 

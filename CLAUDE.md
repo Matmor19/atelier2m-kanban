@@ -108,11 +108,14 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   tant que les parcelles ne sont pas modifiées). Étude et taux votés lisent `parcellesDe(c)`.
 - **Étude de faisabilité** (niveau 1, sans IA) : bouton « 🔎 Étude de faisabilité » sous la parcelle cadastrale de
   la fiche (actif si commune + au moins une parcelle). Le Kanban envoie `action:'faisabilite'` au script Google
-  (`faisabilite_()` dans le .gs, version 6 : 4 étapes `commune` / `parcelles` / `urbanisme` / `risques` appelées une par une par `faisaLancer()` avec l'état intermédiaire `etat`, pour afficher le pourcentage ; sans `etape`, tout en un appel) qui interroge api-adresse (code INSEE), apicarto IGN (cadastre,
+  (`faisabilite_()` dans le .gs, version 7 : 4 étapes `commune` / `parcelles` / `urbanisme` / `risques` appelées une par une par `faisaLancer()` avec l'état intermédiaire `etat`, pour afficher le pourcentage ; sans `etape`, tout en un appel) qui interroge api-adresse (code INSEE), apicarto IGN (cadastre,
   GPU zone-urba / document / secteur-cc / municipality pour le RNU) et Géorisques. Lecture des références :
   `refsCadastre()` (« Section AB n°12 », « 240 - 242 et 244 AI »…). Résultat mémorisé dans `c.faisa` (avec
   `cad` au moment de l'étude), affiché par `renderFaisa()`, bouton « Actualiser ». Donnée brute indicative
   (`FAISA_MENTION`), aucune interprétation automatique.
+  Étape risques : `risquesEtape()` interroge d'abord Géorisques depuis le navigateur (`risquesNavigateur`, délai 25 s),
+  sinon le script (délai 100 s, requêtes en parallèle `fetchAll` côté script) ; si rien ne répond, l'étude se termine
+  sans les risques avec un avertissement (Géorisques ne répond pas toujours aux serveurs Google).
 - **Annexe PLU pré-remplie par l'étude** (`pluDepuisFaisa()`, à l'ouverture de l'annexe et après chaque étude réussie) :
   commune (+ INSEE), référence cadastrale, contenance, document d'urbanisme et texte de la section « Zonage »
   (`pluValeursEtude`). `p.auto` = dernière valeur reprise ; un champ vide ou égal à `p.auto` suit l'étude, un champ
