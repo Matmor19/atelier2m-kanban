@@ -113,6 +113,11 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   `refsCadastre()` (« Section AB n°12 », « 240 - 242 et 244 AI »…). Résultat mémorisé dans `c.faisa` (avec
   `cad` au moment de l'étude), affiché par `renderFaisa()`, bouton « Actualiser ». Donnée brute indicative
   (`FAISA_MENTION`), aucune interprétation automatique.
+- **Annexe PLU pré-remplie par l'étude** (`pluDepuisFaisa()`, à l'ouverture de l'annexe et après chaque étude réussie) :
+  commune (+ INSEE), référence cadastrale, contenance, document d'urbanisme et texte de la section « Zonage »
+  (`pluValeursEtude`). `p.auto` = dernière valeur reprise ; un champ vide ou égal à `p.auto` suit l'étude, un champ
+  modifié à la main n'est jamais remplacé : une étude contradictoire est signalée (`p.conflits`, boutons
+  « Reprendre la valeur de l'étude » / « Garder ma saisie » → `p.ignore`). Sans étude : saisie manuelle inchangée.
 - **Indicateur d'activité** : `busyStart(libellé)` / `busyEnd()` / `busyPromesse()` ; `window.fetch` est enveloppé
   (`busyInfo()` donne le libellé selon la requête ; enregistrement automatique = pastille sans bloquer de bouton).
   Pastille `#busy` (anneau qui tourne) ; le dernier bouton cliqué est désactivé (`is-busy`) jusqu'à la fin, avec un
