@@ -88,6 +88,12 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   suit les changements tant qu'il est identique au dernier texte automatique (`e.objetAuto`, `e.introAuto`,
   `e.presAuto`) ; retouché par l'utilisateur, il n'est plus jamais modifié (boutons « ↻ » pour régénérer).
   Points de vigilance : saisie manuelle uniquement.
+  **Terrain et taxe d'aménagement** (`estFinHtml()`, bloc dans l'assistant DPGF et la fenêtre Estimatif) : valeur
+  d'achat du terrain (`e.terrain`, centimes) et taxe (`e.ta` : surf, gar, tc, td en centièmes de %, vf en centimes,
+  rp) calculée par `taCalc()` : base = 50 % des 100 premiers m² (résidence principale) + reste + 50 % du garage,
+  × valeur forfaitaire × (taux communal + départemental). `annexesAuto()` remplit les lignes annexes terrain et
+  taxe (marqueur `auto`) ; une ligne dont le montant est retouché à la main perd `auto` et n'est plus modifiée.
+  Valeur forfaitaire par défaut : Paramètres (`DB.reglages.taVf`, `taVfAnnee`), à mettre à jour chaque année.
 - **Étude de faisabilité** (niveau 1, sans IA) : bouton « 🔎 Étude de faisabilité » sous la parcelle cadastrale de
   la fiche (actif si commune + au moins une parcelle). Le Kanban envoie `action:'faisabilite'` au script Google
   (`faisabilite_()` dans le .gs, version 5) qui interroge api-adresse (code INSEE), apicarto IGN (cadastre,
