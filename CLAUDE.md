@@ -101,6 +101,11 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   votée). Lancée après une étude de faisabilité réussie ou par le bouton de l'estimatif. Résultat dans `c.taTaux` ;
   `appliquerTauxTA()` pré-remplit tc / td / vstat s'ils sont vides ou déjà issus de la source (`…Src='data'`),
   jamais s'ils ont été saisis à la main (`…Manuel`). Mention « source : data.economie.gouv.fr, à vérifier ».
+- **Parcelles cadastrales** (fiche) : une ligne par parcelle, `c.parcelles = [{section, numero}]` (`renderParcelles`,
+  `parcSet` : ajout, suppression, « Réinitialiser les parcelles »). `c.cad` = texte recomposé (`cadTexte`) utilisé
+  par les documents Word et comparé par l'étude de faisabilité. Ancien texte libre converti à l'ouverture du
+  dossier (`migrerParcelles` via `refsCadastre`), texte d'origine gardé dans `c.cadOrig` (et utilisé tel quel
+  tant que les parcelles ne sont pas modifiées). Étude et taux votés lisent `parcellesDe(c)`.
 - **Étude de faisabilité** (niveau 1, sans IA) : bouton « 🔎 Étude de faisabilité » sous la parcelle cadastrale de
   la fiche (actif si commune + au moins une parcelle). Le Kanban envoie `action:'faisabilite'` au script Google
   (`faisabilite_()` dans le .gs, version 5) qui interroge api-adresse (code INSEE), apicarto IGN (cadastre,
