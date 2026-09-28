@@ -1707,7 +1707,7 @@ function setCont(on){
   toast(on?'Dossier passé en contentieux':'Contentieux levé');
 }
 function sf(k,v){if(!act)return;act[k]=v;act.upd=Date.now();
-  if(['nom','addr','resume','nat'].indexOf(k)>=0&&preremplirInfos(act)&&document.getElementById('d-ctrs'))renderCtrs(); // complète les champs encore vides
+  if(preremplirInfos(act)&&document.getElementById('d-ctrs'))renderCtrs(); // les champs automatiques suivent la fiche
   if(['addr','resume','nat','surf','commune'].indexOf(k)>=0)preremplirEst(act);
   if(['addr','commune'].indexOf(k)>=0)renderFaisaBar();
   sv();render();}
@@ -2080,24 +2080,44 @@ function renderCtrs(){
 }
 var infosOuvert=null; // bloc « Informations pour les documents » : reste tel que l'utilisateur l'a laissé
 var INFOS=[['desig','Désignation complète du client','ex : Monsieur Jean DUPONT et Madame Marie DURAND'],['soc','Société (SCI…) — facultatif','ex : SCI DUPONT ; vide pour un particulier'],['signataire','Signataire','ex : M. Dupont et Mme Durand'],['projet','Description du projet (reprise dans les documents)','ex : construction d\'une maison individuelle de plain-pied…',3],['commune','Commune du projet','ex : Brive-la-Gaillarde'],['contenance','Contenance du terrain','ex : 1 500 m²'],['lot','Lot — facultatif','ex : Lot n° 1 du plan de division']];
-// Pré-remplissage des « Informations pour les documents » à partir de la fiche :
-// seuls les champs VIDES sont remplis (jamais d'écrasement d'une valeur saisie). Retourne true si un champ a changé.
+// Pré-remplissage des « Informations pour les documents » à partir de la fiche et de l'étude de faisabilité.
+// Chaque champ suit sa source tant qu'il est vide ou identique à la dernière valeur reprise (c.infAuto[champ]) ;
+// modifié à la main, il n'est plus jamais remplacé. Retourne true si un champ a changé.
+// Sources : désignation ← nom ; signataire ← désignation ; description ← résumé, sinon nature ;
+// commune ← étude (nom officiel), sinon code postal de l'adresse du chantier ; contenance ← surface cadastrale de l'étude.
 function communeDe(adr){
   var m=String(adr||'').match(/\b\d{5}\s+([^,\n]+)/g);if(!m)return '';
   return m[m.length-1].replace(/^\d{5}\s+/,'').replace(/[\s.;]+$/,'').trim();
 }
+var INFOS_AUTO=['desig','signataire','projet','commune','contenance'];
+function faisaOk(c){return c&&c.faisa&&c.faisa.ok?c.faisa:null;}
+function sourcesInfos(c){
+  var f=faisaOk(c),t=function(x){return String(x||'').trim();};
+  return {desig:t(c.nom),signataire:t(c.desig),projet:t(c.resume)||t(c.nat),commune:t(f&&f.commune)||communeDe(c.addr),contenance:f&&f.surface?fmtM2(f.surface):''};
+}
+// Dossiers antérieurs (pas encore de c.infAuto) : une valeur égale à ce que l'ancien pré-remplissage aurait mis est automatique
+function infoAncienAuto(c,k,cur){
+  var f=faisaOk(c),t=function(x){return String(x||'').trim();};
+  return k==='desig'?cur===t(c.nom):k==='signataire'?cur===t(c.desig):k==='projet'?cur===t(c.resume)||cur===t(c.nat):
+    k==='commune'?cur===communeDe(c.addr)||!!(f&&cur===t(f.commune)):false;
+}
+function infoAuto(c,k){var cur=String(c[k]||'').trim(),A=c.infAuto||{};return !cur||(A[k]!==undefined?cur===A[k]:infoAncienAuto(c,k,cur));}
 function preremplirInfos(c){
-  if(!c)return false;var chg=false,vide=function(k){return !String(c[k]||'').trim();};
-  if(vide('desig')&&String(c.nom||'').trim()){c.desig=c.nom.trim();chg=true;}
-  if(vide('signataire')&&!vide('desig')){c.signataire=c.desig;chg=true;}
-  if(vide('projet')){var p=String(c.resume||'').trim()||String(c.nat||'').trim();if(p){c.projet=p;chg=true;}}
-  if(vide('commune')){var v=communeDe(c.addr);if(v){c.commune=v;chg=true;}}
+  if(!c)return false;var chg=false;c.infAuto=c.infAuto||{};
+  INFOS_AUTO.forEach(function(k){
+    var v=sourcesInfos(c)[k];if(!v||!infoAuto(c,k))return; // recalculé à chaque champ : le signataire suit la désignation
+    if(c[k]!==v){c[k]=v;chg=true;}
+    if(c.infAuto[k]!==v){c.infAuto[k]=v;chg=true;}
+  });
+  if(c.plu&&pluDepuisFaisa(c))chg=true; // l'annexe PLU suit à son tour ces informations
   return chg;
 }
+// Champ modifié à la main alors que l'étude indique autre chose : lien pour reprendre la valeur de l'étude
+function infoReprendre(k){var v=sourcesInfos(act)[k];if(!v)return;act[k]=v;act.infAuto=act.infAuto||{};act.infAuto[k]=v;act.upd=Date.now();preremplirInfos(act);sv();render();renderCtrs();toast('Valeur reprise : '+v);}
 // Désignation modifiée : le signataire suit tant qu'il est resté la copie de l'ancienne désignation
 function setDesig(v){
   if(!act)return;
-  if(!String(act.signataire||'').trim()||act.signataire===act.desig)act.signataire=v;
+  if(!String(act.signataire||'').trim()||act.signataire===act.desig){act.signataire=v;(act.infAuto=act.infAuto||{}).signataire=v;}
   sf('desig',v);renderCtrs();
 }
 function infosHtml(c){
@@ -2105,9 +2125,11 @@ function infosHtml(c){
     INFOS.map(function(f){
       var v=escA(c[f[0]]||'');
       var ch=f[0]==='desig'?'setDesig(this.value)':'sf(\''+f[0]+'\',this.value);renderCtrs()';
+      var src=(f[0]==='commune'||f[0]==='contenance')&&faisaOk(c)?sourcesInfos(c)[f[0]]:'';
+      var diff=src&&String(c[f[0]]||'').trim()&&!infoAuto(c,f[0])&&String(c[f[0]]).trim()!==src?'<div class="rel-note" style="margin:1px 0 4px">Étude de faisabilité : '+esc(src)+' — <a class="lnk" onclick="infoReprendre(\''+f[0]+'\')">reprendre cette valeur</a></div>':'';
       return '<div class="inf-l">'+esc(f[1])+'</div>'+(f[3]?'<textarea class="sd-inp pj-area" placeholder="'+escA(f[2])+'" onchange="'+ch+'">'+esc(c[f[0]]||'')+'</textarea>'
-        :'<input class="sd-inp" placeholder="'+escA(f[2])+'" value="'+v+'" onchange="'+ch+'">');
-    }).join('')+'<div class="rel-note">Adresse du client, adresse du chantier et parcelle : champs de la fiche (colonne de droite et « Projet »).</div>';
+        :'<input class="sd-inp" placeholder="'+escA(f[2])+'" value="'+v+'" onchange="'+ch+'">')+diff;
+    }).join('')+'<div class="rel-note">Remplis automatiquement depuis la fiche et l\'étude de faisabilité (désignation, signataire, description, commune, contenance) ; un champ modifié à la main n\'est plus jamais remplacé. Adresse du client, adresse du chantier et parcelles : champs de la fiche (colonne de droite et « Projet »).</div>';
 }
 function infosManquantes(c){
   var m=[];
@@ -2225,7 +2247,7 @@ function parcSet(i,champ,v){
   else if(champ==='suppr')P.splice(i,1);
   else if(champ==='reset'){if(!confirm('Vider toutes les parcelles cadastrales de ce dossier ?\nVous pourrez les ressaisir proprement (section + numéro).'))return;c.parcelles=[{section:'',numero:''}];delete c.cadOrig;}
   else if(P[i]){P[i]=normParc(Object.assign({},P[i],(function(o){o[champ]=v;return o;})({})));}
-  c.cad=cadTexte(parcellesDe(c));c.upd=Date.now();sv();render();
+  c.cad=cadTexte(parcellesDe(c));c.upd=Date.now();preremplirInfos(c);sv();render();
   renderParcelles();renderFaisaBar();
   if(champ==='ajout'){var L=document.querySelectorAll('#d-parc .parc-it input');if(L.length)L[L.length-(P[P.length-1].section?1:2)].focus();}
 }
@@ -2311,7 +2333,8 @@ function faisaLancer(){
       fin();return;
     }
     faisaProgres={pct:100,lib:'Terminé'};if(act===c)majFaisaProgres();
-    res.date=res.date||new Date().toISOString();res.cad=c.cad||'';res.communeSaisie=p.commune;c.faisa=res;pluDepuisFaisa(c);c.upd=Date.now();sv();
+    res.date=res.date||new Date().toISOString();res.cad=c.cad||'';res.communeSaisie=p.commune;c.faisa=res;preremplirInfos(c);pluDepuisFaisa(c);c.upd=Date.now();sv();
+    if(act===c&&document.getElementById('d-ctrs'))renderCtrs();
     if(c.plu&&c.plu.conflits&&Object.keys(c.plu.conflits).length)toast('Annexe PLU : l\'étude contredit une saisie manuelle — voir l\'annexe');
     chercherTauxTA(c).then(function(){if(c.est)preremplirEst(c);sv();if(act===c){renderFaisa();estReafficher();}}).catch(function(){});
     setTimeout(fin,350);
@@ -2469,10 +2492,9 @@ function renderEst(){
 // ── Annexe 1 : analyse du terrain et du PLU ──
 function openPlu(){
   if(!act)return;
-  var fOk=act.faisa&&act.faisa.ok;
-  if(!act.plu){act.plu={commune:fOk?'':act.commune||'',lieudit:'',cad:fOk?'':act.cad||'',contenance:fOk?'':act.contenance||'',doc:'',
+  if(!act.plu){act.plu={commune:'',lieudit:'',cad:'',contenance:'',doc:'',
     sections:[['Zonage — point déterminant',''],['Dispositions générales du règlement (communes à toutes les zones)',''],['Point à vérifier',''],['Synthèse','']].map(function(s){return {titre:s[0],texte:s[1]};})};ctrSave();}
-  if(pluDepuisFaisa(act))ctrSave();
+  if(preremplirInfos(act))ctrSave();
   renderPlu();showM('m-plu');
 }
 function pluSet(champ,v,i){var p=act&&act.plu;if(!p)return;
@@ -2488,24 +2510,29 @@ function renderPlu(){
     p.sections.map(function(s,i){var ia=pluIASection(p,i);return (i===premIA?pluIABarre(act):'')+'<div class="plu-sec"><input class="sd-inp" style="font-weight:700;color:var(--or)" value="'+escA(s.titre)+'" onchange="pluSet(\'titre\',this.value,'+i+')"><textarea class="sd-inp" rows="'+(ia&&p.ia?9:5)+'" onchange="pluSet(\'texte\',this.value,'+i+')">'+esc(s.texte)+'</textarea>'+(ia&&p.ia&&String(s.texte||'').trim()?'<div class="ia-note">✨ '+esc(PLU_IA_MENTION)+'</div>':'')+'<button class="rm" style="float:right" onclick="pluSet(\'suppr\',0,'+i+')">Supprimer la section</button></div>';}).join('')+
     (premIA<0?pluIABarre(act):'')+'<button class="sml-btn" onclick="pluSet(\'ajout\')">＋ Ajouter une section</button><div class="mbtns"><button class="mb-s" onclick="closeSub(\'m-plu\')">Fermer</button></div>';
 }
-// ── Annexe PLU pré-remplie par l'étude de faisabilité ──
-// Commune, référence cadastrale, contenance, document d'urbanisme et texte de la section « Zonage » sont repris
-// de c.faisa. On retient la dernière valeur reprise (p.auto) : un champ encore égal à celle-ci (ou vide) suit les
-// nouvelles études ; un champ modifié à la main n'est jamais remplacé, et une nouvelle étude qui le contredit
-// est signalée (p.conflits), avec le choix « reprendre » ou « garder ma saisie » (p.ignore).
-var PLU_CHAMPS=[['commune','Commune'],['cad','Référence cadastrale'],['contenance','Contenance'],['doc','Document d\'urbanisme'],['zonage','Zonage (texte)']];
+// ── Annexe PLU pré-remplie par la fiche et l'étude de faisabilité ──
+// Commune, lieu-dit, référence cadastrale et contenance viennent de la fiche (qui suit elle-même l'étude) ; document
+// d'urbanisme et texte de la section « Zonage » viennent de c.faisa. On retient la dernière valeur reprise (p.auto) :
+// un champ encore égal à celle-ci (ou vide) suit sa source ; un champ modifié à la main n'est jamais remplacé, et une
+// source qui le contredit ensuite est signalée (p.conflits), avec le choix « reprendre » ou « garder ma saisie » (p.ignore).
+var PLU_CHAMPS=[['commune','Commune'],['lieudit','Lieu-dit'],['cad','Référence cadastrale'],['contenance','Contenance'],['doc','Document d\'urbanisme'],['zonage','Zonage (texte)']];
+function sansAccents(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+function lieuDitDe(adr){var m=/lieu[\s-]*dit\s*[:,]?\s*[«"“]?\s*([^,»"”\n]+)/i.exec(String(adr||''));return m?m[1].trim():'';}
 function pluSecZonage(p){var i=(p.sections||[]).findIndex(function(s){return /zonage/i.test(s.titre||'');});return i<0?0:i;}
 function pluLire(p,k){if(k!=='zonage')return p[k]||'';var s=(p.sections||[])[pluSecZonage(p)];return s?s.texte||'':'';}
 function pluEcrire(p,k,v){if(k!=='zonage'){p[k]=v;return;}p.sections=p.sections||[];if(!p.sections.length)p.sections.push({titre:'Zonage — point déterminant',texte:''});p.sections[pluSecZonage(p)].texte=v;}
 function pluValeursEtude(c){
-  var f=c.faisa;if(!f||!f.ok)return null;
+  var f=faisaOk(c),t=function(x){return String(x||'').trim();};
+  var com=t(c.commune)||t(f&&f.commune),ins=f&&f.insee&&sansAccents(com)===sansAccents(f.commune)?f.insee:'';
+  var V={commune:com?com+(ins?' ('+ins+')':''):'',lieudit:lieuDitDe(c.addr),cad:t(c.cad)||t(f&&f.cad),contenance:t(c.contenance)||(f&&f.surface?fmtM2(f.surface):''),doc:'',zonage:''};
+  if(!f)return V;
   var dv=(f.zones||[]).map(function(z){return z.validation;}).filter(Boolean).sort().pop(),dvFr=dv&&/^\d{8}$/.test(dv)?dv.slice(6,8)+'/'+dv.slice(4,6)+'/'+dv.slice(0,4):'';
   var doc=f.rnu?'Règlement National d\'Urbanisme (RNU) — la commune n\'a pas de document d\'urbanisme':f.document?(f.document.type||'Document d\'urbanisme')+' de '+(f.document.nom||f.commune||'')+(dvFr?' (version en vigueur du '+dvFr+')':''):'';
   var Z=(f.zones||[]).filter(function(z){return z.code;}),lib=function(z){return String(z.libelle||'').replace(new RegExp('^'+String(z.code).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*:\\s*'),'');};
   var zon=f.rnu?'Le terrain est soumis au Règlement National d\'Urbanisme (RNU).':Z.length===1?'Le terrain est classé en zone '+Z[0].code+(lib(Z[0])&&lib(Z[0])!==Z[0].code?' ('+lib(Z[0])+')':'')+(f.document&&f.document.type?' du '+f.document.type:'')+'.':
     Z.length?'Le terrain est concerné par plusieurs zones'+(f.document&&f.document.type?' du '+f.document.type:'')+' :\n'+Z.map(function(z){return '- Zone '+z.code+(lib(z)&&lib(z)!==z.code?' : '+lib(z):'');}).join('\n'):'';
   var regl=Z.filter(function(z){return z.reglement;})[0];if(zon&&regl)zon+='\n- Règlement : '+regl.reglement;
-  return {commune:f.commune?f.commune+(f.insee?' ('+f.insee+')':''):'',cad:f.cad||c.cad||'',contenance:f.surface?fmtM2(f.surface):'',doc:doc,zonage:zon};
+  V.doc=doc;V.zonage=zon;return V;
 }
 function pluDepuisFaisa(c){
   var p=c.plu,V=pluValeursEtude(c);if(!p||!V)return false;
@@ -2513,9 +2540,9 @@ function pluDepuisFaisa(c){
   PLU_CHAMPS.forEach(function(x){var k=x[0],v=V[k],cur=pluLire(p,k);if(!v)return;
     if(!String(cur).trim()||cur===p.auto[k]){if(cur!==v){pluEcrire(p,k,v);ch=true;}if(p.auto[k]!==v){p.auto[k]=v;ch=true;}if(p.conflits[k]){delete p.conflits[k];ch=true;}}
     else if(cur!==v&&p.ignore[k]!==v){if(p.conflits[k]!==v){p.conflits[k]=v;ch=true;}}
-    else if(cur===v&&p.conflits[k]){delete p.conflits[k];ch=true;}
+    else if(cur===v){if(p.conflits[k]){delete p.conflits[k];ch=true;}if(p.auto[k]!==v){p.auto[k]=v;ch=true;}} // identique à la source : suivi automatique
   });
-  if(ch)p.faisaDate=c.faisa.date;
+  if(ch&&faisaOk(c))p.faisaDate=c.faisa.date;
   return ch;
 }
 function pluConflit(k,choix){
@@ -2524,13 +2551,12 @@ function pluConflit(k,choix){
   delete p.conflits[k];ctrSave();renderPlu();
 }
 function pluBandeau(c){
-  var p=c.plu,f=c.faisa;
-  if(!f||!f.ok)return '<div class="rel-note" style="margin-bottom:8px">Astuce : l\'étude de faisabilité (bouton 🔎 dans la fiche) remplit automatiquement la commune, les parcelles, la contenance, le document d\'urbanisme et le zonage.</div>';
-  var C=p.conflits||{},K=Object.keys(C);
-  return '<div class="dp-band">🔎 Pré-rempli par l\'étude de faisabilité du '+dateFr(String(f.date||'').slice(0,10))+' : commune, parcelles, contenance, document d\'urbanisme et zonage. Vous pouvez modifier ces champs : vos modifications ne seront pas remplacées par une nouvelle étude.</div>'+
-    K.map(function(k){var lib=(PLU_CHAMPS.find(function(x){return x[0]===k;})||[k,k])[1];
-      return '<div class="gen-al"><b>'+esc(lib)+'</b> : l\'étude de faisabilité indique « '+esc(C[k]).replace(/\n/g,' / ')+' », différent de votre saisie « '+esc(pluLire(p,k)).replace(/\n/g,' / ')+' ».'+
-        '<div class="ctr-bar" style="margin:4px 0 0"><button class="sml-btn" style="width:auto;margin:0" onclick="pluConflit(\''+k+'\',\'etude\')">Reprendre la valeur de l\'étude</button><button class="sml-btn" style="width:auto;margin:0" onclick="pluConflit(\''+k+'\',\'garder\')">Garder ma saisie</button></div></div>';}).join('');
+  var p=c.plu,f=faisaOk(c),C=p.conflits||{},K=Object.keys(C);
+  return (f?'<div class="dp-band">🔎 Pré-rempli par la fiche du dossier et l\'étude de faisabilité du '+dateFr(String(f.date||'').slice(0,10))+' : commune, lieu-dit, parcelles, contenance, document d\'urbanisme et zonage. Vous pouvez modifier ces champs : vos modifications ne seront jamais remplacées.</div>':
+    '<div class="rel-note" style="margin-bottom:8px">Commune, lieu-dit, parcelles et contenance sont repris de la fiche du dossier (vos modifications ici ne seront jamais remplacées). Astuce : l\'étude de faisabilité (bouton 🔎 dans la fiche) ajoute le document d\'urbanisme et le zonage.</div>')+
+    K.map(function(k){var lib=(PLU_CHAMPS.find(function(x){return x[0]===k;})||[k,k])[1],srce=k==='doc'||k==='zonage'?'l\'étude de faisabilité indique':'la fiche du dossier indique';
+      return '<div class="gen-al"><b>'+esc(lib)+'</b> : '+srce+' « '+esc(C[k]).replace(/\n/g,' / ')+' », différent de votre saisie « '+esc(pluLire(p,k)).replace(/\n/g,' / ')+' ».'+
+        '<div class="ctr-bar" style="margin:4px 0 0"><button class="sml-btn" style="width:auto;margin:0" onclick="pluConflit(\''+k+'\',\'etude\')">Reprendre cette valeur</button><button class="sml-btn" style="width:auto;margin:0" onclick="pluConflit(\''+k+'\',\'garder\')">Garder ma saisie</button></div></div>';}).join('');
 }
 // ── Annexe PLU : lecture du règlement par l'IA (Gemini, via le script Google, action « plu_ia ») ──
 // Actif si l'étude de faisabilité a trouvé le lien du règlement (PDF). Deux appels : « pdf » (téléchargement du

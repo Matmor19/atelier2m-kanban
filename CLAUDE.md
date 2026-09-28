@@ -116,11 +116,18 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   Étape risques : `risquesEtape()` interroge d'abord Géorisques depuis le navigateur (`risquesNavigateur`, délai 25 s),
   sinon le script (délai 100 s, requêtes en parallèle `fetchAll` côté script) ; si rien ne répond, l'étude se termine
   sans les risques avec un avertissement (Géorisques ne répond pas toujours aux serveurs Google).
-- **Annexe PLU pré-remplie par l'étude** (`pluDepuisFaisa()`, à l'ouverture de l'annexe et après chaque étude réussie) :
-  commune (+ INSEE), référence cadastrale, contenance, document d'urbanisme et texte de la section « Zonage »
-  (`pluValeursEtude`). `p.auto` = dernière valeur reprise ; un champ vide ou égal à `p.auto` suit l'étude, un champ
-  modifié à la main n'est jamais remplacé : une étude contradictoire est signalée (`p.conflits`, boutons
-  « Reprendre la valeur de l'étude » / « Garder ma saisie » → `p.ignore`). Sans étude : saisie manuelle inchangée.
+- **« Informations pour les documents » automatiques** (`preremplirInfos()`, appelé à l'ouverture de la fiche, par `sf`,
+  `parcSet` et après chaque étude réussie) : désignation ← nom, signataire ← désignation, description ← résumé sinon
+  nature, commune ← étude (`f.commune`) sinon code postal de l'adresse (`communeDe`), contenance ← surface cadastrale de
+  l'étude (`sourcesInfos`). `c.infAuto` = dernière valeur reprise par champ : un champ vide ou égal à celle-ci suit sa
+  source, sinon il est manuel et jamais remplacé (`infoAuto` ; anciens dossiers : `infoAncienAuto`). Commune / contenance
+  manuelles différentes de l'étude : lien « reprendre cette valeur » (`infoReprendre`).
+- **Annexe PLU pré-remplie** (`pluDepuisFaisa()`, à l'ouverture de l'annexe et à chaque `preremplirInfos`) : commune
+  (+ INSEE de l'étude), lieu-dit (`lieuDitDe` : « Lieu-dit … » dans l'adresse du chantier), référence cadastrale et contenance
+  viennent de la fiche (qui suit l'étude) ; document d'urbanisme et texte de la section « Zonage » de l'étude
+  (`pluValeursEtude`). `p.auto` = dernière valeur reprise ; un champ vide ou égal à `p.auto` (ou à la source) suit, un
+  champ modifié à la main n'est jamais remplacé : une source contradictoire est signalée (`p.conflits`, boutons
+  « Reprendre cette valeur » / « Garder ma saisie » → `p.ignore`).
 - **Annexe PLU générée par l'IA** (bouton « ✨ Générer avec l'IA », `pluIALancer()`, actif si `pluReglement(c)` trouve
   un lien de règlement dans `c.faisa.zones`) : le script (version 8, `action:'plu_ia'`) fait 2 étapes — `pdf` (`pluIAPdf_` :
   téléchargement, contrôle « %PDF », dépôt dans l'API Files de Gemini, mémorisé 6 h en cache) puis `analyse` (`pluIAAnalyse_` :
