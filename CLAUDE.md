@@ -136,6 +136,10 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   délai de grâce pour les actions en plusieurs requêtes. `anneauHtml(pct)` : anneau avec pourcentage (étude).
 - **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
   uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
+  Un numéro P n'est demandé que si la Proposition ou la Lettre de mission (qui cite ce numéro) est cochée
+  (`avecNumero(docs)`). Estimatif et/ou Annexe PLU seuls : numéro actuel du contrat (`numActuel`, sans nouvelle
+  version) ou, s'il n'en a pas, la référence du dossier (`refNeutre` = `c.ref`, ex. 003-02-2026) ; rien n'est
+  ajouté à `k.versions` et le statut du contrat ne change pas.
   Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le
   propriétaire doit le recopier dans Google Apps Script et publier une nouvelle version.
 - **Confidentialité** : ne jamais enregistrer dans le dépôt de documents ou données de vrais clients

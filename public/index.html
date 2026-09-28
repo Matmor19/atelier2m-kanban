@@ -3387,6 +3387,11 @@ function alertesDoc(c,k,d,docs){
 // ── Génération ──
 var DOCS_LIB={prop:'Proposition d\'honoraires',lm:'Lettre de mission',est:'Estimatif des travaux',plu:'Annexe 1 — Analyse du terrain et du PLU'};
 var DOCS_TYPE={prop:'Proposition',lm:'LettreMission',est:'Estimatif',plu:'AnnexePLU'};
+// Numéro de proposition seulement si la Proposition (ou la Lettre de mission, qui cite ce numéro) est cochée.
+// Estimatif et/ou Annexe PLU seuls : numéro actuel du contrat s'il en a un, sinon référence du dossier (aucun numéro consommé).
+function avecNumero(docs){return docs.indexOf('prop')>=0||docs.indexOf('lm')>=0;}
+function numActuel(k){var v=(k.versions||[]).filter(function(x){return x.num&&!x.echec;});return v.length?v[v.length-1].num:'';}
+function refNeutre(c){return String(c.ref||'').trim().replace(/[\\/:*?"<>|\s]+/g,'-')||'SansNumero';}
 function docsChoisis(){return ['prop','lm','est','plu'].filter(function(x){var el=document.getElementById('gen-'+x);return el&&el.checked;});}
 function prochainNum(k){ // null = premier numéro à demander au script ; sinon même numéro + « -V2 », « -V3 »…
   var v=(k.versions||[]).filter(function(x){return x.num;});if(!v.length)return null;
@@ -3406,11 +3411,13 @@ function openGen(){
   document.getElementById('gen-body').innerHTML=h;renderGenApercu();showM('m-gen');
 }
 function renderGenApercu(){
-  var k=actK,docs=docsChoisis(),n=prochainNum(k);
+  var k=actK,docs=docsChoisis(),num=avecNumero(docs),n=num?prochainNum(k):(numActuel(k)||refNeutre(act));
   var d=donneesDoc(act,k,n||'A2M-'+new Date().getFullYear()+'-P???',isoAuj()),champs=champsApercu(act,k,d,docs),al=alertesDoc(act,k,d,docs);
+  var btn=document.getElementById('gen-go');if(btn&&!btn.disabled)btn.textContent=num?'Valider, numéroter et générer':'Valider et générer';
   var vides=champs.filter(function(x){return !String(x[1]||'').trim();}).length;
   document.getElementById('gen-apercu').innerHTML=
-    '<div class="gen-num">Numéro : <b>'+(n?esc(n)+'</b> (nouvelle version de la même proposition)':'attribué à la validation</b> par votre script Google (jamais pendant l\'aperçu)')+'</div>'+
+    '<div class="gen-num">'+(!num?(numActuel(k)?'Référence : <b>'+esc(n)+'</b> (numéro actuel du contrat, sans nouvelle version)':'Référence : <b>'+esc(n)+'</b> (référence du dossier — aucun numéro de proposition consommé)'):
+      'Numéro : <b>'+(n?esc(n)+'</b> (nouvelle version de la même proposition)':'attribué à la validation</b> par votre script Google (jamais pendant l\'aperçu)'))+'</div>'+
     (al.length?'<div class="gen-al">'+al.map(function(x){return '⚠ '+esc(x);}).join('<br>')+'</div>':'')+
     '<div class="sec-lbl" style="margin-top:8px">Aperçu des champs'+(vides?' — <span style="color:var(--red)">'+vides+' vide'+(vides>1?'s':'')+'</span>':' — tout est rempli ✓')+'</div>'+
     '<table class="gen-t">'+champs.map(function(x){var v=String(x[1]||'').trim();return '<tr class="'+(v?'':'vide')+'"><td>'+esc(x[0])+'</td><td>'+(v?esc(v.length>160?v.slice(0,160)+'…':v):'(vide)')+'</td></tr>';}).join('')+'</table>'+
@@ -3459,9 +3466,10 @@ function genValider(){
   var btn=document.getElementById('gen-go');btn.disabled=true;btn.textContent='Choix du dossier…';
   // 1. Choix du dossier client (fenêtre Chrome) AVANT de demander le numéro : si on annule, aucun numéro n'est consommé
   var choix=window.showDirectoryPicker?window.showDirectoryPicker({id:'a2m-client',mode:'readwrite'}).catch(function(e){if(e&&e.name==='AbortError')throw e;return null;}):Promise.resolve(null);
-  var dossier=null,numero,dateIso,fichiers=[];
-  choix.then(function(dir){dossier=dir;btn.textContent='Numérotation…';return chargerLibs();})
+  var dossier=null,numero,dateIso,fichiers=[],neutre=!avecNumero(docs);
+  choix.then(function(dir){dossier=dir;btn.textContent=neutre?'Génération…':'Numérotation…';return chargerLibs();})
   .then(function(){
+    if(neutre)return {numero:numActuel(k)||refNeutre(c),date:isoAuj()};
     var n=prochainNum(k);
     if(n)return {numero:n,date:isoAuj()};
     return demanderNumero('P',(c.nom||'')+' — '+(k.intitule||''));
@@ -3473,6 +3481,12 @@ function genValider(){
   })
   .then(function(){return enregistrerFichiers(fichiers,dossier);})
   .then(function(mode){
+    if(neutre){ // Estimatif / Annexe PLU seuls : pas de nouvelle version de proposition
+      if(document.getElementById('gen-drive').checked&&act&&act.id===c.id)uploadDocs(fichiers.map(function(f){return new File([f.blob],f.nom,{type:f.blob.type});}));
+      closeSub('m-gen');renderCtr();
+      toast(fichiers.length+' document'+(fichiers.length>1?'s':'')+' '+(mode==='dossier'?'enregistré'+(fichiers.length>1?'s':'')+' dans le dossier choisi':'téléchargé'+(fichiers.length>1?'s':''))+' — référence '+numero);
+      return;
+    }
     k.versions=(k.versions||[]).filter(function(v){return !(v.echec&&v.num===numero);});
     k.versions.push({v:k.versions.length+1,num:numero,date:dateIso,montant:ctrMontant(k),docs:fichiers.map(function(f){return f.nom;})});
     if(k.statut==='brouillon')k.statut='propose';
@@ -3483,8 +3497,9 @@ function genValider(){
     setTimeout(function(){proposerEnvoi(c);},300);
   })
   .catch(function(e){
-    btn.disabled=false;btn.textContent='Valider, numéroter et générer';
+    btn.disabled=false;btn.textContent=neutre?'Valider et générer':'Valider, numéroter et générer';
     if(e&&e.name==='AbortError')return;
+    if(neutre){alert('La génération n\'a pas abouti : '+(e&&e.message||e));return;}
     alert('La génération n\'a pas abouti : '+(e&&e.message||e)+(numero?'\n\nLe numéro '+numero+' a été attribué : il sera réutilisé si vous relancez la génération de ce contrat.':''));
     if(numero&&!(k.versions||[]).some(function(v){return v.num===numero;})){k.versions=k.versions||[];k.versions.push({v:k.versions.length+1,num:numero,date:dateIso||isoAuj(),montant:ctrMontant(k),docs:[],echec:true});c.upd=Date.now();sv();}
   });
