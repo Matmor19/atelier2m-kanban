@@ -382,6 +382,8 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .mn-c{border:1px solid var(--brd);border-radius:10px;padding:8px 10px 4px;margin-bottom:6px;background:var(--surface)}
 .mn-h{display:flex;gap:4px 10px;align-items:center;flex-wrap:wrap;font-size:11.5px;color:var(--txt);margin-bottom:6px}.mn-h span{font-size:11px;color:var(--txt2)}.mn-h .mn-b{margin-left:auto;white-space:nowrap}
 .ta-src{font-weight:600;text-transform:none;letter-spacing:0;color:var(--amber)}
+.ia-bar{margin:4px 0 10px;padding:8px 10px;border:1px dashed var(--or);border-radius:10px}.ia-bar .rel-note{margin-top:4px}.ia-bar .faisa-att{margin:0}
+.ia-note{font-size:10.5px;font-style:italic;color:var(--txt3);margin:2px 0 4px}
 .parc-ed{margin-bottom:6px}.parc-t,.parc-it{display:grid;grid-template-columns:22px 90px 1fr 24px;gap:6px;align-items:center}.parc-t{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);margin-bottom:2px}.parc-ttl{font-size:10px;font-weight:800;color:var(--txt2);margin:2px 0 3px}
 .parc-it{margin-bottom:4px}.parc-it .sd-inp{margin:0}.parc-n{font-size:10px;color:var(--txt3);text-align:center}.parc-it .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:15px}.parc-it .rm:hover{color:var(--red)}
 @keyframes tourne{to{transform:rotate(360deg)}}
@@ -2479,12 +2481,12 @@ function pluSet(champ,v,i){var p=act&&act.plu;if(!p)return;
   else if(champ==='ajout')p.sections.push({titre:'Nouvelle section',texte:''});else p[champ]=v;
   ctrSave();if(i!==undefined&&champ!=='suppr')return;renderPlu();}
 function renderPlu(){
-  var p=act.plu,f=function(ch,lib){return '<div class="fld"><label>'+lib+'</label><input value="'+escA(p[ch]||'')+'" onchange="pluSet(\''+ch+'\',this.value)"></div>';};
+  var p=act.plu,premIA=(p.sections||[]).findIndex(function(s,i){return pluIASection(p,i);}),f=function(ch,lib){return '<div class="fld"><label>'+lib+'</label><input value="'+escA(p[ch]||'')+'" onchange="pluSet(\''+ch+'\',this.value)"></div>';};
   document.getElementById('plu-body').innerHTML='<div class="mn-ttl">🗺️ Annexe 1 — Analyse du terrain et du PLU</div>'+pluBandeau(act)+
     '<div class="fg">'+f('commune','Commune (ex : Brive-la-Gaillarde (19031))')+f('lieudit','Lieu-dit')+f('cad','Référence cadastrale (ex : Section AB, feuille 1, n°0012)')+f('contenance','Contenance')+'</div>'+f('doc','Document d\'urbanisme applicable')+
     '<div class="rel-note" style="margin:8px 0">Dans les textes : une ligne commençant par « - » devient une puce, une ligne commençant par « ! » devient un paragraphe d\'alerte (orange, italique).</div>'+
-    p.sections.map(function(s,i){return '<div class="plu-sec"><input class="sd-inp" style="font-weight:700;color:var(--or)" value="'+escA(s.titre)+'" onchange="pluSet(\'titre\',this.value,'+i+')"><textarea class="sd-inp" rows="5" onchange="pluSet(\'texte\',this.value,'+i+')">'+esc(s.texte)+'</textarea><button class="rm" style="float:right" onclick="pluSet(\'suppr\',0,'+i+')">Supprimer la section</button></div>';}).join('')+
-    '<button class="sml-btn" onclick="pluSet(\'ajout\')">＋ Ajouter une section</button><div class="mbtns"><button class="mb-s" onclick="closeSub(\'m-plu\')">Fermer</button></div>';
+    p.sections.map(function(s,i){var ia=pluIASection(p,i);return (i===premIA?pluIABarre(act):'')+'<div class="plu-sec"><input class="sd-inp" style="font-weight:700;color:var(--or)" value="'+escA(s.titre)+'" onchange="pluSet(\'titre\',this.value,'+i+')"><textarea class="sd-inp" rows="'+(ia&&p.ia?9:5)+'" onchange="pluSet(\'texte\',this.value,'+i+')">'+esc(s.texte)+'</textarea>'+(ia&&p.ia&&String(s.texte||'').trim()?'<div class="ia-note">✨ '+esc(PLU_IA_MENTION)+'</div>':'')+'<button class="rm" style="float:right" onclick="pluSet(\'suppr\',0,'+i+')">Supprimer la section</button></div>';}).join('')+
+    (premIA<0?pluIABarre(act):'')+'<button class="sml-btn" onclick="pluSet(\'ajout\')">＋ Ajouter une section</button><div class="mbtns"><button class="mb-s" onclick="closeSub(\'m-plu\')">Fermer</button></div>';
 }
 // ── Annexe PLU pré-remplie par l'étude de faisabilité ──
 // Commune, référence cadastrale, contenance, document d'urbanisme et texte de la section « Zonage » sont repris
@@ -2529,6 +2531,69 @@ function pluBandeau(c){
     K.map(function(k){var lib=(PLU_CHAMPS.find(function(x){return x[0]===k;})||[k,k])[1];
       return '<div class="gen-al"><b>'+esc(lib)+'</b> : l\'étude de faisabilité indique « '+esc(C[k]).replace(/\n/g,' / ')+' », différent de votre saisie « '+esc(pluLire(p,k)).replace(/\n/g,' / ')+' ».'+
         '<div class="ctr-bar" style="margin:4px 0 0"><button class="sml-btn" style="width:auto;margin:0" onclick="pluConflit(\''+k+'\',\'etude\')">Reprendre la valeur de l\'étude</button><button class="sml-btn" style="width:auto;margin:0" onclick="pluConflit(\''+k+'\',\'garder\')">Garder ma saisie</button></div></div>';}).join('');
+}
+// ── Annexe PLU : lecture du règlement par l'IA (Gemini, via le script Google, action « plu_ia ») ──
+// Actif si l'étude de faisabilité a trouvé le lien du règlement (PDF). Deux appels : « pdf » (téléchargement du
+// règlement et dépôt chez Gemini) puis « analyse » (3 textes). Les textes remplissent les sections « Dispositions
+// générales », « Point à vérifier » et « Synthèse » (modifiables ensuite). Dernière génération : p.ia.
+var PLU_IA_MENTION='Synthèse générée par IA à partir du règlement — à vérifier, ne remplace pas une analyse juridique.';
+var PLU_IA_SECS=[['dispositions',/dispositions/i,'Dispositions générales du règlement (communes à toutes les zones)'],['points',/point|vigilance|v[ée]rifier/i,'Point à vérifier'],['synthese',/synth[èe]se/i,'Synthèse']];
+var pluIA={enCours:false,pct:0,lib:'',erreur:'',carte:null,t0:0};
+function pluReglement(c){var f=c&&c.faisa;if(!f||!f.ok)return '';var z=(f.zones||[]).filter(function(z){return z.reglement&&/^https:\/\//i.test(z.reglement);})[0];return z?z.reglement:'';}
+function pluIACle(p,i){var s=(p.sections||[])[i];if(!s||/zonage/i.test(s.titre||''))return '';var x=PLU_IA_SECS.find(function(y){return y[1].test(s.titre||'');});return x?x[0]:'';}
+function pluIASection(p,i){return !!pluIACle(p,i);}
+function pluIAIndex(p,k,creer){
+  p.sections=p.sections||[];
+  for(var i=0;i<p.sections.length;i++)if(pluIACle(p,i)===k)return i;
+  if(!creer)return -1;
+  p.sections.push({titre:PLU_IA_SECS.find(function(y){return y[0]===k;})[2],texte:''});return p.sections.length-1;
+}
+function pluIAProgHtml(){return anneauHtml(pluIA.pct,52)+'<div><b>'+esc(pluIA.lib)+'</b><br><span>'+Math.round((Date.now()-pluIA.t0)/1000)+' s — le règlement est parfois volumineux, cela peut prendre une ou deux minutes.</span></div>';}
+function majPluIA(){var el=document.getElementById('plu-ia-prog');if(el)el.innerHTML=pluIAProgHtml();}
+function pluIABarre(c){
+  var url=pluReglement(c),p=c.plu,h='<div class="ia-bar">';
+  if(pluIA.enCours&&pluIA.carte===c)h+='<div class="faisa-att faisa-prog" id="plu-ia-prog">'+pluIAProgHtml()+'</div>';
+  else h+='<button class="sml-btn" style="width:auto;margin:0" onclick="pluIALancer()"'+(url?'':' disabled')+'>✨ Générer avec l\'IA</button>'+
+    '<div class="rel-note">'+(url?'Remplit les sections « Dispositions générales », « Point à vérifier » et « Synthèse » à partir du <a class="lnk" href="'+escA(url)+'" target="_blank" rel="noopener">règlement (PDF)</a> trouvé par l\'étude de faisabilité.':'Disponible quand l\'étude de faisabilité (bouton 🔎 dans la fiche) a trouvé le règlement PDF de la zone.')+'</div>';
+  if(pluIA.erreur&&pluIA.carte===c&&!pluIA.enCours)h+='<div class="gen-al" style="margin-top:6px">⚠ '+esc(pluIA.erreur)+'</div>';
+  if(p.ia&&!pluIA.enCours)h+='<div class="rel-note">Dernière génération par l\'IA : '+dateFr(String(p.ia.date||'').slice(0,10))+(p.ia.zones?' — zone '+esc(p.ia.zones):'')+'.</div>';
+  return h+'</div>';
+}
+function pluIALancer(){
+  var c=act,p=c&&c.plu,url=pluReglement(c);if(!p||!url||pluIA.enCours)return;
+  if(location.protocol==='file:'||!remoteReady){pluIA={enCours:false,erreur:'Connexion au serveur Google nécessaire.',carte:c};renderPlu();return;}
+  // Textes saisis ou retouchés à la main : confirmation avant de les remplacer
+  var T0=p.ia&&p.ia.textes||{},manu=PLU_IA_SECS.filter(function(x){var i=pluIAIndex(p,x[0],false),t=i<0?'':String(p.sections[i].texte||'').trim();return t&&t!==String(T0[x[0]]||'').trim();});
+  if(manu.length&&!confirm('Ces sections contiennent déjà du texte :\n- '+manu.map(function(x){return p.sections[pluIAIndex(p,x[0],false)].titre;}).join('\n- ')+'\n\nLes remplacer par le texte généré par l\'IA ?'))return;
+  var f=c.faisa,Z=(f.zones||[]).filter(function(z){return z.code;});
+  var zones=Z.map(function(z){var l=String(z.libelle||'').replace(new RegExp('^'+String(z.code).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*:\\s*'),'');return z.code+(l&&l!==z.code?' ('+l+')':'');}).join(', ');
+  var base={action:'plu_ia',url:url,commune:f.commune||c.commune||'',document:f.document?[f.document.type,f.document.nom].filter(Boolean).join(' '):'',zones:zones,
+    projet:[c.nat,surfNum(c.surf)?'environ '+c.surf+' m² de surface habitable':''].filter(Boolean).join(', ')};
+  pluIA={enCours:true,pct:5,lib:'Téléchargement du règlement…',erreur:'',carte:c,t0:Date.now()};renderPlu();
+  var jeton=busyStart('Lecture du règlement en cours…',false),mont=setInterval(majPluIA,1000);
+  var appel=function(o,ms){return avecDelai(fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({},base,o))}).then(function(r){return r.json();}),ms,'le script Google n\'a pas répondu à temps');};
+  var fin=function(){clearInterval(mont);pluIA.enCours=false;busyEnd(jeton);var m=document.getElementById('m-plu');if(act===c&&m&&m.classList.contains('open'))renderPlu();};
+  appel({etape:'pdf'},180000).then(function(r){
+    if(!r||!r.ok)throw r||{};
+    pluIA.pct=30;pluIA.lib='Lecture du règlement en cours…';majPluIA();
+    clearInterval(mont);mont=setInterval(function(){pluIA.pct=Math.min(95,pluIA.pct+(95-pluIA.pct)*0.03);majPluIA();},1000);
+    return appel({etape:'analyse',fichier:r.fichier},330000);
+  }).then(function(r){
+    if(!r||!r.ok)throw r||{};
+    var T={dispositions:String(r.dispositions||'').trim(),points:String(r.points||'').trim(),synthese:String(r.synthese||'').trim()};
+    if(!T.dispositions&&!T.points&&!T.synthese)throw {erreur:'L\'IA n\'a rien trouvé dans ce règlement.'};
+    T.synthese=(T.synthese?T.synthese+'\n':'')+'! '+PLU_IA_MENTION;
+    PLU_IA_SECS.forEach(function(x){p.sections[pluIAIndex(p,x[0],true)].texte=T[x[0]];});
+    p.ia={date:new Date().toISOString(),url:url,zones:zones,modele:r.modele||'',textes:T};
+    c.upd=Date.now();sv();
+    pluIA.pct=100;pluIA.lib='Terminé';majPluIA();
+    toast('Annexe PLU : 3 sections remplies par l\'IA — à relire et vérifier');
+    setTimeout(fin,350);
+  }).catch(function(e){
+    pluIA.erreur=e&&e.erreur?(e.erreur==='Données invalides'?'Votre script Google n\'est pas encore à jour : recopiez le nouveau code (version 8) dans Google Apps Script, puis publiez une nouvelle version du déploiement.':e.erreur):
+      'Service indisponible ('+(e&&e.message||'réponse inattendue du script Google')+'). Réessayez dans quelques minutes.';
+    fin();
+  });
 }
 function pluSections(p){
   return (p.sections||[]).filter(function(s){return lignes(s.texte).length;}).map(function(s){

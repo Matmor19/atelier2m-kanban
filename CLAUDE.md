@@ -121,6 +121,15 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   (`pluValeursEtude`). `p.auto` = dernière valeur reprise ; un champ vide ou égal à `p.auto` suit l'étude, un champ
   modifié à la main n'est jamais remplacé : une étude contradictoire est signalée (`p.conflits`, boutons
   « Reprendre la valeur de l'étude » / « Garder ma saisie » → `p.ignore`). Sans étude : saisie manuelle inchangée.
+- **Annexe PLU générée par l'IA** (bouton « ✨ Générer avec l'IA », `pluIALancer()`, actif si `pluReglement(c)` trouve
+  un lien de règlement dans `c.faisa.zones`) : le script (version 8, `action:'plu_ia'`) fait 2 étapes — `pdf` (`pluIAPdf_` :
+  téléchargement, contrôle « %PDF », dépôt dans l'API Files de Gemini, mémorisé 6 h en cache) puis `analyse` (`pluIAAnalyse_` :
+  `generateContent` avec réponse JSON `dispositions` / `points` / `synthese` ; modèles `GEMINI_MODELES`, suivant si 404).
+  Clé dans les propriétés du script `GEMINI_CLE` (jamais dans le code ni dans le dépôt ; modèle facultatif `GEMINI_MODELE`),
+  vérifiable avec `initialiser()`. Remplit les sections « Dispositions générales », « Point à vérifier », « Synthèse »
+  (`PLU_IA_SECS`, créées si absentes ; confirmation si du texte manuel serait remplacé) ; mention `PLU_IA_MENTION` ajoutée
+  en ligne « ! » à la synthèse (donc dans le Word) et affichée sous chaque texte. Dernière génération : `c.plu.ia`.
+  Erreurs claires (`geminiErreur_` : clé, quota 429, PDF illisible, réseau) affichées dans la barre, sans bloquer l'annexe.
 - **Indicateur d'activité** : `busyStart(libellé)` / `busyEnd()` / `busyPromesse()` ; `window.fetch` est enveloppé
   (`busyInfo()` donne le libellé selon la requête ; enregistrement automatique = pastille sans bloquer de bouton).
   Pastille `#busy` (anneau qui tourne) ; le dernier bouton cliqué est désactivé (`is-busy`) jusqu'à la fin, avec un

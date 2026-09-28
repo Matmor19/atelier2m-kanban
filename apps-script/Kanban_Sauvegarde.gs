@@ -1,5 +1,5 @@
 /**
- * Atelier 2M — Sauvegarde du Kanban dans Google Drive  (version 7 : documents + Google Agenda + numérotation + faisabilité par étapes)
+ * Atelier 2M — Sauvegarde du Kanban dans Google Drive  (version 8 : documents + Google Agenda + numérotation + faisabilité par étapes + lecture du règlement PLU par l'IA)
  * -----------------------------------------------------------------------------------
  * - Enregistre les dossiers du Kanban dans "kanban-atelier2m-data.json"
  * - Copie de secours quotidienne dans "Kanban Atelier 2M - Sauvegardes" (30 jours)
@@ -8,6 +8,8 @@
  * - Place les dates importantes des dossiers dans l'agenda Google "Atelier 2M — Dossiers"
  * - Attribue les numéros de propositions (A2M-AAAA-P001…) et de factures (A2M-AAAA-F001…)
  * - Étude de faisabilité : interroge les services publics (cadastre, PLU, risques) pour le Kanban
+ * - Annexe PLU : fait lire le règlement (PDF) par l'IA Gemini de Google. La clé Gemini est rangée dans
+ *   les « Propriétés du script » sous le nom GEMINI_CLE (jamais écrite dans ce code).
  */
 
 var FICHIER = 'kanban-atelier2m-data.json';
@@ -30,6 +32,7 @@ function doPost(e) {
   if (data && data.action === 'numero') return numero_(data);
   if (data && data.action === 'compteurs') return compteurs_();
   if (data && data.action === 'faisabilite') return faisabilite_(data);
+  if (data && data.action === 'plu_ia') return pluIA_(data);
   return sauvegarder_(data);
 }
 
@@ -330,6 +333,111 @@ function faisaRisques_(d, r) {
   return null;
 }
 
+// ── ANNEXE PLU : LECTURE DU RÈGLEMENT PAR L'IA (Gemini, Google AI Studio) ─────
+// Deux étapes appelées l'une après l'autre par le Kanban (pour afficher l'avancement) :
+// 1. d.etape = 'pdf'     : télécharge le règlement (d.url) et le dépose chez Gemini (fichier gardé 48 h par Google)
+// 2. d.etape = 'analyse' : demande à Gemini les 3 textes de l'annexe (dispositions générales, points à vérifier, synthèse)
+// Clé : Paramètres du projet → Propriétés du script → GEMINI_CLE. Modèle : GEMINI_MODELE (facultatif).
+var GEMINI = 'https://generativelanguage.googleapis.com/';
+var GEMINI_MODELES = ['gemini-flash-latest', 'gemini-2.5-flash'];
+
+function pluIA_(d) {
+  try {
+    var cle = PropertiesService.getScriptProperties().getProperty('GEMINI_CLE');
+    if (!cle) return reponse_(JSON.stringify({ ok: false, code: 'cle', erreur: 'Clé Gemini non renseignée dans le script Google (Paramètres du projet → Propriétés du script → GEMINI_CLE).' }));
+    if (d.etape === 'pdf') return reponse_(JSON.stringify(pluIAPdf_(d, cle)));
+    if (d.etape === 'analyse') return reponse_(JSON.stringify(pluIAAnalyse_(d, cle)));
+    return reponse_(JSON.stringify({ ok: false, erreur: 'Étape inconnue.' }));
+  } catch (e) {
+    var m = String(e && e.message || e);
+    return reponse_(JSON.stringify({ ok: false, erreur: /timeout|délai|timed out/i.test(m) ? 'L\'IA a mis trop de temps à répondre (règlement très volumineux ?). Réessayez dans quelques minutes.' : 'Erreur réseau : ' + m }));
+  }
+}
+
+// 1. Téléchargement du règlement et dépôt chez Gemini
+function pluIAPdf_(d, cle) {
+  var url = String(d.url || '');
+  if (!/^https:\/\//i.test(url)) return { ok: false, erreur: 'Lien du règlement invalide.' };
+  var cache = CacheService.getScriptCache(), ck = 'gemf_' + Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, url));
+  var deja = cache.get(ck);
+  if (deja) return { ok: true, fichier: JSON.parse(deja) };
+  var rep = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
+  if (rep.getResponseCode() >= 400) return { ok: false, erreur: 'Téléchargement du règlement impossible (erreur ' + rep.getResponseCode() + '). Le lien n\'est peut-être plus valable : actualisez l\'étude de faisabilité.' };
+  var octets = rep.getContent();
+  if (octets.length < 5 || String.fromCharCode(octets[0], octets[1], octets[2], octets[3]) !== '%PDF') return { ok: false, erreur: 'Le lien du règlement ne mène pas à un fichier PDF lisible.' };
+  if (octets.length > 48 * 1024 * 1024) return { ok: false, erreur: 'Règlement trop volumineux (plus de 48 Mo) pour être lu automatiquement.' };
+  // Dépôt en deux temps (protocole « resumable » de Google)
+  var dep = UrlFetchApp.fetch(GEMINI + 'upload/v1beta/files', { method: 'post', contentType: 'application/json', muteHttpExceptions: true,
+    headers: { 'x-goog-api-key': cle, 'X-Goog-Upload-Protocol': 'resumable', 'X-Goog-Upload-Command': 'start',
+      'X-Goog-Upload-Header-Content-Length': String(octets.length), 'X-Goog-Upload-Header-Content-Type': 'application/pdf' },
+    payload: JSON.stringify({ file: { display_name: 'reglement-plu.pdf' } }) });
+  var err = geminiErreur_(dep);
+  if (err) return err;
+  var h = dep.getAllHeaders(), adr = '';
+  Object.keys(h).forEach(function (k) { if (k.toLowerCase() === 'x-goog-upload-url') adr = h[k]; });
+  if (!adr) return { ok: false, erreur: 'Gemini n\'a pas accepté le dépôt du règlement.' };
+  var env = UrlFetchApp.fetch(adr, { method: 'post', contentType: 'application/pdf', muteHttpExceptions: true,
+    headers: { 'X-Goog-Upload-Offset': '0', 'X-Goog-Upload-Command': 'upload, finalize' }, payload: octets });
+  err = geminiErreur_(env);
+  if (err) return err;
+  var f = JSON.parse(env.getContentText()).file || {};
+  // Google prépare le fichier quelques secondes (état PROCESSING) avant de pouvoir le lire
+  for (var i = 0; i < 20 && f.state === 'PROCESSING'; i++) {
+    Utilities.sleep(2000);
+    f = JSON.parse(UrlFetchApp.fetch(GEMINI + 'v1beta/' + f.name, { headers: { 'x-goog-api-key': cle }, muteHttpExceptions: true }).getContentText() || '{}');
+  }
+  if (f.state === 'FAILED' || !f.uri) return { ok: false, erreur: 'Le règlement PDF est illisible pour l\'IA (fichier scanné ou protégé ?).' };
+  var res = { uri: f.uri, mime: f.mimeType || 'application/pdf', taille: octets.length };
+  cache.put(ck, JSON.stringify(res), 6 * 3600);
+  return { ok: true, fichier: res };
+}
+
+// 2. Analyse : consigne + règlement → 3 textes (format de l'annexe : « - » puce, « ! » alerte)
+function pluIAAnalyse_(d, cle) {
+  var fi = d.fichier || {};
+  if (!fi.uri) return { ok: false, erreur: 'Règlement non transmis à l\'IA.' };
+  var consigne = [
+    'Tu es un assistant pour un bureau de dessin d\'architecture (maisons individuelles). Le document joint est le règlement écrit du ' + (d.document || 'document d\'urbanisme') + ' de la commune de ' + (d.commune || '?') + '.',
+    'Le terrain du projet est situé en zone ' + (d.zones || '?') + '.' + (d.projet ? ' Projet : ' + d.projet + '.' : ''),
+    'En t\'appuyant UNIQUEMENT sur le texte du règlement joint (n\'invente rien ; si une règle n\'y figure pas, écris « non précisé dans le règlement »), rédige en français :',
+    '1. "dispositions" : un résumé des dispositions générales applicables à toutes les zones (champ d\'application, adaptations mineures, reconstruction, divisions, risques, réseaux…).',
+    '2. "points" : les points de vigilance à vérifier pour un projet de construction dans la zone ' + (d.zones || '') + ' : destinations autorisées ou interdites, implantation et reculs par rapport aux voies et aux limites séparatives, emprise au sol, hauteur maximale, aspect extérieur (toitures, façades, clôtures, couleurs), espaces verts et pleine terre, stationnement, accès et réseaux. Donne les valeurs chiffrées et le numéro d\'article quand ils existent.',
+    '3. "synthese" : une courte synthèse (3 à 5 phrases) des contraintes principales pour ce projet.',
+    'Mise en forme de chaque texte : une idée par ligne ; une ligne commençant par « - » est une puce ; une ligne commençant par « ! » signale un point d\'alerte important. Pas de markdown (pas d\'astérisques, pas de titres).'
+  ].join('\n');
+  var corps = { contents: [{ role: 'user', parts: [{ file_data: { mime_type: fi.mime || 'application/pdf', file_uri: fi.uri } }, { text: consigne }] }],
+    generationConfig: { temperature: 0.2, responseMimeType: 'application/json',
+      responseSchema: { type: 'OBJECT', properties: { dispositions: { type: 'STRING' }, points: { type: 'STRING' }, synthese: { type: 'STRING' } }, required: ['dispositions', 'points', 'synthese'] } } };
+  var prop = PropertiesService.getScriptProperties().getProperty('GEMINI_MODELE');
+  var modeles = (prop ? [prop] : []).concat(GEMINI_MODELES), rep = null, err = null;
+  for (var i = 0; i < modeles.length; i++) {
+    rep = UrlFetchApp.fetch(GEMINI + 'v1beta/models/' + modeles[i] + ':generateContent', { method: 'post', contentType: 'application/json',
+      muteHttpExceptions: true, headers: { 'x-goog-api-key': cle }, payload: JSON.stringify(corps) });
+    err = geminiErreur_(rep);
+    if (!err || rep.getResponseCode() !== 404) break; // 404 = modèle retiré par Google : on essaie le suivant
+  }
+  if (err) return err;
+  var j = JSON.parse(rep.getContentText() || '{}'), cand = j.candidates && j.candidates[0];
+  if (!cand) return { ok: false, erreur: 'L\'IA n\'a pas répondu' + (j.promptFeedback && j.promptFeedback.blockReason ? ' (demande refusée : ' + j.promptFeedback.blockReason + ')' : '') + '.' };
+  var texte = ((cand.content && cand.content.parts) || []).filter(function (p) { return p.text && !p.thought; }).map(function (p) { return p.text; }).join('');
+  var r;
+  try { r = JSON.parse(texte); } catch (e) { return { ok: false, erreur: 'Réponse de l\'IA incomplète' + (cand.finishReason === 'MAX_TOKENS' ? ' (texte trop long)' : '') + '. Réessayez.' }; }
+  return { ok: true, dispositions: String(r.dispositions || ''), points: String(r.points || ''), synthese: String(r.synthese || ''), modele: j.modelVersion || modeles[i] || '' };
+}
+
+// Message clair selon l'erreur renvoyée par Gemini (null si tout va bien)
+function geminiErreur_(rep) {
+  var code = rep.getResponseCode();
+  if (code < 400) return null;
+  var m = '';
+  try { m = (JSON.parse(rep.getContentText()).error || {}).message || ''; } catch (e) {}
+  if (code === 429) return { ok: false, code: 'quota', erreur: 'Quota de l\'IA Gemini dépassé (trop de demandes pour aujourd\'hui ou cette minute). Réessayez plus tard.' };
+  if (code === 400 && /api key|API_KEY/i.test(m) || code === 401 || code === 403) return { ok: false, code: 'cle', erreur: 'Clé Gemini refusée : vérifiez la propriété GEMINI_CLE du script Google.' + (m ? ' (' + m + ')' : '') };
+  if (code === 400) return { ok: false, erreur: 'L\'IA n\'a pas pu lire ce règlement' + (m ? ' (' + m + ')' : '') + '.' };
+  if (code === 404) return { ok: false, erreur: 'Modèle Gemini introuvable' + (m ? ' (' + m + ')' : '') + '.' };
+  return { ok: false, erreur: 'Service Gemini indisponible (erreur ' + code + ')' + (m ? ' : ' + m : '') + '. Réessayez dans quelques minutes.' };
+}
+
 // Lecture d'un service public (GET, ou POST JSON si « corps » est fourni)
 function json_(url, corps) {
   var o = { muteHttpExceptions: true, followRedirects: true, headers: { Accept: 'application/json' } };
@@ -360,4 +468,8 @@ function initialiser() {
   Logger.log('Agenda prêt : ' + agenda_().getName());
   // Autorise les appels aux services publics (étude de faisabilité)
   Logger.log('Accès aux services publics : ' + UrlFetchApp.fetch(APICARTO + 'gpu/municipality?insee=19031', { muteHttpExceptions: true }).getResponseCode());
+  // Clé de l'IA Gemini (annexe PLU) : vérifie qu'elle est renseignée et acceptée par Google
+  var cle = PropertiesService.getScriptProperties().getProperty('GEMINI_CLE');
+  if (!cle) Logger.log('Clé Gemini : NON renseignée (Paramètres du projet → Propriétés du script → GEMINI_CLE)');
+  else Logger.log('Clé Gemini : ' + (UrlFetchApp.fetch(GEMINI + 'v1beta/models', { headers: { 'x-goog-api-key': cle }, muteHttpExceptions: true }).getResponseCode() === 200 ? 'acceptée ✓' : 'REFUSÉE par Google'));
 }
