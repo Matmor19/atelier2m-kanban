@@ -91,7 +91,8 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   **Terrain et taxe d'aménagement** (`estFinHtml()`, bloc dans l'assistant DPGF et la fenêtre Estimatif) : valeur
   d'achat du terrain (`e.terrain`, centimes) et taxe (`e.ta` : surf, gar, tc, td en centièmes de %, vf en centimes,
   rp) calculée par `taCalc()` : base = 50 % des 100 premiers m² (résidence principale) + reste + 50 % du garage,
-  × valeur forfaitaire × (taux communal + départemental). `annexesAuto()` remplit les lignes annexes terrain et
+  × valeur forfaitaire × (taux communal + départemental), + piscine (m² de bassin × 250 €, `TA_PISC_DEF`) et places de
+  stationnement extérieures (× 2 000 €, `TA_STAT_DEF`), sans abattement, au même taux. `annexesAuto()` remplit les lignes annexes terrain et
   taxe (marqueur `auto`) ; une ligne dont le montant est retouché à la main perd `auto` et n'est plus modifiée.
   Valeur forfaitaire par défaut : Paramètres (`DB.reglages.taVf`, `taVfAnnee`), à mettre à jour chaque année.
 - **Étude de faisabilité** (niveau 1, sans IA) : bouton « 🔎 Étude de faisabilité » sous la parcelle cadastrale de

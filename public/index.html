@@ -2415,34 +2415,34 @@ function bibMaj(B){
     prec=x;
   });
 }
-// Version 3 : vérification des prix (double comptages, prix du grand projet de 300 m² ramenés à une maison courante, fenêtres du gabarit).
-// Un prix ou une règle n'est changé que s'il a encore l'ancienne valeur (les changements faits par l'utilisateur sont gardés).
-var BIB_MAJ_V3=[
-  {lot:'L18',id:'18.04',ancienPu:5108278,pu:1500000,lib:'Couverture de piscine : abri télescopique bas ou volet automatique.',obs:'Prix corrigé (avant : 51 083 €, grand abri spécial du projet de 300 m²). Une bâche 4 saisons coûte environ 2 000 € : à ajuster selon le projet.'},
-  {lot:'L20',id:'20.05',ancienPu:521258,pu:150000,lib:'Supplément douche PMR : receveur extra-plat de plain-pied, barres d\'appui, siège relevable.',obs:'Supplément par rapport à la douche standard déjà comptée (lots 11 et 12). Avant : 5 213 € (douche complète comptée deux fois).'},
-  {lot:'L20',id:'20.06',ancienPu:154748,pu:45000,lib:'Supplément WC PMR : cuvette rehaussée, barres d\'appui.',obs:'Supplément par rapport au WC standard déjà compté (lots 11 et 12). Avant : 1 547 €.'},
-  {lot:'L20',id:'20.01',ancienF:'P',f:'20',obs:'Longueur des cheminements accessibles (stationnement, entrée) : 20 ml par défaut, à ajuster. Avant : calculée avec le périmètre de la maison.'},
-  {lot:'L19',id:'19.03',ancienPu:190385,pu:50000,lib:'Protections et intégration de la production photovoltaïque au tableau électrique.',obs:'Le tableau électrique de la maison est déjà compté en 10.02. Avant : 1 904 € (tableau complet du projet de 300 m²).'},
-  {lot:'L10',id:'10.54',ancienF:'8',f:'0',obs:'Mis à 0 : l\'alimentation et le raccordement des volets roulants sont déjà comptés en 8.05.'},
-  {lot:'L21',id:'21.02',ancienPu:426667,pu:280000,lib:'Porte de garage sectionnelle motorisée (standard 2,40 × 2,00 m).',obs:'Porte standard. Grande porte de garage double : environ 4 300 €.'},
-  {lot:'L14',id:'14.03',ancienF:'S*1.0',f:'S-SDE*4',obs:'Surface habitable moins le sol des salles d\'eau (carrelé, ligne 14.04).'},
-  {lot:'L14',id:'sde-carr',apres:'14.03',nouvelle:{art:'14.04',lib:'Carrelage de sol et faïence murale des salles d\'eau (douche et murs humides), fourni posé.',u:'m2',pu:7000,f:'SDE*12',obs:'Environ 4 m² de sol + 8 m² de faïence par salle d\'eau.'}},
-  {lot:'L7',id:'7.05',ancienPu:95550,pu:67000,obs:'Prix corrigé (avant : 955,50 €, plus cher que la fenêtre 90x135).'},
-  {lot:'L7',id:'7.07',ancienPu:163800,pu:79000,obs:'Prix corrigé (avant : 1 638 €, le double de la fenêtre 90x135 pour la même surface).'}];
-function bibMaj3(B){
-  BIB_MAJ_V3.forEach(function(m){
-    var lot=B.find(function(l){return l.id===m.lot;});if(!lot)return;var x=lot.lignes.find(function(y){return y.id===m.id;});
-    if(m.nouvelle){if(x)return;var p=lot.lignes.findIndex(function(y){return y.id===m.apres;});lot.lignes.splice(p<0?lot.lignes.length:p+1,0,Object.assign({id:m.id,grp:''},m.nouvelle));return;}
-    if(!x)return;
-    if(m.ancienPu!==undefined){if(x.pu!==m.ancienPu)return;x.pu=m.pu;}
-    if(m.ancienF!==undefined){if(x.f!==m.ancienF)return;x.f=m.f;}
-    if(m.lib)x.lib=m.lib;if(m.obs)x.obs=m.obs;
-  });
-}
-// Anciennes désignations : dans un dossier, une désignation non retouchée suit la bibliothèque
-var LIB_AVANT={};
-BIB_ORIGINE.forEach(function(l){l.lignes.forEach(function(x){LIB_AVANT[x.id]=x.lib;});});
-bibMaj(BIB_ORIGINE);bibMaj3(BIB_ORIGINE);
+// Version 3 : vérification des prix (double comptages, prix du grand projet de 300 m² ramenés à une maison courante, fenêtres du gabarit).
+// Un prix ou une règle n'est changé que s'il a encore l'ancienne valeur (les changements faits par l'utilisateur sont gardés).
+var BIB_MAJ_V3=[
+  {lot:'L18',id:'18.04',ancienPu:5108278,pu:1500000,lib:'Couverture de piscine : abri télescopique bas ou volet automatique.',obs:'Prix corrigé (avant : 51 083 €, grand abri spécial du projet de 300 m²). Une bâche 4 saisons coûte environ 2 000 € : à ajuster selon le projet.'},
+  {lot:'L20',id:'20.05',ancienPu:521258,pu:150000,lib:'Supplément douche PMR : receveur extra-plat de plain-pied, barres d\'appui, siège relevable.',obs:'Supplément par rapport à la douche standard déjà comptée (lots 11 et 12). Avant : 5 213 € (douche complète comptée deux fois).'},
+  {lot:'L20',id:'20.06',ancienPu:154748,pu:45000,lib:'Supplément WC PMR : cuvette rehaussée, barres d\'appui.',obs:'Supplément par rapport au WC standard déjà compté (lots 11 et 12). Avant : 1 547 €.'},
+  {lot:'L20',id:'20.01',ancienF:'P',f:'20',obs:'Longueur des cheminements accessibles (stationnement, entrée) : 20 ml par défaut, à ajuster. Avant : calculée avec le périmètre de la maison.'},
+  {lot:'L19',id:'19.03',ancienPu:190385,pu:50000,lib:'Protections et intégration de la production photovoltaïque au tableau électrique.',obs:'Le tableau électrique de la maison est déjà compté en 10.02. Avant : 1 904 € (tableau complet du projet de 300 m²).'},
+  {lot:'L10',id:'10.54',ancienF:'8',f:'0',obs:'Mis à 0 : l\'alimentation et le raccordement des volets roulants sont déjà comptés en 8.05.'},
+  {lot:'L21',id:'21.02',ancienPu:426667,pu:280000,lib:'Porte de garage sectionnelle motorisée (standard 2,40 × 2,00 m).',obs:'Porte standard. Grande porte de garage double : environ 4 300 €.'},
+  {lot:'L14',id:'14.03',ancienF:'S*1.0',f:'S-SDE*4',obs:'Surface habitable moins le sol des salles d\'eau (carrelé, ligne 14.04).'},
+  {lot:'L14',id:'sde-carr',apres:'14.03',nouvelle:{art:'14.04',lib:'Carrelage de sol et faïence murale des salles d\'eau (douche et murs humides), fourni posé.',u:'m2',pu:7000,f:'SDE*12',obs:'Environ 4 m² de sol + 8 m² de faïence par salle d\'eau.'}},
+  {lot:'L7',id:'7.05',ancienPu:95550,pu:67000,obs:'Prix corrigé (avant : 955,50 €, plus cher que la fenêtre 90x135).'},
+  {lot:'L7',id:'7.07',ancienPu:163800,pu:79000,obs:'Prix corrigé (avant : 1 638 €, le double de la fenêtre 90x135 pour la même surface).'}];
+function bibMaj3(B){
+  BIB_MAJ_V3.forEach(function(m){
+    var lot=B.find(function(l){return l.id===m.lot;});if(!lot)return;var x=lot.lignes.find(function(y){return y.id===m.id;});
+    if(m.nouvelle){if(x)return;var p=lot.lignes.findIndex(function(y){return y.id===m.apres;});lot.lignes.splice(p<0?lot.lignes.length:p+1,0,Object.assign({id:m.id,grp:''},m.nouvelle));return;}
+    if(!x)return;
+    if(m.ancienPu!==undefined){if(x.pu!==m.ancienPu)return;x.pu=m.pu;}
+    if(m.ancienF!==undefined){if(x.f!==m.ancienF)return;x.f=m.f;}
+    if(m.lib)x.lib=m.lib;if(m.obs)x.obs=m.obs;
+  });
+}
+// Anciennes désignations : dans un dossier, une désignation non retouchée suit la bibliothèque
+var LIB_AVANT={};
+BIB_ORIGINE.forEach(function(l){l.lignes.forEach(function(x){LIB_AVANT[x.id]=x.lib;});});
+bibMaj(BIB_ORIGINE);bibMaj3(BIB_ORIGINE);
 
 // ── Bibliothèque de prix (commune à tous les dossiers) ──
 function bib(){if(DB.bib&&(DB.bibV||1)<BIB_V){if((DB.bibV||1)<2)bibMaj(DB.bib);bibMaj3(DB.bib);DB.bibV=BIB_V;}return DB.bib||BIB_ORIGINE;}
@@ -2810,6 +2810,7 @@ function estRegenerer(quoi){
 // base : abattement de 50 % sur les 100 premiers m² d'une résidence principale et sur le garage.
 var OBS_TERRAIN_DEF='Terrain déjà en possession du maître d\'ouvrage',OBS_TERRAIN_ACHAT='Prix d\'achat du terrain (hors frais de notaire)';
 var TA_MENTION='Estimation indicative — montant à confirmer auprès du service urbanisme de la commune / de la DDT lors de la déclaration préalable ou du permis de construire.';
+var TA_PISC_DEF=25000,TA_STAT_DEF=200000; // piscine 250 €/m² de bassin, stationnement extérieur 2 000 €/place (valeurs légales, sans abattement)
 var TA_VF_DEF=93000,TA_VF_ANNEE_DEF='2025'; // valeur forfaitaire hors Île-de-France (€/m², en centimes) — à mettre à jour chaque année dans Paramètres
 function taVfGlobal(){var r=reglages();return r.taVf||TA_VF_DEF;}
 function taCalc(c){
@@ -2818,8 +2819,11 @@ function taCalc(c){
   var G=t.gar!==null&&t.gar!==undefined?+t.gar:garAuto,S=t.surf!==null&&t.surf!==undefined?+t.surf:hab+garAuto;
   G=Math.min(Math.max(G,0),S);var H=S-G,rp=t.rp!==0,vf=t.vf||taVfGlobal(),taux=(t.tc||0)+(t.td||0);
   var baseH=rp?Math.min(H,100)*0.5+Math.max(H-100,0):H,base=Math.round((baseH+G*0.5)*100)/100;
-  var complet=S>0&&vf>0&&(t.tc!==null&&t.tc!==undefined||t.td!==null&&t.td!==undefined);
-  return {S:S,G:G,H:H,rp:rp,vf:vf,taux:taux,base:base,complet:complet,taxe:complet?Math.round(base*vf*taux/10000):0,autoS:t.surf===null||t.surf===undefined,autoG:t.gar===null||t.gar===undefined};
+  // Piscine (valeur forfaitaire au m² de bassin) et places de stationnement extérieures (valeur par place), sans abattement
+  var pisc=t.pisc!==null&&t.pisc!==undefined?+t.pisc:(v?(+v.PISC||0):0),vp=t.vpisc||TA_PISC_DEF,np=+t.np||0,vs=t.vstat||TA_STAT_DEF;
+  var complet=(S>0||pisc>0||np>0)&&vf>0&&(t.tc!==null&&t.tc!==undefined||t.td!==null&&t.td!==undefined);
+  var tBat=Math.round(base*vf*taux/10000),tPisc=Math.round(pisc*vp*taux/10000),tStat=Math.round(np*vs*taux/10000);
+  return {S:S,G:G,H:H,rp:rp,vf:vf,taux:taux,base:base,pisc:pisc,vp:vp,np:np,vs:vs,tBat:tBat,tPisc:tPisc,tStat:tStat,complet:complet,taxe:complet?tBat+tPisc+tStat:0,autoS:t.surf===null||t.surf===undefined,autoG:t.gar===null||t.gar===undefined};
 }
 function annexeCherche(A,auto,re,strict){return A.find(function(x){return x.auto===auto;})||(strict?null:A.find(function(x){return re.test(x.lib||'');}));}
 function annexesAuto(c,strict,seul){ // strict : ne touche qu'aux lignes encore automatiques (appel à chaque enregistrement) ; seul : 'terrain' ou 'ta'
@@ -2835,7 +2839,7 @@ function annexesAuto(c,strict,seul){ // strict : ne touche qu'aux lignes encore 
     var k=taCalc(c),x=annexeCherche(A,'ta',/taxe d.am[ée]nagement/i,strict);
     if(!x&&k.complet&&!strict){var i=A.findIndex(function(y){return /notaire/i.test(y.lib||'');});x={lib:'',mt:null,obs:'',hp:false};A.splice(i>=0?i+1:0,0,x);}
     if(x){x.auto='ta';
-      if(k.complet){x.mt=k.taxe;x.lib='Taxe d\'aménagement ('+String(k.base).replace('.',',')+' m² taxables × '+fmtE(k.vf)+' € × '+pctStr(k.taux)+' %)';}
+      if(k.complet){x.mt=k.taxe;x.lib='Taxe d\'aménagement ('+[k.base?String(k.base).replace('.',',')+' m² taxables × '+fmtE(k.vf)+' €':'',k.pisc?'piscine '+String(k.pisc).replace('.',',')+' m² × '+fmtE(k.vp)+' €':'',k.np?k.np+' place'+(k.np>1?'s':'')+' de stationnement × '+fmtE(k.vs)+' €':''].filter(Boolean).join(' + ')+', taux '+pctStr(k.taux)+' %)';}
       else{x.mt=null;x.lib='Taxe d\'aménagement';}
       x.obs=TA_MENTION;}
   }
@@ -2844,21 +2848,26 @@ function estFin(champ,v){
   var c=act,e=c&&c.est;if(!e)return;e.ta=e.ta||{rp:1};v=String(v===undefined?'':v).trim();
   if(champ==='terrain'){e.terrain=v===''?null:cts(v);e.terrainSet=1;}
   else if(champ==='rp')e.ta.rp=v==='true'?1:0;
-  else if(champ==='tc'||champ==='td'||champ==='vf')e.ta[champ]=v===''?null:cts(v);
+  else if(champ==='tc'||champ==='td'||champ==='vf'||champ==='vpisc'||champ==='vstat')e.ta[champ]=v===''?null:cts(v);
   else e.ta[champ]=v===''?null:(parseFloat(v.replace(/\s/g,'').replace(',','.'))||0);
   annexesAuto(c,false,champ==='terrain'?'terrain':'ta');ctrSave();estReafficher();
 }
 function estFinHtml(c){
   var e=c.est,t=e.ta||{},k=taCalc(c),r=reglages(),num=function(v){return v===null||v===undefined?'':String(v).replace('.',',');};
   var f=function(ch,lib,val,ph){return '<div class="fld"><label>'+lib+'</label><input value="'+escA(val)+'"'+(ph?' placeholder="'+escA(ph)+'"':'')+' onchange="estFin(\''+ch+'\',this.value)"></div>';};
-  var det=k.complet?'Base taxable : '+(k.rp&&k.H>0?(k.H>100?'100 m² × 50 % + '+num(Math.round((k.H-100)*100)/100)+' m²':num(k.H)+' m² × 50 %'):num(k.H)+' m²')+(k.G?' + garage '+num(k.G)+' m² × 50 %':'')+' = <b>'+num(k.base)+' m²</b> → '+num(k.base)+' × '+fmtE(k.vf)+' € × '+pctStr(k.taux)+' % = <b>'+fmtE(k.taxe)+' €</b>':'Saisissez le taux communal et/ou départemental pour calculer la taxe.';
+  var det=k.complet?(k.S?'Construction — base taxable : '+(k.rp&&k.H>0?(k.H>100?'100 m² × 50 % + '+num(Math.round((k.H-100)*100)/100)+' m²':num(k.H)+' m² × 50 %'):num(k.H)+' m²')+(k.G?' + garage '+num(k.G)+' m² × 50 %':'')+' = <b>'+num(k.base)+' m²</b> → '+num(k.base)+' × '+fmtE(k.vf)+' € × '+pctStr(k.taux)+' % = '+fmtE(k.tBat)+' €':'')+
+      (k.pisc?'<br>Piscine : '+num(k.pisc)+' m² × '+fmtE(k.vp)+' € × '+pctStr(k.taux)+' % = '+fmtE(k.tPisc)+' €':'')+
+      (k.np?'<br>Stationnement extérieur : '+k.np+' place'+(k.np>1?'s':'')+' × '+fmtE(k.vs)+' € × '+pctStr(k.taux)+' % = '+fmtE(k.tStat)+' €':'')+
+      '<br><b>Taxe d\'aménagement estimée : '+fmtE(k.taxe)+' €</b>':'Saisissez le taux communal et/ou départemental pour calculer la taxe.';
   return '<details class="ctr-tx"'+(estFinOuvert?' open':'')+' ontoggle="estFinOuvert=this.open"><summary>💶 Terrain et taxe d\'aménagement'+(e.terrain>0?' — terrain '+fmtE(e.terrain)+' €':'')+(k.complet?' — taxe '+fmtE(k.taxe)+' €':'')+'</summary>'+
     '<div class="fg">'+f('terrain','Valeur d\'achat du terrain (€) — vide ou 0 = terrain déjà possédé',e.terrain?fmtE(e.terrain):'','ex : 45 000')+'</div>'+
     '<div class="sec-lbl">Estimation de la taxe d\'aménagement</div>'+
     '<div class="dp-q">'+f('surf','Surface taxable (m²)',num(t.surf),num(k.S)+' (auto : habitable + garage)')+f('gar','dont garage (m²)',num(t.gar),num(k.G)+' (auto)')+
       f('tc','Taux communal (%)',t.tc!==null&&t.tc!==undefined?pctStr(t.tc):'','à saisir')+f('td','Taux départemental (%)',t.td!==null&&t.td!==undefined?pctStr(t.td):'','à saisir')+
       f('vf','Valeur forfaitaire (€ / m²)',t.vf?fmtE(t.vf):'',fmtE(taVfGlobal())+' (barème '+(r.taVfAnnee||TA_VF_ANNEE_DEF)+')')+
-      '<label class="sd-chk"><input type="checkbox"'+(k.rp?' checked':'')+' onchange="estFin(\'rp\',this.checked)"><label>Résidence principale (abattement de 50 % sur les 100 premiers m²)</label></label></div>'+
+      '<label class="sd-chk"><input type="checkbox"'+(k.rp?' checked':'')+' onchange="estFin(\'rp\',this.checked)"><label>Résidence principale (abattement de 50 % sur les 100 premiers m²)</label></label>'+
+      f('pisc','Piscine : surface du bassin (m²)',num(t.pisc),num(k.pisc)+(t.pisc===null||t.pisc===undefined?' (auto : questionnaire)':''))+f('vpisc','Piscine : valeur forfaitaire (€ / m²)',t.vpisc?fmtE(t.vpisc):'',fmtE(TA_PISC_DEF)+' (valeur légale)')+
+      f('np','Places de stationnement extérieures',num(t.np),'0')+f('vstat','Stationnement : valeur par place (€)',t.vstat?fmtE(t.vstat):'',fmtE(TA_STAT_DEF)+' (jusqu\'à 5 000 selon la commune)')+'</div>'+
     '<div class="faisa-bloc">'+det+'</div>'+
     '<div class="rel-note">Le résultat remplit les lignes « Coût d\'acquisition du terrain » et « Taxe d\'aménagement » des postes annexes (Word Estimatif). '+esc(TA_MENTION)+' Valeur forfaitaire par défaut : Paramètres.</div></details>';
 }
