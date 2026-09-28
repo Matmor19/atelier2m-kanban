@@ -108,11 +108,15 @@ Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès 
   tant que les parcelles ne sont pas modifiées). Étude et taux votés lisent `parcellesDe(c)`.
 - **Étude de faisabilité** (niveau 1, sans IA) : bouton « 🔎 Étude de faisabilité » sous la parcelle cadastrale de
   la fiche (actif si commune + au moins une parcelle). Le Kanban envoie `action:'faisabilite'` au script Google
-  (`faisabilite_()` dans le .gs, version 5) qui interroge api-adresse (code INSEE), apicarto IGN (cadastre,
+  (`faisabilite_()` dans le .gs, version 6 : 4 étapes `commune` / `parcelles` / `urbanisme` / `risques` appelées une par une par `faisaLancer()` avec l'état intermédiaire `etat`, pour afficher le pourcentage ; sans `etape`, tout en un appel) qui interroge api-adresse (code INSEE), apicarto IGN (cadastre,
   GPU zone-urba / document / secteur-cc / municipality pour le RNU) et Géorisques. Lecture des références :
   `refsCadastre()` (« Section AB n°12 », « 240 - 242 et 244 AI »…). Résultat mémorisé dans `c.faisa` (avec
   `cad` au moment de l'étude), affiché par `renderFaisa()`, bouton « Actualiser ». Donnée brute indicative
   (`FAISA_MENTION`), aucune interprétation automatique.
+- **Indicateur d'activité** : `busyStart(libellé)` / `busyEnd()` / `busyPromesse()` ; `window.fetch` est enveloppé
+  (`busyInfo()` donne le libellé selon la requête ; enregistrement automatique = pastille sans bloquer de bouton).
+  Pastille `#busy` (anneau qui tourne) ; le dernier bouton cliqué est désactivé (`is-busy`) jusqu'à la fin, avec un
+  délai de grâce pour les actions en plusieurs requêtes. `anneauHtml(pct)` : anneau avec pourcentage (étude).
 - **Numérotation** A2M-AAAA-P001 (propositions) / A2M-AAAA-F001 (factures et avoirs) : attribuée
   uniquement par le script Google (`action: 'numero'`, avec verrou), jamais pendant un aperçu.
   Le code du script est dans `apps-script/Kanban_Sauvegarde.gs` : après toute modification, le

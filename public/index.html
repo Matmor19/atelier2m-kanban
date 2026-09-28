@@ -384,6 +384,15 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .ta-src{font-weight:600;text-transform:none;letter-spacing:0;color:var(--amber)}
 .parc-ed{margin-bottom:6px}.parc-t,.parc-it{display:grid;grid-template-columns:22px 90px 1fr 24px;gap:6px;align-items:center}.parc-t{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);margin-bottom:2px}.parc-ttl{font-size:10px;font-weight:800;color:var(--txt2);margin:2px 0 3px}
 .parc-it{margin-bottom:4px}.parc-it .sd-inp{margin:0}.parc-n{font-size:10px;color:var(--txt3);text-align:center}.parc-it .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:15px}.parc-it .rm:hover{color:var(--red)}
+@keyframes tourne{to{transform:rotate(360deg)}}
+.anneau{display:inline-block;width:18px;height:18px;border-radius:50%;border:3px solid color-mix(in srgb,var(--or) 22%,transparent);border-top-color:var(--or);animation:tourne .8s linear infinite;flex:none}
+.anneau-pct{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:none}.anneau-pct svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg)}
+.anneau-pct circle{fill:none;stroke-width:4}.anneau-pct .fond{stroke:color-mix(in srgb,var(--or) 18%,transparent)}.anneau-pct .val{stroke:var(--or);stroke-linecap:round;transition:stroke-dashoffset .5s ease}
+.anneau-pct b{font-size:10.5px;color:var(--txt)}
+.busy{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);z-index:400;display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--brd2);box-shadow:0 8px 28px rgba(0,0,0,.18);border-radius:30px;padding:9px 16px 9px 12px;font-size:12px;font-weight:700;color:var(--txt);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.busy.on{opacity:1;transform:translate(-50%,0)}
+button.is-busy{opacity:.6;cursor:wait!important}button.is-busy::after{content:'';display:inline-block;width:10px;height:10px;margin-left:7px;vertical-align:-1px;border-radius:50%;border:2px solid currentColor;border-right-color:transparent;animation:tourne .7s linear infinite}
+.faisa-prog{display:flex;align-items:center;gap:14px}.faisa-prog span{font-size:10.5px;color:var(--txt3)}
 .faisa-bar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:-2px 0 8px}.faisa-bar .sml-btn:disabled{opacity:.45;cursor:not-allowed}.faisa-res{font-size:10.5px;color:var(--txt2)}
 .faisa-bloc{font-size:11.5px;color:var(--txt);line-height:1.55;margin-bottom:10px}.faisa-zone{margin:2px 0}.faisa-code{display:inline-block;min-width:34px;text-align:center;font-weight:800;color:#fff;background:var(--or);border-radius:6px;padding:1px 6px;margin-right:4px}
 .faisa-ul{margin:0;padding-left:18px}.faisa-att{font-size:11.5px;color:var(--txt2);padding:10px;background:var(--surface2);border-radius:10px;margin-bottom:8px}.faisa-mention{font-size:10px;font-style:italic;color:var(--txt3);border-top:1px solid var(--brd);padding-top:6px;margin-top:8px}
@@ -734,6 +743,7 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="busy" id="busy" role="status" aria-live="polite"><span class="anneau"></span><span id="busy-lib"></span></div>
 
 <script>
 var COLS=[
@@ -862,6 +872,64 @@ var INIT=[
 
 var DB={cards:[],archived:[]},act=null,filt='all',sortMode='date_desc',staledays=14;
 var API='https://script.google.com/macros/s/AKfycbwLGYVnT9HvYgLJNzEP1QCa8b-BQw18eZ0vse2hXixZT4LwrFv3-bt4X4i--gX8eqDoKw/exec';
+// ── Indicateur d'activité : anneau de progression pendant toute action qui attend une réponse ──
+// busyStart(libellé) / busyEnd(jeton) : la pastille en bas de l'écran s'affiche après 250 ms (pas de clignotement
+// pour les actions éclair). Le dernier bouton cliqué (moins de 60 s, toujours à l'écran) est désactivé avec un
+// anneau jusqu'à la fin de l'action ; un court délai de grâce couvre les actions en plusieurs requêtes (Word).
+// Toutes les requêtes passent par fetch : elles sont détectées automatiquement (sauf l'enregistrement automatique,
+// qui affiche la pastille sans bloquer de bouton, et les lectures en arrière-plan).
+var busyListe=[],busySeq=0,busyMinuteur=null,dernierClic={btn:null,t:0},boutonsOccupes=[];
+document.addEventListener('click',function(e){var b=e.target&&e.target.closest&&e.target.closest('button');if(b)dernierClic={btn:b,t:Date.now()};},true);
+function busyStart(lib,bloquerBouton){
+  var j={id:++busySeq,lib:lib,btn:null};busyListe.push(j);
+  if(bloquerBouton!==false){var b=dernierClic.btn;
+    if(b&&b.isConnected&&Date.now()-dernierClic.t<60000){
+      var o=boutonsOccupes.find(function(x){return x.btn===b;});
+      if(o){o.n++;clearTimeout(o.lib);}else if(!b.disabled){boutonsOccupes.push({btn:b,n:1});b.disabled=true;b.classList.add('is-busy');}
+      if(boutonsOccupes.some(function(x){return x.btn===b;}))j.btn=b;
+    }}
+  majBusy();return j;
+}
+function busyEnd(j){
+  if(!j)return;var i=busyListe.indexOf(j);if(i<0)return;busyListe.splice(i,1);
+  if(j.btn){var o=boutonsOccupes.find(function(x){return x.btn===j.btn;});
+    if(o&&--o.n<=0)o.lib=setTimeout(function(){if(o.n>0)return;o.btn.disabled=false;o.btn.classList.remove('is-busy');boutonsOccupes.splice(boutonsOccupes.indexOf(o),1);},450);}
+  majBusy();
+}
+function busyPromesse(lib,promesse,bloquerBouton){var j=busyStart(lib,bloquerBouton);return Promise.resolve(promesse).then(function(v){busyEnd(j);return v;},function(e){busyEnd(j);throw e;});}
+function majBusy(){
+  var el=document.getElementById('busy');if(!el)return;
+  if(!busyListe.length){clearTimeout(busyMinuteur);busyMinuteur=null;el.classList.remove('on');return;}
+  document.getElementById('busy-lib').textContent=busyListe[busyListe.length-1].lib;
+  if(!el.classList.contains('on')&&!busyMinuteur)busyMinuteur=setTimeout(function(){busyMinuteur=null;if(busyListe.length)el.classList.add('on');},250);
+}
+// Libellé selon la requête (null = requête silencieuse)
+function busyInfo(url,opts){
+  url=String(url||'');var corps=opts&&typeof opts.body==='string'?opts.body.slice(0,300):'',act_=(/"action":"(\w+)"/.exec(corps)||[])[1];
+  if(url.indexOf('script.google.com')>=0){
+    if(!opts||!opts.method||opts.method==='GET')return busyListe.length?null:{lib:'Chargement des dossiers…',btn:false};
+    return {upload:{lib:'Envoi du fichier vers Google Drive…'},delete:{lib:'Suppression du fichier…'},numero:{lib:'Attribution du numéro…'},
+      calsync:{lib:'Synchronisation de l\'agenda…',btn:false},compteurs:null,faisabilite:null}[act_]||(act_?null:{lib:'Sauvegarde…',btn:false});
+  }
+  if(url.indexOf('data.economie.gouv.fr')>=0)return {lib:'Recherche des taux votés…'};
+  if(url.indexOf('api-adresse.data.gouv.fr')>=0)return {lib:'Recherche de la commune…'};
+  return null; // modèles Word : suivis par remplirModele
+}
+(function(){
+  var f0=window.fetch.bind(window);
+  window.fetch=function(url,opts){
+    var info=busyInfo(url,opts);if(!info)return f0(url,opts);
+    var j=busyStart(info.lib,info.btn);
+    return f0(url,opts).then(function(r){busyEnd(j);return r;},function(e){busyEnd(j);throw e;});
+  };
+})();
+// Anneau de progression : pct = nombre (0-100) → anneau rempli et pourcentage ; sinon anneau qui tourne
+function anneauHtml(pct,taille){
+  taille=taille||44;
+  if(pct===null||pct===undefined)return '<span class="anneau" style="width:'+taille+'px;height:'+taille+'px"></span>';
+  var r=18,c=2*Math.PI*r;
+  return '<span class="anneau-pct" style="width:'+taille+'px;height:'+taille+'px"><svg viewBox="0 0 44 44"><circle cx="22" cy="22" r="'+r+'" class="fond"/><circle cx="22" cy="22" r="'+r+'" class="val" stroke-dasharray="'+c.toFixed(1)+'" stroke-dashoffset="'+(c*(1-pct/100)).toFixed(1)+'"/></svg><b>'+Math.round(pct)+' %</b></span>';
+}
 var remoteReady=false,pushTimer=null;
 
 // ── GOOGLE AGENDA ───────────────────────────────────────────
@@ -2206,36 +2274,51 @@ function renderFaisaBar(){
   var el=document.getElementById('d-faisa');if(!el||!act)return;
   var p=faisaParams(act),ok=p.commune&&p.refs.length,f=act.faisa,r='';
   if(f&&f.ok){var z=(f.zones||[]).map(function(x){return x.code;}).filter(Boolean);
-    r=(z.length?'Zone '+z.join(', '):f.rnu?'RNU':'Zone ?')+' · '+fmtM2(f.surface)+' · '+(f.risques||[]).length+' risque(s) — '+dateFr(f.date.slice(0,10))+(f.cad!==act.cad?' <b style="color:var(--amber)">· parcelles modifiées : à actualiser</b>':'');}
-  el.innerHTML='<button class="sml-btn" style="width:auto;margin:0"'+(ok?'':' disabled title="Renseignez la commune (adresse du chantier ou « Informations pour les documents ») et au moins une parcelle (section + numéro)"')+' onclick="openFaisa()">🔎 Étude de faisabilité</button>'+
+    r=(z.length?'Zone '+z.join(', '):f.rnu?'RNU':'Zone ?')+' · '+fmtM2(f.surface)+' · '+(f.risques||[]).length+' risque(s) — '+dateFr(String(f.date||'').slice(0,10))+(f.cad!==act.cad?' <b style="color:var(--amber)">· parcelles modifiées : à actualiser</b>':'');}
+  el.innerHTML='<button class="sml-btn'+(faisaEnCours?' is-busy':'')+'" style="width:auto;margin:0"'+(faisaEnCours?' disabled':'')+(ok?'':' disabled title="Renseignez la commune (adresse du chantier ou « Informations pour les documents ») et au moins une parcelle (section + numéro)"')+' onclick="openFaisa()">🔎 Étude de faisabilité</button>'+
     '<span class="faisa-res">'+(r||(ok?'Parcelle(s) : '+p.refs.map(function(x){return x.section+' '+x.numero;}).join(', ')+' — '+esc(p.commune):'<i>Commune et au moins une parcelle (section + numéro) nécessaires</i>'))+'</span>';
 }
 function fmtM2(n){return n?fmtE(Math.round(n)*100)+' m²':'—';}
 var faisaEnCours=false,faisaErreur='';
 function openFaisa(){if(!act)return;faisaErreur='';renderFaisa();showM('m-faisa');if(!act.faisa)faisaLancer();}
+// Les 4 étapes sont demandées une par une au script Google (version 6) : l'avancement progresse à chaque étape.
+// Un script version 5 ignore « etape » et renvoie tout dès la 1re demande : l'étude se termine alors directement.
+var FAISA_ETAPES=[['commune','Recherche de la commune…'],['parcelles','Lecture du cadastre…'],['urbanisme','Recherche de la zone PLU (Géoportail de l\'Urbanisme)…'],['risques','Recherche des risques (Géorisques)…']];
+var faisaProgres={pct:0,lib:''};
 function faisaLancer(){
   var c=act,p=faisaParams(c);if(faisaEnCours)return;
   if(!p.commune||!p.refs.length){faisaErreur='Renseignez la commune et au moins une parcelle cadastrale (section + numéro).';renderFaisa();return;}
   if(location.protocol==='file:'||!remoteReady){faisaErreur='Connexion au serveur Google nécessaire.';renderFaisa();return;}
-  faisaEnCours=true;faisaErreur='';renderFaisa();
-  fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'faisabilite'},p))})
-  .then(function(r){return r.json();})
-  .then(function(res){
-    faisaEnCours=false;
+  faisaEnCours=true;faisaErreur='';faisaProgres={pct:0,lib:FAISA_ETAPES[0][1]};renderFaisa();
+  var jeton=busyStart('Étude de faisabilité…',false),etat=null;
+  var fin=function(){faisaEnCours=false;busyEnd(jeton);if(act===c){try{renderFaisa();renderFaisaBar();}catch(e){console.error(e);}}};
+  var etape=function(n){
+    faisaProgres={pct:n*25,lib:FAISA_ETAPES[n][1]};if(act===c)majFaisaProgres();
+    return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'faisabilite',etape:FAISA_ETAPES[n][0],etat:etat},p))})
+    .then(function(r){return r.json();}).then(function(res){
+      if(!res||!res.ok)return res;
+      if(!res.etape||n===FAISA_ETAPES.length-1){delete res.geoms;delete res.etape;return res;} // terminé (ou script version 5 : tout en une fois)
+      etat=res;return etape(n+1);
+    });
+  };
+  etape(0).then(function(res){
     if(!res||!res.ok){
       faisaErreur=res&&res.erreur==='Données invalides'?'Votre script Google n\'est pas encore à jour : recopiez le nouveau code (apps-script/Kanban_Sauvegarde.gs) dans Google Apps Script, puis publiez une nouvelle version du déploiement.':((res&&res.erreur)||'Réponse inattendue du script Google.');
       if(res&&res.avert&&res.avert.length)faisaErreur+='\n'+res.avert.join('\n');
-    } else {res.cad=c.cad||'';res.communeSaisie=p.commune;c.faisa=res;c.upd=Date.now();sv();
-      chercherTauxTA(c).then(function(){if(c.est)preremplirEst(c);sv();if(act===c){renderFaisa();estReafficher();}}).catch(function(){});}
-    if(act===c){renderFaisa();renderFaisaBar();}
-  })
-  .catch(function(e){faisaEnCours=false;faisaErreur='Service indisponible ('+(e&&e.message||e)+'). Réessayez dans quelques minutes.';if(act===c)renderFaisa();});
+      fin();return;
+    }
+    faisaProgres={pct:100,lib:'Terminé'};if(act===c)majFaisaProgres();
+    res.date=res.date||new Date().toISOString();res.cad=c.cad||'';res.communeSaisie=p.commune;c.faisa=res;c.upd=Date.now();sv();
+    chercherTauxTA(c).then(function(){if(c.est)preremplirEst(c);sv();if(act===c){renderFaisa();estReafficher();}}).catch(function(){});
+    setTimeout(fin,350);
+  }).catch(function(e){faisaErreur='Service indisponible ('+(e&&e.message||e)+'). Réessayez dans quelques minutes.';fin();});
 }
+function majFaisaProgres(){var el=document.getElementById('faisa-prog');if(el)el.innerHTML=anneauHtml(faisaProgres.pct,52)+'<div><b>'+esc(faisaProgres.lib)+'</b><br><span>Étape '+Math.min(4,Math.floor(faisaProgres.pct/25)+1)+' sur 4</span></div>';else if(document.getElementById('m-faisa').classList.contains('open'))renderFaisa();}
 function faisaContenance(){var f=act.faisa;if(!f||!f.surface)return;act.contenance=fmtE(Math.round(f.surface)*100)+' m²';act.upd=Date.now();sv();renderFaisa();if(document.getElementById('d-ctrs'))renderCtrs();toast('Contenance du terrain : '+act.contenance);}
 function renderFaisa(){
   var c=act,f=c.faisa,p=faisaParams(c),h='<div class="mn-ttl">🔎 Étude de faisabilité <span class="ctr-st">cadastre · PLU · risques</span></div>';
   h+='<div class="rel-note" style="margin-bottom:8px">Commune : <b>'+esc(p.commune||'—')+'</b>'+(p.insee?' ('+p.insee+')':'')+' · parcelle(s) lue(s) : <b>'+(p.refs.map(function(x){return x.section+' '+x.numero;}).join(', ')||'—')+'</b> <i>(depuis « '+esc(c.cad||'')+' »)</i></div>';
-  if(faisaEnCours)h+='<div class="faisa-att">⏳ Interrogation du cadastre, du Géoportail de l\'Urbanisme et de Géorisques… (jusqu\'à une minute)</div>';
+  if(faisaEnCours)h+='<div class="faisa-att faisa-prog" id="faisa-prog">'+anneauHtml(faisaProgres.pct,52)+'<div><b>'+esc(faisaProgres.lib)+'</b><br><span>Étape '+Math.min(4,Math.floor(faisaProgres.pct/25)+1)+' sur 4</span></div></div>';
   if(faisaErreur)h+='<div class="gen-al">⚠ '+esc(faisaErreur).replace(/\n/g,'<br>')+'</div>';
   if(f&&f.ok){
     if(f.cad!==c.cad)h+='<div class="gen-al">Les références cadastrales ont changé depuis cette étude (« '+esc(f.cad)+' ») : cliquez sur « Actualiser ».</div>';
@@ -2267,7 +2350,7 @@ function renderFaisa(){
     h+='<div class="sec-lbl">Taxe d\'aménagement — taux votés</div><div class="faisa-bloc">'+(c.taTaux?tauxTAHtml(c):'<i>Recherche en cours ou indisponible.</i>')+'<a class="lnk" onclick="btnTauxTA()">↻ Rechercher les taux</a></div>';
     if(f.depuisAdresse)h+='<div class="rel-note">Position établie d\'après l\'adresse « '+esc(f.depuisAdresse)+' » (parcelle introuvable).</div>';
     if(f.lon)h+='<div class="rel-note" style="margin-top:6px">Voir sur une carte : <a class="lnk" href="https://www.geoportail-urbanisme.gouv.fr/map/#tile=1&lon='+f.lon+'&lat='+f.lat+'&zoom=17" target="_blank" rel="noopener">Géoportail de l\'Urbanisme</a> · <a class="lnk" href="'+escA(f.georisquesUrl||'https://www.georisques.gouv.fr/mes-risques/connaitre-les-risques-pres-de-chez-moi')+'" target="_blank" rel="noopener">Géorisques</a> · <a class="lnk" href="https://www.geoportail.gouv.fr/carte?c='+f.lon+','+f.lat+'&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes" target="_blank" rel="noopener">Cadastre</a></div>';
-    h+='<div class="rel-note" style="margin-top:4px">Étude du '+dateFr(f.date.slice(0,10))+' — commune '+esc(f.commune||'')+' (INSEE '+esc(f.insee||'')+').</div>';
+    h+='<div class="rel-note" style="margin-top:4px">Étude du '+dateFr(String(f.date||'').slice(0,10))+' — commune '+esc(f.commune||'')+' (INSEE '+esc(f.insee||'')+').</div>';
   }
   h+='<div class="faisa-mention">ⓘ '+esc(FAISA_MENTION)+'</div>';
   h+='<div class="mbtns"><button class="mb-c" onclick="faisaLancer()"'+(faisaEnCours?' disabled':'')+'>↻ '+(f?'Actualiser':'Lancer la recherche')+'</button><button class="mb-s" onclick="closeSub(\'m-faisa\')">Fermer</button></div>';
@@ -3199,9 +3282,11 @@ function nomFichier(doc,num,c){
 function chargerScript(src,glob){
   return window[glob]?Promise.resolve():new Promise(function(ok,ko){var s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=function(){ko(new Error('Chargement impossible : '+src));};document.head.appendChild(s);});
 }
-function chargerLibs(){return chargerScript('https://cdn.jsdelivr.net/npm/pizzip@3.3.0/dist/pizzip.min.js','PizZip').then(function(){return chargerScript('https://cdn.jsdelivr.net/npm/docxtemplater@3.71.0/build/docxtemplater.min.js','docxtemplater');});}
+function chargerLibs(){if(window.PizZip&&window.docxtemplater)return Promise.resolve();return busyPromesse('Préparation du document Word…',chargerLibs0());}
+function chargerLibs0(){return chargerScript('https://cdn.jsdelivr.net/npm/pizzip@3.3.0/dist/pizzip.min.js','PizZip').then(function(){return chargerScript('https://cdn.jsdelivr.net/npm/docxtemplater@3.71.0/build/docxtemplater.min.js','docxtemplater');});}
 var TPL={prop:function(k){return 'proposition_'+tplBase(k)+'.docx';},lm:function(k){return 'lettre_mission_'+tplBase(k)+'.docx';},est:function(k,c){return 'estimatif_'+(c.est&&c.est.mise==='A'?'A':'B')+'.docx';},plu:function(){return 'annexe_PLU.docx';}};
-function remplirModele(fichier,data){
+function remplirModele(fichier,data){return busyPromesse('Préparation du document Word…',remplirModele0(fichier,data));}
+function remplirModele0(fichier,data){
   return fetch('modeles/'+fichier,{cache:'no-cache'}).then(function(r){if(!r.ok)throw new Error('Modèle introuvable : '+fichier);return r.arrayBuffer();}).then(function(buf){
     var doc=new window.docxtemplater(new window.PizZip(buf),{paragraphLoop:true,linebreaks:true,nullGetter:function(){return '';}});
     doc.render(data);
