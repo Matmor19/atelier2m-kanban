@@ -1,5 +1,5 @@
 /**
- * Atelier 2M — Sauvegarde du Kanban dans Google Drive  (version 8 : documents + Google Agenda + numérotation + faisabilité par étapes + lecture du règlement PLU par l'IA)
+ * Atelier 2M — Sauvegarde du Kanban dans Google Drive  (version 9 : documents + Google Agenda + numérotation + faisabilité par étapes + lecture du règlement PLU par l'IA + fusion PC / téléphone)
  * -----------------------------------------------------------------------------------
  * - Enregistre les dossiers du Kanban dans "kanban-atelier2m-data.json"
  * - Copie de secours quotidienne dans "Kanban Atelier 2M - Sauvegardes" (30 jours)
@@ -103,12 +103,77 @@ function sauvegarder_(data) {
     if (data.cards.length === 0 && actuel.cards && actuel.cards.length > 0) {
       return reponse_(JSON.stringify({ ok: false, erreur: 'Refus : envoi vide' }));
     }
+    // Fusion dossier par dossier avec la copie du Drive (un appareil en retard n'efface plus le travail de l'autre)
+    var res = actuel.cards && actuel.cards.length ? fusionner_(data, actuel) : data;
+    delete res._sync; delete res.dirty;
+    res.savedAt = Date.now();
     sauvegardeDuJour_(fichier);
-    fichier.setContent(JSON.stringify(data));
-    return reponse_(JSON.stringify({ ok: true, dossiers: data.cards.length }));
+    fichier.setContent(JSON.stringify(res));
+    return reponse_(JSON.stringify({ ok: true, dossiers: res.cards.length, fusion: 1, db: res }));
   } finally {
     verrou.releaseLock();
   }
+}
+
+// ── SYNCHRONISATION ENTRE APPAREILS (PC, téléphone…) ─────
+// Chaque appareil envoie tout le Kanban, avec _sync = { base: {id du dossier: date de modification lors de sa
+// dernière synchronisation}, changed: [réglages modifiés sur cet appareil] }.
+// - dossier présent des deux côtés : la version la plus récente (upd) l'emporte ; les factures et les propositions
+//   numérotées de l'autre version sont toujours conservées (elles ne doivent jamais disparaître) ;
+// - dossier absent du Drive mais connu de l'appareil et non modifié depuis : supprimé sur un autre appareil ;
+// - dossier absent de l'appareil mais connu et non modifié depuis sur le Drive : supprimé sur cet appareil ;
+// - dans le doute, le dossier est gardé.
+// Réglages (paramètres, bibliothèques…) : ceux de l'appareil s'il les a modifiés, sinon ceux du Drive.
+// Registre des factures : réunion des deux.
+function fusionner_(inc, srv) {
+  var s = inc._sync || {}, base = s.base || {}, chg = s.changed, res = { cards: [], archived: [] };
+  var pool = function (db) {
+    var m = {}, ordre = [];
+    ['cards', 'archived'].forEach(function (loc) {
+      (db[loc] || []).forEach(function (c) { if (c && c.id !== undefined && !m[c.id]) { m[c.id] = { c: c, loc: loc }; ordre.push(c.id); } });
+    });
+    return { m: m, ordre: ordre };
+  };
+  var L = pool(inc), R = pool(srv);
+  var ids = L.ordre.concat(R.ordre.filter(function (id) { return !L.m[id]; }));
+  ids.forEach(function (id) {
+    var l = L.m[id], r = R.m[id], b = base[id], g = null;
+    if (l && r) { g = (l.c.upd || 0) >= (r.c.upd || 0) ? l : r; garderPieces_(g.c, (g === l ? r : l).c); }
+    else if (l) g = b !== undefined && (l.c.upd || 0) <= b ? null : l;
+    else g = b !== undefined && (r.c.upd || 0) <= b ? null : r;
+    if (g) res[g.loc].push(g.c);
+  });
+  Object.keys(srv).concat(Object.keys(inc)).forEach(function (k) {
+    if (k in res || k === '_sync' || k === 'savedAt' || k === 'dirty') return;
+    if (k === 'registre') { res[k] = fusionRegistre_(inc[k], srv[k]); return; }
+    var local = (k in inc) && (!chg || chg.indexOf(k) >= 0 || !(k in srv));
+    res[k] = local ? inc[k] : srv[k];
+  });
+  return res;
+}
+
+// Factures (par id) et propositions numérotées (par numéro) de la version écartée ajoutées à la version gardée
+function garderPieces_(g, p) {
+  (p.contrats || []).forEach(function (kp) {
+    var kg = (g.contrats || []).filter(function (x) { return x.id === kp.id; })[0];
+    var utile = (kp.factures || []).length || (kp.versions || []).some(function (v) { return v.num && !v.echec; });
+    if (!kg) { if (utile) { g.contrats = g.contrats || []; g.contrats.push(kp); } return; }
+    [['factures', 'id'], ['versions', 'num']].forEach(function (x) {
+      var liste = x[0], cle = x[1];
+      (kp[liste] || []).forEach(function (e) {
+        if (!e || e[cle] === undefined || (liste === 'versions' && e.echec)) return;
+        kg[liste] = kg[liste] || [];
+        if (!kg[liste].some(function (y) { return y && y[cle] === e[cle]; })) kg[liste].push(e);
+      });
+    });
+  });
+}
+
+function fusionRegistre_(a, b) {
+  a = a || []; b = b || [];
+  var cle = function (x) { return x && (x.fid !== undefined ? 'f' + x.fid : 'n' + x.num); }, vu = {};
+  a.forEach(function (x) { vu[cle(x)] = 1; });
+  return b.filter(function (x) { return !vu[cle(x)]; }).concat(a);
 }
 
 // Range un document dans le dossier Drive du client

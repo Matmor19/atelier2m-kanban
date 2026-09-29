@@ -25,6 +25,14 @@ L'adresse du script est dans la variable `API` de `public/index.html`
 
 Ne pas changer l'adresse `API` sans demande explicite : cela couperait l'accès aux données.
 
+**Synchronisation entre appareils** (PC, téléphone) : chaque envoi (`payload()`) joint `_sync` = `base` (id → `upd` de
+chaque dossier lors de la dernière synchronisation, mémorisé dans `localStorage` `a2m_sync` par `noterSync()`) et `changed`
+(réglages modifiés ici, repérés par `hashTxt`). Le script (version 9, `fusionner_`) fusionne dossier par dossier : le plus
+récent (`upd`) gagne, factures et propositions numérotées de l'autre version toujours gardées (`garderPieces_`), suppressions
+repérées grâce à `base`, registre réuni (`fusionRegistre_`) ; il renvoie le Kanban fusionné (`res.db`), repris par
+`adopterFusion()` (le dossier ouvert n'est pas remplacé). Toute modification d'un dossier doit donc mettre à jour `c.upd`
+(archiver / restaurer compris).
+
 ## Contrats, documents Word et numérotation
 
 - Un dossier (carte) peut contenir plusieurs **contrats** (`c.contrats`) : types `A` (mission complète),

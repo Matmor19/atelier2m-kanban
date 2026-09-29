@@ -965,7 +965,33 @@ function calNext(){
 }
 
 function saveLocal(){try{localStorage.setItem('a2m_kanban',JSON.stringify(DB));}catch(e){}}
-function payload(){var c=JSON.parse(JSON.stringify(DB));delete c.dirty;return JSON.stringify(c);}
+// ── Synchronisation entre appareils (PC, téléphone…) ──
+// Le script Google (version 9) fusionne dossier par dossier au lieu de remplacer tout le Kanban : chaque envoi joint
+// _sync = {base : {id : date de modification (upd) de chaque dossier lors de la dernière synchronisation}, changed : réglages
+// modifiés sur cet appareil depuis}. Le script renvoie le Kanban fusionné (res.db), repris ici s'il n'y a rien eu de neuf entre-temps.
+var SYNC_HORS=['cards','archived','savedAt','dirty','_sync'],syncBase=null,syncAverti=false;
+try{syncBase=JSON.parse(localStorage.getItem('a2m_sync')||'null');}catch(e){}
+function hashTxt(t){var h=0;for(var i=0;i<t.length;i++)h=(h*31+t.charCodeAt(i))|0;return h+':'+t.length;}
+function etatSync(db){
+  var b={},k={};(db.cards||[]).concat(db.archived||[]).forEach(function(c){if(c)b[c.id]=c.upd||0;});
+  Object.keys(db).forEach(function(x){if(SYNC_HORS.indexOf(x)<0)k[x]=hashTxt(JSON.stringify(db[x])||'');});
+  return {base:b,cles:k};
+}
+function noterSync(){syncBase=etatSync(DB);try{localStorage.setItem('a2m_sync',JSON.stringify(syncBase));}catch(e){}}
+function payload(){
+  var c=JSON.parse(JSON.stringify(DB));delete c.dirty;
+  var e=etatSync(c),b=syncBase||{base:{},cles:{}};
+  c._sync={v:1,base:b.base,changed:Object.keys(e.cles).filter(function(k){return b.cles[k]!==e.cles[k];})};
+  return JSON.stringify(c);
+}
+// Reprise du Kanban fusionné par le script : un dossier identique à celui de cet appareil garde son objet
+// (la fiche ou le contrat ouvert continuent de fonctionner) ; le dossier ouvert n'est jamais remplacé pendant la saisie.
+function adopterFusion(p){
+  var loc={};DB.cards.concat(DB.archived).forEach(function(c){loc[c.id]=c;});
+  var garde=function(c){var l=loc[c.id];return l&&((act&&act.id===c.id)||JSON.stringify(l)===JSON.stringify(c))?l:c;};
+  p.cards=(p.cards||[]).map(garde);p.archived=(p.archived||[]).map(garde);
+  setDB(p);DB.dirty=false;migrateDB();saveLocal();noterSync();render();
+}
 
 function sv(){
   DB.savedAt=Date.now();
@@ -977,7 +1003,7 @@ function sv(){
   clearTimeout(pushTimer);
   pushTimer=setTimeout(pushRemote,800); // regroupe les clics rapides en un seul envoi
 }
-var pushing=false,pushTries=0;
+var pushing=false,pushTries=0,scriptFusion=false;try{scriptFusion=localStorage.getItem('a2m_fusion')==='1';}catch(e){}
 function pushRemote(){
   clearTimeout(pushTimer);pushTimer=null;
   if(pushing){pushTimer=setTimeout(pushRemote,1500);return;} // un envoi est déjà en cours : on attend sa fin
@@ -988,8 +1014,9 @@ function pushRemote(){
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(function(res){
       if(!res||!res.ok)throw new Error((res&&res.erreur)||'erreur');
-      pushTries=0;
-      if(DB.savedAt===sentAt&&!pushTimer){DB.dirty=false;saveLocal();}
+      pushTries=0;scriptFusion=!!res.fusion;try{localStorage.setItem('a2m_fusion',scriptFusion?'1':'0');}catch(e){}
+      if(DB.savedAt===sentAt&&!pushTimer){if(res.db&&Array.isArray(res.db.cards))adopterFusion(res.db);else{DB.dirty=false;saveLocal();noterSync();}}
+      if(!res.fusion&&!syncAverti){syncAverti=true;toast('Synchronisation PC / téléphone : mettez à jour le script Google (version 9)');}
       try{calSyncAll();}catch(e){}
     })
     .catch(function(e){
@@ -1013,7 +1040,7 @@ window.addEventListener('pagehide',function(){
 });
 
 function setDB(p){DB=p;if(!DB.cards)DB.cards=[];if(!DB.archived)DB.archived=[];}
-function takeRemote(p){setDB(p);DB.dirty=false;var mm=corrigerMenusMm()+ajouterAnnexesTerrain();migrateDB();saveLocal();if(mm)sv();}
+function takeRemote(p){setDB(p);DB.dirty=false;var mm=corrigerMenusMm()+ajouterAnnexesTerrain();migrateDB();saveLocal();noterSync();if(mm)sv();}
 
 function load(){
   setDB({cards:[],archived:[]});
@@ -1073,12 +1100,13 @@ function refreshFromRemote(force){
   }).catch(function(){});
 }
 // Une modification est restée marquée « non envoyée » (envoi échoué, page fermée trop vite…) :
-// si Google Drive n'a pas de version plus récente, on l'envoie ; sinon on reprend la version de Drive.
+// si Google Drive n'a pas de version plus récente, on l'envoie ; sinon on reprend la version de Drive
+// (avec le script version 9, on l'envoie toujours : le script fusionne dossier par dossier, rien n'est perdu).
 function reprendreEnvoi(){
   if(pushing||pushTimer)return;
   fetch(API,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(p){
     if(!DB.dirty||pushTimer||pushing)return;
-    if(p&&Array.isArray(p.cards)&&p.cards.length&&(p.savedAt||0)>(DB.savedAt||0)){takeRemote(p);render();toast('Dossiers mis à jour depuis Google Drive');return;}
+    if(!scriptFusion&&p&&Array.isArray(p.cards)&&p.cards.length&&(p.savedAt||0)>(DB.savedAt||0)){takeRemote(p);render();toast('Dossiers mis à jour depuis Google Drive');return;}
     pushRemote();
   }).catch(function(){});
 }
@@ -1771,7 +1799,7 @@ function dupC(){
 function archC(){
   if(!act)return;
   if(!confirm('Archiver "'+act.nom+'" ?\nRestaurations possible depuis les Archives.'))return;
-  calRemove(act);DB.archived.push(act);DB.cards=DB.cards.filter(function(c){return c.id!==act.id;});
+  calRemove(act);act.upd=Date.now();DB.archived.push(act);DB.cards=DB.cards.filter(function(c){return c.id!==act.id;});
   act=null;closeM();sv();render();toast('Projet archivé');
 }
 
@@ -1793,7 +1821,7 @@ function showArch(){
   showM('m-arch');
 }
 
-function restoreArch(i){var c=DB.archived.splice(i,1)[0];c.calSig='[]';DB.cards.push(c);sv();render();closeM();toast('Restauré : '+c.nom);}
+function restoreArch(i){var c=DB.archived.splice(i,1)[0];c.calSig='[]';c.upd=Date.now();DB.cards.push(c);sv();render();closeM();toast('Restauré : '+c.nom);}
 
 // ── MA SEMAINE ──────────────────────────────────────────
 // Liste des choses à faire, calculée à partir des dossiers et regroupée par urgence.
