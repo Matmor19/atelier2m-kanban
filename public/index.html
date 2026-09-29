@@ -977,24 +977,38 @@ function sv(){
   clearTimeout(pushTimer);
   pushTimer=setTimeout(pushRemote,800); // regroupe les clics rapides en un seul envoi
 }
+var pushing=false,pushTries=0;
 function pushRemote(){
   clearTimeout(pushTimer);pushTimer=null;
+  if(pushing){pushTimer=setTimeout(pushRemote,1500);return;} // un envoi est déjà en cours : on attend sa fin
+  pushing=true;
   var sentAt=DB.savedAt;
   // text/plain : accepté directement par Google Apps Script (pas de blocage CORS)
   fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:payload()})
-    .then(function(r){return r.json();})
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(function(res){
-      if(!res||!res.ok){toast('Sauvegarde Google refusée : '+((res&&res.erreur)||'erreur'));return;}
+      if(!res||!res.ok)throw new Error((res&&res.erreur)||'erreur');
+      pushTries=0;
       if(DB.savedAt===sentAt&&!pushTimer){DB.dirty=false;saveLocal();}
-      calSyncAll();
+      try{calSyncAll();}catch(e){}
     })
-    .catch(function(){toast('Hors ligne — sauvegardé sur cet appareil');});
+    .catch(function(e){
+      // Échec (réseau coupé, script Google lent ou en erreur) : on réessaie automatiquement
+      pushTries++;
+      if(pushTries===1||pushTries%5===0)toast('Envoi vers Google Drive impossible ('+(e&&e.message||'erreur')+') — nouvel essai automatique');
+      clearTimeout(pushTimer);
+      pushTimer=setTimeout(pushRemote,Math.min(60000,4000*pushTries));
+    })
+    .then(function(){pushing=false;});
 }
-// Si on ferme la page juste après une modification, l'envoi part quand même
+// Si on ferme la page juste après une modification, on tente un envoi de dernière minute.
+// (Le navigateur refuse les envois de plus de 64 Ko : dans ce cas la modification reste marquée
+// « non envoyée » et repart toute seule au retour sur l'application, voir refreshFromRemote.)
 window.addEventListener('pagehide',function(){
   if(pushTimer&&remoteReady&&navigator.sendBeacon){
-    clearTimeout(pushTimer);pushTimer=null;
-    navigator.sendBeacon(API,new Blob([payload()],{type:'text/plain;charset=utf-8'}));
+    var ok=false;
+    try{ok=navigator.sendBeacon(API,new Blob([payload()],{type:'text/plain;charset=utf-8'}));}catch(e){}
+    if(ok){clearTimeout(pushTimer);pushTimer=null;}
   }
 });
 
@@ -1007,26 +1021,47 @@ function load(){
   var mm=corrigerMenusMm()+ajouterAnnexesTerrain();
   if(migrateDB()||mm)saveLocal();
   render();
-  if(window.location.protocol==='file:')return;
+  connectRemote();
+}
+
+// Première lecture de Google Drive. Le script Google répond parfois par une erreur (404, lenteur…) :
+// on réessaie automatiquement (3 s, 6 s, 12 s… puis chaque minute) au lieu de rester en « mode local ».
+var connecting=false,connTries=0,connTimer=null;
+function connectRemote(){
+  if(remoteReady||connecting||window.location.protocol==='file:')return;
+  connecting=true;clearTimeout(connTimer);
   fetch(API,{cache:'no-store'})
     .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
     .then(function(p){
+      if(!p||!Array.isArray(p.cards))throw new Error('réponse inattendue');
       remoteReady=true;
-      var remoteHas=p&&p.cards&&p.cards.length>0;
+      if(connTries>0)toast('Connexion à Google Drive rétablie');
+      connTries=0;
+      var remoteHas=p.cards.length>0;
       // La copie Google Drive fait foi, SAUF si cet appareil a des modifications pas encore envoyées
       if(remoteHas&&!(DB.dirty&&(DB.savedAt||0)>(p.savedAt||0))){takeRemote(p);}
       else if(DB.cards.length){sv();}
       render();
       setTimeout(calSyncAll,1500);
     })
-    .catch(function(e){console.log('Mode local:',e.message);toast('Serveur injoignable — mode local');});
+    .catch(function(e){
+      console.log('Mode local:',e.message);
+      if(!remoteReady){
+        if(connTries===0)toast('Serveur injoignable — nouvel essai automatique…');
+        connTries++;
+        connTimer=setTimeout(connectRemote,Math.min(60000,3000*Math.pow(2,Math.min(connTries-1,5))));
+      }
+    })
+    .then(function(){connecting=false;});
 }
 
 // Mise à jour automatique : quand on revient sur l'onglet, et toutes les minutes
 var lastRefresh=0;
 function refreshFromRemote(force){
-  if(!remoteReady||window.location.protocol==='file:')return;
-  if(DB.dirty||pushTimer||uploading.length)return;                 // modification en cours d'envoi
+  if(window.location.protocol==='file:')return;
+  if(!remoteReady){connectRemote();return;}                        // connexion initiale jamais réussie : on réessaie
+  if(pushTimer||pushing||uploading.length)return;                  // envoi en cours
+  if(DB.dirty){reprendreEnvoi();return;}                           // modification restée « non envoyée » : on la renvoie
   if(document.querySelector('.mov.open'))return;                  // une fiche est ouverte : on ne dérange pas
   if(document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName))return;
   if(Date.now()-lastRefresh<5000)return;
@@ -1035,6 +1070,16 @@ function refreshFromRemote(force){
     if(!p||!Array.isArray(p.cards)||!p.cards.length)return;
     if(DB.dirty||pushTimer)return;
     if((p.savedAt||0)!==(DB.savedAt||0)){takeRemote(p);render();}
+  }).catch(function(){});
+}
+// Une modification est restée marquée « non envoyée » (envoi échoué, page fermée trop vite…) :
+// si Google Drive n'a pas de version plus récente, on l'envoie ; sinon on reprend la version de Drive.
+function reprendreEnvoi(){
+  if(pushing||pushTimer)return;
+  fetch(API,{cache:'no-store'}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(p){
+    if(!DB.dirty||pushTimer||pushing)return;
+    if(p&&Array.isArray(p.cards)&&p.cards.length&&(p.savedAt||0)>(DB.savedAt||0)){takeRemote(p);render();toast('Dossiers mis à jour depuis Google Drive');return;}
+    pushRemote();
   }).catch(function(){});
 }
 document.addEventListener('visibilitychange',function(){if(document.visibilityState==='visible')refreshFromRemote(true);});
