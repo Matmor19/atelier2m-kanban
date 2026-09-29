@@ -145,6 +145,10 @@ repérées grâce à `base`, registre réuni (`fusionRegistre_`) ; il renvoie le
   (`PLU_IA_SECS`, créées si absentes ; confirmation si du texte manuel serait remplacé) ; mention `PLU_IA_MENTION` ajoutée
   en ligne « ! » à la synthèse (donc dans le Word) et affichée sous chaque texte. Dernière génération : `c.plu.ia`.
   Erreurs claires (`geminiErreur_` : clé, quota 429, PDF illisible, réseau) affichées dans la barre, sans bloquer l'annexe.
+  Lien du règlement (`pluReglement`) : lien collé à la main dans la barre (`c.plu.reglementManuel`, `pluSetRegl`), sinon lien
+  direct de l'étude s'il s'agit d'un PDF en https, sinon « Règlement écrit » trouvé par `chercherReglement()` dans la liste des
+  pièces du document (`https://www.geoportail-urbanisme.gouv.fr/api/document/{id}/files`, CORS autorisé ; id tiré de `zone.doc`),
+  mémorisé dans `c.faisa.reglementPdf` (cas des communes dont le lien est une page « Sommaire.html »).
 - **Indicateur d'activité** : `busyStart(libellé)` / `busyEnd()` / `busyPromesse()` ; `window.fetch` est enveloppé
   (`busyInfo()` donne le libellé selon la requête ; enregistrement automatique = pastille sans bloquer de bouton).
   Pastille `#busy` (anneau qui tourne) ; le dernier bouton cliqué est désactivé (`is-busy`) jusqu'à la fin, avec un

@@ -2410,6 +2410,7 @@ function faisaLancer(){
     if(act===c&&document.getElementById('d-ctrs'))renderCtrs();
     if(c.plu&&c.plu.conflits&&Object.keys(c.plu.conflits).length)toast('Annexe PLU : l\'étude contredit une saisie manuelle — voir l\'annexe');
     chercherTauxTA(c).then(function(){if(c.est)preremplirEst(c);sv();if(act===c){renderFaisa();estReafficher();}}).catch(function(){});
+    chercherReglement(c).then(function(ok){if(ok&&c.plu&&pluDepuisFaisa(c))sv();});
     setTimeout(fin,350);
   }).catch(function(e){faisaErreur='Service indisponible ('+(e&&e.message||e)+'). Réessayez dans quelques minutes.';fin();});
 }
@@ -2568,6 +2569,7 @@ function openPlu(){
   if(!act.plu){act.plu={commune:'',lieudit:'',cad:'',contenance:'',doc:'',
     sections:[['Zonage — point déterminant',''],['Dispositions générales du règlement (communes à toutes les zones)',''],['Point à vérifier',''],['Synthèse','']].map(function(s){return {titre:s[0],texte:s[1]};})};ctrSave();}
   if(preremplirInfos(act))ctrSave();
+  var c0=act;chercherReglement(c0).then(function(ok){if(ok&&act===c0){pluDepuisFaisa(c0);var m=document.getElementById('m-plu');if(m&&m.classList.contains('open'))renderPlu();}});
   renderPlu();showM('m-plu');
 }
 function pluSet(champ,v,i){var p=act&&act.plu;if(!p)return;
@@ -2604,7 +2606,7 @@ function pluValeursEtude(c){
   var Z=(f.zones||[]).filter(function(z){return z.code;}),lib=function(z){return String(z.libelle||'').replace(new RegExp('^'+String(z.code).replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\s*:\\s*'),'');};
   var zon=f.rnu?'Le terrain est soumis au Règlement National d\'Urbanisme (RNU).':Z.length===1?'Le terrain est classé en zone '+Z[0].code+(lib(Z[0])&&lib(Z[0])!==Z[0].code?' ('+lib(Z[0])+')':'')+(f.document&&f.document.type?' du '+f.document.type:'')+'.':
     Z.length?'Le terrain est concerné par plusieurs zones'+(f.document&&f.document.type?' du '+f.document.type:'')+' :\n'+Z.map(function(z){return '- Zone '+z.code+(lib(z)&&lib(z)!==z.code?' : '+lib(z):'');}).join('\n'):'';
-  var regl=Z.filter(function(z){return z.reglement;})[0];if(zon&&regl)zon+='\n- Règlement : '+regl.reglement;
+  var regl=pdfDirect((Z.filter(function(z){return pdfDirect(z.reglement);})[0]||{}).reglement)||f.reglementPdf||(Z.filter(function(z){return z.reglement;})[0]||{}).reglement;if(zon&&regl)zon+='\n- Règlement : '+regl;
   V.doc=doc;V.zonage=zon;return V;
 }
 function pluDepuisFaisa(c){
@@ -2638,7 +2640,35 @@ function pluBandeau(c){
 var PLU_IA_MENTION='Synthèse générée par IA à partir du règlement — à vérifier, ne remplace pas une analyse juridique.';
 var PLU_IA_SECS=[['dispositions',/dispositions/i,'Dispositions générales du règlement (communes à toutes les zones)'],['points',/point|vigilance|v[ée]rifier/i,'Point à vérifier'],['synthese',/synth[èe]se/i,'Synthèse']];
 var pluIA={enCours:false,pct:0,lib:'',erreur:'',carte:null,t0:0};
-function pluReglement(c){var f=c&&c.faisa;if(!f||!f.ok)return '';var z=(f.zones||[]).filter(function(z){return z.reglement&&/^https:\/\//i.test(z.reglement);})[0];return z?z.reglement:'';}
+// Règlement PDF : lien saisi à la main dans l'annexe, sinon lien direct de l'étude (PDF en https), sinon règlement écrit trouvé
+// dans la liste des pièces du document sur le Géoportail de l'Urbanisme (chercherReglement, mémorisé dans c.faisa.reglementPdf).
+// Certaines communes n'ont en effet qu'une page « sommaire » (ex. …/Sommaire.html) comme lien de règlement.
+var GPU_API='https://www.geoportail-urbanisme.gouv.fr/api/document/';
+function pdfDirect(u){return /^https:\/\/.+\.pdf(\?.*)?$/i.test(String(u||''))?u:'';}
+function pluReglement(c){
+  var m=c&&c.plu&&String(c.plu.reglementManuel||'').trim();if(m)return m;
+  var f=faisaOk(c);if(!f)return '';
+  var z=(f.zones||[]).filter(function(z){return pdfDirect(z.reglement);})[0];
+  return z?z.reglement:(f.reglementPdf||'');
+}
+function gpuDocId(f){var z=(f.zones||[]).filter(function(z){return /by-id\/[0-9a-f]+/i.test(z.doc||'');})[0];return z?/by-id\/([0-9a-f]+)/i.exec(z.doc)[1]:'';}
+function chercherReglement(c){
+  var f=faisaOk(c);if(!f||pluReglement(c))return Promise.resolve(false);
+  var id=gpuDocId(f);if(!id||f.reglementCherche===id)return Promise.resolve(false);
+  return fetch(GPU_API+id+'/files').then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(L){
+    var pdf=(L||[]).filter(function(x){return /\.pdf$/i.test(x.name||'');});
+    var x=pdf.filter(function(x){return /r[èe]glement\s*[ée]crit/i.test(x.title||'');})[0]||
+      pdf.filter(function(x){return /r[èe]glement/i.test((x.title||'')+' '+(x.name||''))&&!/graphique|zonage|plan/i.test((x.title||'')+' '+(x.name||''));})[0];
+    f.reglementCherche=id;
+    if(x)f.reglementPdf=GPU_API+id+'/files/'+encodeURIComponent(x.name);
+    c.upd=Date.now();sv();return !!x;
+  }).catch(function(){return false;});
+}
+function pluSetRegl(v){
+  var p=act&&act.plu;if(!p)return;v=String(v||'').trim();
+  if(v&&!/^https?:\/\//i.test(v)){alert('Collez l\'adresse complète du PDF (elle commence par https://).');return;}
+  p.reglementManuel=v.replace(/^http:\/\//i,'https://');ctrSave();renderPlu();
+}
 function pluIACle(p,i){var s=(p.sections||[])[i];if(!s||/zonage/i.test(s.titre||''))return '';var x=PLU_IA_SECS.find(function(y){return y[1].test(s.titre||'');});return x?x[0]:'';}
 function pluIASection(p,i){return !!pluIACle(p,i);}
 function pluIAIndex(p,k,creer){
@@ -2653,7 +2683,10 @@ function pluIABarre(c){
   var url=pluReglement(c),p=c.plu,h='<div class="ia-bar">';
   if(pluIA.enCours&&pluIA.carte===c)h+='<div class="faisa-att faisa-prog" id="plu-ia-prog">'+pluIAProgHtml()+'</div>';
   else h+='<button class="sml-btn" style="width:auto;margin:0" onclick="pluIALancer()"'+(url?'':' disabled')+'>✨ Générer avec l\'IA</button>'+
-    '<div class="rel-note">'+(url?'Remplit les sections « Dispositions générales », « Point à vérifier » et « Synthèse » à partir du <a class="lnk" href="'+escA(url)+'" target="_blank" rel="noopener">règlement (PDF)</a> trouvé par l\'étude de faisabilité.':'Disponible quand l\'étude de faisabilité (bouton 🔎 dans la fiche) a trouvé le règlement PDF de la zone.')+'</div>';
+    '<div class="rel-note">'+(url?'Remplit les sections « Dispositions générales », « Point à vérifier » et « Synthèse » à partir du <a class="lnk" href="'+escA(url)+'" target="_blank" rel="noopener">règlement (PDF)</a>'+(p.reglementManuel?' indiqué ci-dessous.':' trouvé par l\'étude de faisabilité.'):
+      faisaOk(c)?'L\'étude de faisabilité n\'a pas trouvé de règlement PDF téléchargeable pour cette zone'+((faisaOk(c).zones||[]).filter(function(z){return z.reglement;}).map(function(z){return ' (voir la <a class="lnk" href="'+escA(z.reglement)+'" target="_blank" rel="noopener">page du règlement</a>)';})[0]||'')+'. Collez le lien du PDF ci-dessous pour utiliser l\'IA.':
+      'Disponible quand l\'étude de faisabilité (bouton 🔎 dans la fiche) a trouvé le règlement PDF de la zone.')+'</div>'+
+    (faisaOk(c)&&(!url||p.reglementManuel)?'<input class="sd-inp" style="margin:6px 0 0" placeholder="Lien du règlement PDF (https://…pdf) — facultatif" value="'+escA(p.reglementManuel||'')+'" onchange="pluSetRegl(this.value)">':'');
   if(pluIA.erreur&&pluIA.carte===c&&!pluIA.enCours)h+='<div class="gen-al" style="margin-top:6px">⚠ '+esc(pluIA.erreur)+'</div>';
   if(p.ia&&!pluIA.enCours)h+='<div class="rel-note">Dernière génération par l\'IA : '+dateFr(String(p.ia.date||'').slice(0,10))+(p.ia.zones?' — zone '+esc(p.ia.zones):'')+'.</div>';
   return h+'</div>';
