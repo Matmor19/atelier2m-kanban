@@ -4418,7 +4418,9 @@ function openFiche(kind,body){
 // Ouvre l'application de métré pour ce client (lecture seule : seule la référence du dossier est transmise)
 function ouvrirMetre(){
   if(!act||!act.ref){toast('Ce dossier n\'a pas encore de référence');return;}
-  window.open('https://matmor19.github.io/metre-atelier2m/?client='+encodeURIComponent(act.ref),'_blank');
+  // Lien cliqué (et non window.open) : si l'application du métré est installée, le navigateur peut l'ouvrir directement
+  var a=document.createElement('a');a.href='https://matmor19.github.io/metre-atelier2m/?client='+encodeURIComponent(act.ref);
+  a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();
 }
 function expFicheClient(){
   if(!act)return;var c=act,p=prog(c);
