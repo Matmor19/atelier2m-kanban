@@ -609,6 +609,7 @@ button.is-busy{opacity:.6;cursor:wait!important}button.is-busy::after{content:''
       <div id="d-actions"></div>
       <button class="pdf-btn" onclick="expFicheClient()">Fiche client</button>
       <button class="pdf-btn blue" onclick="expFicheTravail()">Fiche de travail</button>
+      <button class="pdf-btn" onclick="ouvrirMetre()">📐 Ouvrir le métré</button>
       <button class="sml-btn" onclick="dupC()">Dupliquer ce projet</button>
       <button class="sml-btn" onclick="archC()">Archiver ce projet</button>
       <button class="del-btn" onclick="delC()">Supprimer</button>
@@ -4414,6 +4415,11 @@ function openFiche(kind,body){
 }
 
 // Fiche client : document présentable, remis au client (sans les notes internes)
+// Ouvre l'application de métré pour ce client (lecture seule : seule la référence du dossier est transmise)
+function ouvrirMetre(){
+  if(!act||!act.ref){toast('Ce dossier n\'a pas encore de référence');return;}
+  window.open('https://matmor19.github.io/metre-atelier2m/?client='+encodeURIComponent(act.ref),'_blank');
+}
 function expFicheClient(){
   if(!act)return;var c=act,p=prog(c);
   var b='<h2>Client</h2>'+kv(clientRows(c),false)+
