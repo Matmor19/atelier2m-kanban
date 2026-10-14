@@ -423,12 +423,15 @@ button.is-busy{opacity:.6;cursor:wait!important}button.is-busy::after{content:''
   .btn-new{position:fixed;right:16px;bottom:18px;z-index:150;border-radius:28px;padding:15px 20px;font-size:12px;box-shadow:0 8px 22px rgba(212,118,42,.5)}
   .toolbar{padding:8px 12px;overflow-x:auto;flex-wrap:nowrap}
   .tb-srch{flex:0 0 150px}
-  .board-wrap{padding:10px 8px 70px;scroll-snap-type:x mandatory}
-  .col{min-width:82vw;scroll-snap-align:start}
+  .board-wrap{padding:10px 8px 70px}
   .md{flex-direction:column}.md-main,.md-side{max-height:none;width:auto;border-right:none}
   .mov{padding:8px}
   .legend{display:none}
 }
+/* Petit écran (téléphone plié) : une colonne à la fois. Écran plus large (téléphone pliant déplié, tablette) :
+   vue d'ensemble avec plusieurs colonnes côte à côte. */
+@media (max-width:600px){.board-wrap{scroll-snap-type:x mandatory}.col{min-width:82vw;scroll-snap-align:start}}
+@media (min-width:601px) and (max-width:1024px){.col{min-width:215px}}
 </style>
 </head>
 <body>
