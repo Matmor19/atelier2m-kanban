@@ -35,7 +35,9 @@ repérées grâce à `base`, registre réuni (`fusionRegistre_`) ; il renvoie le
 
 **Affichage du tableau** : une colonne à la fois seulement si l'écran fait 600 px ou moins. Bouton « 🔭 Vue d'ensemble »
 (`basculerVue` / `majVue`) : zoom du tableau (`--zb`, 50 % minimum) pour que toutes les colonnes tiennent dans la largeur ;
-actif par défaut de 601 à 1100 px (téléphone pliant déplié, tablette), choix mémorisé par appareil (`localStorage` `a2m_vue`).
+actif par défaut sur les écrans moyens (`ecranMoyen()` : `screen.width` de 601 à 1100 px, téléphone pliant déplié, tablette),
+choix mémorisé par appareil (`localStorage` `a2m_vue`). Sur ces écrans, la vue d'ensemble affiche la page comme sur un ordinateur :
+`majViewport()` (script dans l'en-tête) passe la balise viewport `#vp` à `width=1280` (équivalent du « site pour ordinateur » de Chrome).
 
 ## Contrats, documents Word et numérotation
 

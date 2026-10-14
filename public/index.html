@@ -2,7 +2,15 @@
 <!-- saved from url=(0054)file:///C:/Users/ateli/Downloads/kanban_corrige_1.html -->
 <html lang="fr"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" id="vp" content="width=device-width,initial-scale=1">
+<script>
+// Écran moyen (téléphone pliant déplié, tablette : 601 à 1100 px) en « vue d'ensemble » : la page est affichée comme sur
+// un ordinateur (1280 px de large) puis réduite par le navigateur pour tenir dans l'écran, comme le mode « site pour ordinateur ».
+function ecranMoyen(){var w=screen.width||innerWidth;return w>600&&w<=1100;}
+function vueEns(){var v=null;try{v=localStorage.getItem('a2m_vue');}catch(e){}return v?v==='1':ecranMoyen();}
+function majViewport(){var m=document.getElementById('vp'),c=vueEns()&&ecranMoyen()?'width=1280':'width=device-width,initial-scale=1';if(m&&m.getAttribute('content')!==c)m.setAttribute('content',c);}
+majViewport();
+</script>
 <title>Kanban — Atelier 2M</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#d4762a">
@@ -1225,12 +1233,12 @@ function setF(f){
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(function(){t.classList.remove('show');},2500);}
 
 // ── Vue d'ensemble : le tableau est réduit (zoom) pour que toutes les colonnes tiennent dans la largeur de l'écran
-// (au moins 50 %). Activée par défaut sur les écrans moyens (téléphone pliant déplié, tablette : 601 à 1100 px) ;
+// (au moins 50 %). Activée par défaut sur les écrans moyens (téléphone pliant déplié, tablette : 601 à 1100 px), où la page
+// entière s'affiche alors comme sur un ordinateur (majViewport, dans l'en-tête) ;
 // le choix du bouton est mémorisé sur l'appareil (localStorage « a2m_vue »).
-function vueEns(){var v=null;try{v=localStorage.getItem('a2m_vue');}catch(e){}return v?v==='1':(innerWidth>600&&innerWidth<=1100);}
 function basculerVue(){var on=!vueEns();try{localStorage.setItem('a2m_vue',on?'1':'0');}catch(e){}majVue();}
 function majVue(){
-  var on=vueEns(),b=document.getElementById('vue-btn'),w=document.querySelector('.board-wrap');
+  var on=vueEns(),b=document.getElementById('vue-btn'),w=document.querySelector('.board-wrap');majViewport();
   document.body.classList.toggle('vue-ens',on);
   if(b){b.classList.toggle('on',on);b.textContent=on?'🔍 Vue normale':'🔭 Vue d\'ensemble';}
   if(on&&w){var n=document.querySelectorAll('.board .col').length||7,dispo=w.clientWidth-28,besoin=n*200+(n-1)*12;
