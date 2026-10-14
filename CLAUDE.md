@@ -33,6 +33,10 @@ repérées grâce à `base`, registre réuni (`fusionRegistre_`) ; il renvoie le
 `adopterFusion()` (le dossier ouvert n'est pas remplacé). Toute modification d'un dossier doit donc mettre à jour `c.upd`
 (archiver / restaurer compris).
 
+**Affichage du tableau** : une colonne à la fois seulement si l'écran fait 600 px ou moins. Bouton « 🔭 Vue d'ensemble »
+(`basculerVue` / `majVue`) : zoom du tableau (`--zb`, 50 % minimum) pour que toutes les colonnes tiennent dans la largeur ;
+actif par défaut de 601 à 1100 px (téléphone pliant déplié, tablette), choix mémorisé par appareil (`localStorage` `a2m_vue`).
+
 ## Contrats, documents Word et numérotation
 
 - Un dossier (carte) peut contenir plusieurs **contrats** (`c.contrats`) : types `A` (mission complète),
