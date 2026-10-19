@@ -2449,23 +2449,31 @@ function faisaLancer(){
 // si Géorisques ne répond pas, l'étude se termine quand même sans les risques (message « non disponibles »).
 function avecDelai(pr,ms,msg){return Promise.race([pr,new Promise(function(ok,ko){setTimeout(function(){ko(new Error(msg||'délai dépassé'));},ms);})]);}
 function geoJson(u,ms){return avecDelai(fetch(u,{headers:{Accept:'application/json'}}).then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}),ms);}
+// Géorisques n'accepte pas les serveurs de Google (« Address unavailable ») mais répond au navigateur (CORS autorisé) :
+// toutes les requêtes partent en même temps et chacune est facultative ; la liste des risques vient du rapport complet
+// (lent) ou, à défaut, de GASPAR. Les réponses « autour du point » contiennent plusieurs communes : on garde celle du terrain.
 function risquesNavigateur(st){
-  var G='https://georisques.gouv.fr/api/v1/',ll=st.lon+','+st.lat;
-  return geoJson(G+'resultats_rapport_risque?latlon='+ll,25000).then(function(rap){
-    var res={risques:[]};
-    ['risquesNaturels','risquesTechnologiques'].forEach(function(k){var o=rap&&rap[k];if(o)Object.keys(o).forEach(function(n){var x=o[n];if(x&&x.present)res.risques.push(x.libelle||n);});});
-    if(rap&&rap.url)res.georisquesUrl=rap.url;
-    var opt=function(u,f){return geoJson(u,10000).then(f).catch(function(){});};
-    return Promise.all([
-      opt(G+'zonage_sismique?latlon='+ll,function(j){var x=j.data&&j.data[0];if(x)res.sismicite=x.zone_sismicite||x.code_zone||'';}),
-      opt(G+'radon?code_insee='+st.insee,function(j){var x=j.data&&j.data[0];if(x)res.radon=String(x.classe_potentiel||'');}),
-      opt(G+'rga?latlon='+ll,function(j){var x=(j&&j.data&&j.data[0])||j;if(x&&x.exposition)res.argile=x.exposition;})
-    ]).then(function(){return res;});
+  var G='https://georisques.gouv.fr/api/v1/',ll=st.lon+','+st.lat,res={risques:[]},ok=false;
+  var deLaCommune=function(j){var d=(j&&j.data)||[];return d.filter(function(x){return String(x.code_insee||'')===String(st.insee||'');})[0]||d[0];};
+  var opt=function(u,ms,f){return geoJson(G+u,ms).then(function(j){f(j);}).catch(function(){});};
+  return Promise.all([
+    opt('resultats_rapport_risque?latlon='+ll,45000,function(rap){var L=[];
+      ['risquesNaturels','risquesTechnologiques'].forEach(function(k){var o=rap&&rap[k];if(o)Object.keys(o).forEach(function(n){var x=o[n];if(x&&x.present)L.push(x.libelle||n);});});
+      if(rap&&rap.url)res.georisquesUrl=rap.url;if(rap&&(rap.risquesNaturels||rap.risquesTechnologiques)){res.rapport=L;ok=true;}}),
+    opt('gaspar/risques?latlon='+ll,20000,function(j){var x=deLaCommune(j);if(x){res.gaspar=(x.risques_detail||[]).map(function(r){return r.libelle_risque_long;}).filter(Boolean);ok=true;}}),
+    opt('zonage_sismique?latlon='+ll,20000,function(j){var x=deLaCommune(j);if(x){res.sismicite=x.zone_sismicite||x.code_zone||'';ok=true;}}),
+    opt('radon?code_insee='+st.insee,20000,function(j){var x=deLaCommune(j);if(x){res.radon=String(x.classe_potentiel||'');ok=true;}}),
+    opt('rga?latlon='+ll,20000,function(j){var x=(j&&j.data&&j.data[0])||j;if(x&&x.exposition){res.argile=x.exposition;ok=true;}})
+  ]).then(function(){
+    if(!ok)throw new Error('Géorisques ne répond pas');
+    res.risques=res.rapport||(res.gaspar||[]).filter(function(x,i,a){return a.indexOf(x)===i;});
+    if(!res.rapport&&!res.gaspar)res.avertGeo='Liste des risques non disponible pour le moment (Géorisques) : cliquez sur « Actualiser » plus tard.';
+    delete res.rapport;delete res.gaspar;return res;
   });
 }
 function risquesEtape(etat,p){
   var fini=function(r){r=Object.assign({},r);r.ok=true;delete r.geoms;delete r.etape;return r;};
-  return risquesNavigateur(etat).then(function(x){return fini(Object.assign({},etat,x));})
+  return risquesNavigateur(etat).then(function(x){var r=fini(Object.assign({},etat,x));if(x.avertGeo){r.avert=(r.avert||[]).concat([x.avertGeo]);}delete r.avertGeo;return r;})
   .catch(function(){
     return avecDelai(fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'faisabilite',etape:'risques',etat:etat},p))}).then(function(r){return r.json();}),100000)
       .then(function(res){if(res&&res.ok)return fini(res);throw new Error((res&&res.erreur)||'réponse inattendue');});

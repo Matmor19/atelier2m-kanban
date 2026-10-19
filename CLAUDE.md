@@ -127,7 +127,9 @@ choix mémorisé par appareil (`localStorage` `a2m_vue`). Sur ces écrans, la vu
   `refsCadastre()` (« Section AB n°12 », « 240 - 242 et 244 AI »…). Résultat mémorisé dans `c.faisa` (avec
   `cad` au moment de l'étude), affiché par `renderFaisa()`, bouton « Actualiser ». Donnée brute indicative
   (`FAISA_MENTION`), aucune interprétation automatique.
-  Étape risques : `risquesEtape()` interroge d'abord Géorisques depuis le navigateur (`risquesNavigateur`, délai 25 s),
+  Étape risques : `risquesEtape()` interroge d'abord Géorisques depuis le navigateur (`risquesNavigateur` : rapport complet
+  (45 s), GASPAR, sismicité, radon, argiles en parallèle, chacun facultatif ; ligne de la commune du terrain gardée — Géorisques
+  refuse les serveurs de Google, « Address unavailable »),
   sinon le script (délai 100 s, requêtes en parallèle `fetchAll` côté script) ; si rien ne répond, l'étude se termine
   sans les risques avec un avertissement (Géorisques ne répond pas toujours aux serveurs Google).
 - **Climat et Eurocodes** (section de l'étude, `euroHtml()`, et section « Climat et Eurocodes » de l'annexe PLU, suivie comme le
