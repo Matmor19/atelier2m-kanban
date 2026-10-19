@@ -130,6 +130,13 @@ choix mémorisé par appareil (`localStorage` `a2m_vue`). Sur ces écrans, la vu
   Étape risques : `risquesEtape()` interroge d'abord Géorisques depuis le navigateur (`risquesNavigateur`, délai 25 s),
   sinon le script (délai 100 s, requêtes en parallèle `fetchAll` côté script) ; si rien ne répond, l'étude se termine
   sans les risques avec un avertissement (Géorisques ne répond pas toujours aux serveurs Google).
+- **Climat et Eurocodes** (section de l'étude, `euroHtml()`, et section « Climat et Eurocodes » de l'annexe PLU, suivie comme le
+  zonage : clé `eurocodes` de `PLU_CHAMPS`, `pluSecEuro`, texte `euroLignes()` ; section supprimée à la main → `p.sansEurocodes`,
+  plus recréée). `c.euro` = {alt, vent, neige, cat, h}. Altitude : API altimétrie IGN (`chercherAltitude`, CORS autorisé, après
+  l'étude et à l'ouverture de l'annexe). Zones de vent / régions de neige : pas de données ouvertes (tables AFNOR) → choisies à la
+  main (liens cartes Dlubal), mémorisées par commune (`DB.reglages.zonesCommunes[insee]`, reprises par `euroDe`). Calculs :
+  `VENT_VB`, `ventQp()` (qp terrain plat, kl de l'annexe nationale, catégories `CAT_TERRAIN`), `NEIGE_SK` + `neigeSk()` (correction
+  d'altitude), zone RE2020 par département (`RE2020_ZONES`) + classe d'altitude, séisme / argiles / radon de l'étude. Mention `EURO_MENTION`.
 - **« Informations pour les documents » automatiques** (`preremplirInfos()`, appelé à l'ouverture de la fiche, par `sf`,
   `parcSet` et après chaque étude réussie) : désignation ← nom, signataire ← désignation, description ← résumé sinon
   nature, commune ← étude (`f.commune`) sinon code postal de l'adresse (`communeDe`), contenance ← surface cadastrale de

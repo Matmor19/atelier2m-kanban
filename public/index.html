@@ -394,6 +394,8 @@ body.is-dragging,body.is-dragging *{cursor:grabbing !important}
 .ta-src{font-weight:600;text-transform:none;letter-spacing:0;color:var(--amber)}
 .ia-bar{margin:4px 0 10px;padding:8px 10px;border:1px dashed var(--or);border-radius:10px}.ia-bar .rel-note{margin-top:4px}.ia-bar .faisa-att{margin:0}
 .ia-note{font-size:10.5px;font-style:italic;color:var(--txt3);margin:2px 0 4px}
+.euro-g{display:grid;grid-template-columns:150px 1fr;gap:5px 10px;align-items:center}.euro-g>div:nth-child(odd){font-weight:700;color:var(--txt2)}
+@media(max-width:600px){.euro-g{grid-template-columns:1fr}}
 .parc-ed{margin-bottom:6px}.parc-t,.parc-it{display:grid;grid-template-columns:22px 90px 1fr 24px;gap:6px;align-items:center}.parc-t{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--txt3);margin-bottom:2px}.parc-ttl{font-size:10px;font-weight:800;color:var(--txt2);margin:2px 0 3px}
 .parc-it{margin-bottom:4px}.parc-it .sd-inp{margin:0}.parc-n{font-size:10px;color:var(--txt3);text-align:center}.parc-it .rm{background:none;border:none;color:var(--txt3);cursor:pointer;font-size:15px}.parc-it .rm:hover{color:var(--red)}
 @keyframes tourne{to{transform:rotate(360deg)}}
@@ -2439,6 +2441,7 @@ function faisaLancer(){
     if(c.plu&&c.plu.conflits&&Object.keys(c.plu.conflits).length)toast('Annexe PLU : l\'étude contredit une saisie manuelle — voir l\'annexe');
     chercherTauxTA(c).then(function(){if(c.est)preremplirEst(c);sv();if(act===c){renderFaisa();estReafficher();}}).catch(function(){});
     chercherReglement(c).then(function(ok){if(ok&&c.plu&&pluDepuisFaisa(c))sv();});
+    chercherAltitude(c).then(function(ok){if(ok&&act===c){var m=document.getElementById('m-faisa');if(m&&m.classList.contains('open'))renderFaisa();}});
     setTimeout(fin,350);
   }).catch(function(e){faisaErreur='Service indisponible ('+(e&&e.message||e)+'). Réessayez dans quelques minutes.';fin();});
 }
@@ -2471,6 +2474,84 @@ function risquesEtape(etat,p){
 }
 function majFaisaProgres(){var el=document.getElementById('faisa-prog');if(el)el.innerHTML=anneauHtml(faisaProgres.pct,52)+'<div><b>'+esc(faisaProgres.lib)+'</b><br><span>Étape '+Math.min(4,Math.floor(faisaProgres.pct/25)+1)+' sur 4</span></div>';else if(document.getElementById('m-faisa').classList.contains('open'))renderFaisa();}
 function faisaContenance(){var f=act.faisa;if(!f||!f.surface)return;act.contenance=fmtE(Math.round(f.surface)*100)+' m²';act.upd=Date.now();sv();renderFaisa();if(document.getElementById('d-ctrs'))renderCtrs();toast('Contenance du terrain : '+act.contenance);}
+// ── Climat et Eurocodes (section de l'étude de faisabilité et de l'annexe PLU) ──
+// c.euro = {alt (m, IGN), vent (zone 1-4), neige (région A1…E), cat (catégorie de terrain), h (hauteur du bâtiment, m),
+// ventSrc / neigeSrc : 'manuel' ou 'memo'}. Les zones de vent et de neige par commune ne sont pas en données ouvertes (tables
+// AFNOR) : elles sont choisies à la main une fois par commune, puis mémorisées (DB.reglages.zonesCommunes[insee]) et reprises
+// pour les autres dossiers de la même commune. Altitude : API altimétrie de l'IGN (CORS autorisé). Calculs indicatifs.
+var EURO_MENTION='Données indicatives (Eurocodes NF EN 1991-1-3 et 1991-1-4 avec annexes nationales, RE2020), à confirmer par le bureau d\'études structure et thermique.';
+var VENT_VB={'1':22,'2':24,'3':26,'4':28};
+var NEIGE_SK={A1:[45,0],A2:[45,100],B1:[55,100],B2:[55,135],C1:[65,100],C2:[65,135],D:[90,180],E:[140,0]}; // [sk à 200 m, sAd] en centièmes de kN/m²
+var CAT_TERRAIN=[['0','0 — mer, lac, bord de mer',.005,1],['II','II — rase campagne, peu d\'obstacles',.05,2],['IIIa','IIIa — campagne avec haies, vergers, petits bois',.2,5],['IIIb','IIIb — village, zone industrielle, forêt',.5,9],['IV','IV — zone urbaine dense (15 % de la surface bâtie, hauteur moyenne > 15 m)',1,15]];
+var RE2020_ZONES={H1a:'02 14 27 59 60 61 62 75 76 77 78 80 91 92 93 95',H1b:'08 10 45 51 52 54 55 57 58 67 68 70 88 89 90',
+  H1c:'01 03 05 15 19 21 23 25 38 39 42 43 63 69 71 73 74 87',H2a:'22 29 35 50 56',H2b:'16 17 18 28 36 37 41 44 49 53 72 79 85 86',
+  H2c:'09 12 24 31 32 33 40 46 47 64 65 81 82',H2d:'04 07 26 48 84',H3:'06 11 13 30 34 66 83 2A 2B'};
+var DLUBAL_VENT='https://www.dlubal.com/fr/zones-de-neige-de-vent-et-de-sismicite/vent-nf-en-1991-1-4.html',DLUBAL_NEIGE='https://www.dlubal.com/fr/zones-de-neige-de-vent-et-de-sismicite/neige-nf-en-1991-1-3.html';
+function depDe(insee){insee=String(insee||'');return /^97/.test(insee)?insee.slice(0,3):insee.slice(0,2);}
+function zoneRE2020(insee){var d=depDe(insee);for(var z in RE2020_ZONES)if((' '+RE2020_ZONES[z]+' ').indexOf(' '+d+' ')>=0)return z;return '';}
+function classeAlt(a){return a===null||a===undefined?'':a<=400?'altitude ≤ 400 m':a<=800?'altitude de 400 à 800 m':'altitude > 800 m';}
+function nb2(x){return String(Math.round(x*100)/100).replace('.',',');}function kn(x){return x.toFixed(2).replace('.',',');}
+// Charge de neige caractéristique au sol à l'altitude A (kN/m²) : sk(200 m) + correction d'altitude de l'annexe nationale
+function neigeSk(reg,a){var r=NEIGE_SK[reg];if(!r)return null;var sk=r[0]/100,d=0;a=a||0;
+  if(reg==='E'){if(a>200&&a<=500)d=1.5*a/1000-.30;else if(a>500&&a<=1000)d=3.5*a/1000-1.30;else if(a>1000)d=7*a/1000-4.80;}
+  else{if(a>200&&a<=500)d=a/1000-.20;else if(a>500&&a<=1000)d=1.5*a/1000-.45;else if(a>1000)d=3.5*a/1000-2.45;}
+  return {sk:sk+Math.max(0,d),sk200:sk,sad:r[1]/100};}
+// Pression dynamique de pointe qp(z) (Pa) : relief plat (co = 1), cdir = cseason = 1, kl de l'annexe nationale française
+function ventQp(zone,cat,h){var vb=VENT_VB[zone],t=CAT_TERRAIN.filter(function(x){return x[0]===cat;})[0];if(!vb||!t)return null;
+  var z0=t[2],z=Math.max(h||0,t[3]),kr=.19*Math.pow(z0/.05,.07),lz=Math.log(z/z0),vm=kr*lz*vb,kl=1-2e-4*Math.pow(Math.log10(z0)+3,6),iv=kl/lz;
+  return Math.round((1+7*iv)*.5*1.225*vm*vm);}
+function euroDe(c){
+  var f=faisaOk(c);if(!f)return null;var e=c.euro=c.euro||{},m=((DB.reglages||{}).zonesCommunes||{})[f.insee]||{};
+  ['vent','neige'].forEach(function(k){if(!e[k]&&m[k]){e[k]=m[k];e[k+'Src']='memo';}});
+  return e;
+}
+var euroAltEnCours={};
+function chercherAltitude(c){
+  var f=faisaOk(c);if(!f||!f.lon||euroAltEnCours[c.id])return Promise.resolve(false);var e=euroDe(c);
+  if(e.alt!==undefined&&e.altLon===f.lon&&e.altLat===f.lat)return Promise.resolve(false);
+  euroAltEnCours[c.id]=1;
+  return fetch('https://data.geopf.fr/altimetrie/1.0/calcul/alti/rest/elevation.json?lon='+f.lon+'&lat='+f.lat+'&resource=ign_rge_alti_wld&zonly=true')
+    .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();}).then(function(j){
+      var a=j&&j.elevations&&j.elevations[0];if(typeof a!=='number'||a<-500)return false;
+      e.alt=Math.round(a);e.altLon=f.lon;e.altLat=f.lat;c.upd=Date.now();if(c.plu)pluDepuisFaisa(c);sv();return true;
+    }).catch(function(){return false;}).then(function(x){delete euroAltEnCours[c.id];return x;});
+}
+function euroSet(champ,v){
+  var c=act,f=faisaOk(c);if(!f)return;var e=euroDe(c);
+  if(champ==='h'){var n=parseFloat(String(v).replace(',','.'));if(n>0)e.h=n;else delete e.h;}
+  else if(champ==='alt'){var a=parseFloat(String(v).replace(',','.'));if(isFinite(a)){e.alt=Math.round(a);e.altManuel=1;}}
+  else e[champ]=v;
+  if(champ==='vent'||champ==='neige'){e[champ+'Src']='manuel';DB.reglages=DB.reglages||{};var Z=DB.reglages.zonesCommunes=DB.reglages.zonesCommunes||{};
+    Z[f.insee]=Z[f.insee]||{};if(v)Z[f.insee][champ]=v;else delete Z[f.insee][champ];}
+  c.upd=Date.now();if(c.plu)pluDepuisFaisa(c);sv();renderFaisa();
+}
+// Texte de la section « Climat et Eurocodes » (étude et annexe PLU)
+function euroLignes(c){
+  var f=faisaOk(c),e=f&&euroDe(c);if(!e)return [];var L=[],a=e.alt,re=zoneRE2020(f.insee);
+  L.push('- Altitude du terrain : '+(a!==undefined?a+' m'+(e.altManuel?'':' (IGN)'):'à préciser'));
+  var vb=VENT_VB[e.vent],qp=ventQp(e.vent,e.cat||'IIIa',e.h||8);
+  L.push('- Vent (NF EN 1991-1-4/NA) : '+(vb?'zone '+e.vent+', vitesse de référence vb,0 = '+vb+' m/s'+(e.cat?' ; catégorie de terrain '+e.cat:'')+(qp?' ; pression de pointe qp ≈ '+kn(qp/1000)+' kN/m² à '+nb2(e.h||8)+' m'+(e.cat?'':' (catégorie IIIa par défaut)'):''):'zone à préciser'));
+  var sn=neigeSk(e.neige,a);
+  L.push('- Neige (NF EN 1991-1-3/NA) : '+(sn?'région '+e.neige+', charge au sol sk = '+kn(sn.sk)+' kN/m²'+(a!==undefined?' à '+a+' m':'')+(sn.sad?' ; charge exceptionnelle sAd = '+kn(sn.sad)+' kN/m²':''):'région à préciser'));
+  L.push('- Séisme (Eurocode 8) : '+(f.sismicite?'zone '+f.sismicite:'zone à vérifier (Géorisques indisponible)'));
+  if(re)L.push('- Zone climatique RE2020 : '+re+(a!==undefined?', '+classeAlt(a):''));
+  if(f.argile||f.radon)L.push('- '+[f.argile?'Retrait-gonflement des argiles : '+f.argile:'',f.radon?'potentiel radon : catégorie '+f.radon:''].filter(Boolean).join(' ; '));
+  L.push('! '+EURO_MENTION);
+  return L;
+}
+function euroHtml(c){
+  var f=faisaOk(c),e=euroDe(c),sel=function(ch,opts,v,vide){return '<select class="sd-inp" style="margin:0;width:auto;max-width:100%" onchange="euroSet(\''+ch+'\',this.value)"><option value="">'+vide+'</option>'+opts.map(function(o){return '<option value="'+o[0]+'"'+(o[0]===v?' selected':'')+'>'+esc(o[1])+'</option>';}).join('')+'</select>';};
+  var src=function(k){return e[k+'Src']==='memo'?' <i style="color:var(--txt3)">(repris d\'un autre dossier de '+esc(f.commune||'la commune')+')</i>':'';};
+  var h='<div class="euro-g">';
+  h+='<div>Altitude</div><div><input class="sd-inp" style="margin:0;width:90px" value="'+(e.alt!==undefined?e.alt:'')+'" placeholder="m" onchange="euroSet(\'alt\',this.value)"> m '+(e.alt!==undefined&&!e.altManuel?'<i style="color:var(--txt3)">(IGN)</i>':e.alt===undefined?'<i>recherche…</i>':'')+'</div>';
+  h+='<div>Zone de vent</div><div>'+sel('vent',[['1','Zone 1 (22 m/s)'],['2','Zone 2 (24 m/s)'],['3','Zone 3 (26 m/s)'],['4','Zone 4 (28 m/s)']],e.vent,'— à choisir —')+src('vent')+' <a class="lnk" href="'+DLUBAL_VENT+'" target="_blank" rel="noopener">carte des zones de vent</a></div>';
+  h+='<div>Catégorie de terrain</div><div>'+sel('cat',CAT_TERRAIN.map(function(x){return [x[0],x[1]];}),e.cat,'— à choisir (IIIa par défaut) —')+'</div>';
+  h+='<div>Hauteur du bâtiment</div><div><input class="sd-inp" style="margin:0;width:90px" value="'+(e.h?nb2(e.h):'')+'" placeholder="8" onchange="euroSet(\'h\',this.value)"> m</div>';
+  h+='<div>Région de neige</div><div>'+sel('neige',Object.keys(NEIGE_SK).map(function(k){return [k,'Région '+k];}),e.neige,'— à choisir —')+src('neige')+' <a class="lnk" href="'+DLUBAL_NEIGE+'" target="_blank" rel="noopener">carte des régions de neige</a></div>';
+  h+='</div><ul class="faisa-ul" style="margin-top:6px">'+euroLignes(c).filter(function(l){return l.charAt(0)==='-';}).map(function(l){return '<li>'+esc(l.replace(/^-\s*/,''))+'</li>';}).join('')+'</ul>';
+  h+='<div class="rel-note">Les zones de vent et de neige ne sont pas publiées en données ouvertes : choisissez-les une fois pour la commune (cartes gratuites Dlubal) ; elles seront reprises pour les autres dossiers de '+esc(f.commune||'cette commune')+'. Pression de pointe calculée pour un terrain plat (sans effet de relief).</div>';
+  return h+'<div class="faisa-mention" style="margin-top:4px">ⓘ '+esc(EURO_MENTION)+'</div>';
+}
 function renderFaisa(){
   var c=act,f=c.faisa,p=faisaParams(c),h='<div class="mn-ttl">🔎 Étude de faisabilité <span class="ctr-st">cadastre · PLU · risques</span></div>';
   h+='<div class="rel-note" style="margin-bottom:8px">Commune : <b>'+esc(p.commune||'—')+'</b>'+(p.insee?' ('+p.insee+')':'')+' · parcelle(s) lue(s) : <b>'+(p.refs.map(function(x){return x.section+' '+x.numero;}).join(', ')||'—')+'</b> <i>(depuis « '+esc(c.cad||'')+' »)</i></div>';
@@ -2503,6 +2584,8 @@ function renderFaisa(){
     if(comp.length)h+='<div style="margin-top:4px">'+comp.join(' · ')+'</div>';
     h+='</div>';
     if((f.avert||[]).length)h+='<div class="gen-al">'+f.avert.map(esc).join('<br>')+'</div>';
+    h+='<div class="sec-lbl">Climat et Eurocodes</div><div class="faisa-bloc">'+euroHtml(c)+'</div>';
+    if(euroDe(c).alt===undefined)chercherAltitude(c).then(function(ok){var m=document.getElementById('m-faisa');if(ok&&act===c&&m&&m.classList.contains('open'))renderFaisa();});
     h+='<div class="sec-lbl">Taxe d\'aménagement — taux votés</div><div class="faisa-bloc">'+(c.taTaux?tauxTAHtml(c):'<i>Recherche en cours ou indisponible.</i>')+'<a class="lnk" onclick="btnTauxTA()">↻ Rechercher les taux</a></div>';
     if(f.depuisAdresse)h+='<div class="rel-note">Position établie d\'après l\'adresse « '+esc(f.depuisAdresse)+' » (parcelle introuvable).</div>';
     if(f.lon)h+='<div class="rel-note" style="margin-top:6px">Voir sur une carte : <a class="lnk" href="https://www.geoportail-urbanisme.gouv.fr/map/#tile=1&lon='+f.lon+'&lat='+f.lat+'&zoom=17" target="_blank" rel="noopener">Géoportail de l\'Urbanisme</a> · <a class="lnk" href="'+escA(f.georisquesUrl||'https://www.georisques.gouv.fr/mes-risques/connaitre-les-risques-pres-de-chez-moi')+'" target="_blank" rel="noopener">Géorisques</a> · <a class="lnk" href="https://www.geoportail.gouv.fr/carte?c='+f.lon+','+f.lat+'&z=18&l0=CADASTRALPARCELS.PARCELLAIRE_EXPRESS::GEOPORTAIL:OGC:WMTS(1)&permalink=yes" target="_blank" rel="noopener">Cadastre</a></div>';
@@ -2597,11 +2680,13 @@ function openPlu(){
   if(!act.plu){act.plu={commune:'',lieudit:'',cad:'',contenance:'',doc:'',
     sections:[['Zonage — point déterminant',''],['Dispositions générales du règlement (communes à toutes les zones)',''],['Point à vérifier',''],['Synthèse','']].map(function(s){return {titre:s[0],texte:s[1]};})};ctrSave();}
   if(preremplirInfos(act))ctrSave();
-  var c0=act;chercherReglement(c0).then(function(ok){if(ok&&act===c0){pluDepuisFaisa(c0);var m=document.getElementById('m-plu');if(m&&m.classList.contains('open'))renderPlu();}});
+  var c0=act;chercherAltitude(c0).then(function(ok){if(ok&&act===c0){var m=document.getElementById('m-plu');if(m&&m.classList.contains('open'))renderPlu();}});
+  chercherReglement(c0).then(function(ok){if(ok&&act===c0){pluDepuisFaisa(c0);var m=document.getElementById('m-plu');if(m&&m.classList.contains('open'))renderPlu();}});
   renderPlu();showM('m-plu');
 }
 function pluSet(champ,v,i){var p=act&&act.plu;if(!p)return;
-  if(p.conflits){if(i===undefined)delete p.conflits[champ];else if(champ==='texte'&&i===pluSecZonage(p))delete p.conflits.zonage;}
+  if(p.conflits){if(i===undefined)delete p.conflits[champ];else if(champ==='texte'&&i===pluSecZonage(p))delete p.conflits.zonage;else if(champ==='texte'&&i===pluSecEuro(p,false))delete p.conflits.eurocodes;}
+  if(champ==='suppr'&&i!==undefined&&i===pluSecEuro(p,false)){p.sansEurocodes=1;if(p.conflits)delete p.conflits.eurocodes;} // section retirée : plus recréée
   if(i!==undefined){if(champ==='suppr')p.sections.splice(i,1);else p.sections[i][champ]=v;}
   else if(champ==='ajout')p.sections.push({titre:'Nouvelle section',texte:''});else p[champ]=v;
   ctrSave();if(i!==undefined&&champ!=='suppr')return;renderPlu();}
@@ -2618,12 +2703,14 @@ function renderPlu(){
 // d'urbanisme et texte de la section « Zonage » viennent de c.faisa. On retient la dernière valeur reprise (p.auto) :
 // un champ encore égal à celle-ci (ou vide) suit sa source ; un champ modifié à la main n'est jamais remplacé, et une
 // source qui le contredit ensuite est signalée (p.conflits), avec le choix « reprendre » ou « garder ma saisie » (p.ignore).
-var PLU_CHAMPS=[['commune','Commune'],['lieudit','Lieu-dit'],['cad','Référence cadastrale'],['contenance','Contenance'],['doc','Document d\'urbanisme'],['zonage','Zonage (texte)']];
+var PLU_CHAMPS=[['commune','Commune'],['lieudit','Lieu-dit'],['cad','Référence cadastrale'],['contenance','Contenance'],['doc','Document d\'urbanisme'],['zonage','Zonage (texte)'],['eurocodes','Climat et Eurocodes (texte)']];
+function pluSecEuro(p,creer){var S=p.sections=p.sections||[],i=S.findIndex(function(s){return /eurocode|climat/i.test(s.titre||'');});
+  if(i<0&&creer){var z=S.findIndex(function(s){return /zonage/i.test(s.titre||'');});i=z<0?0:z+1;S.splice(i,0,{titre:'Climat et Eurocodes',texte:''});}return i;}
 function sansAccents(x){return String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
 function lieuDitDe(adr){var m=/lieu[\s-]*dit\s*[:,]?\s*[«"“]?\s*([^,»"”\n]+)/i.exec(String(adr||''));return m?m[1].trim():'';}
 function pluSecZonage(p){var i=(p.sections||[]).findIndex(function(s){return /zonage/i.test(s.titre||'');});return i<0?0:i;}
-function pluLire(p,k){if(k!=='zonage')return p[k]||'';var s=(p.sections||[])[pluSecZonage(p)];return s?s.texte||'':'';}
-function pluEcrire(p,k,v){if(k!=='zonage'){p[k]=v;return;}p.sections=p.sections||[];if(!p.sections.length)p.sections.push({titre:'Zonage — point déterminant',texte:''});p.sections[pluSecZonage(p)].texte=v;}
+function pluLire(p,k){if(k==='eurocodes'){var j=pluSecEuro(p,false);return j<0?'':p.sections[j].texte||'';}if(k!=='zonage')return p[k]||'';var s=(p.sections||[])[pluSecZonage(p)];return s?s.texte||'':'';}
+function pluEcrire(p,k,v){if(k==='eurocodes'){p.sections[pluSecEuro(p,true)].texte=v;return;}if(k!=='zonage'){p[k]=v;return;}p.sections=p.sections||[];if(!p.sections.length)p.sections.push({titre:'Zonage — point déterminant',texte:''});p.sections[pluSecZonage(p)].texte=v;}
 function pluValeursEtude(c){
   var f=faisaOk(c),t=function(x){return String(x||'').trim();};
   var com=t(c.commune)||t(f&&f.commune),ins=f&&f.insee&&sansAccents(com)===sansAccents(f.commune)?f.insee:'';
@@ -2635,7 +2722,7 @@ function pluValeursEtude(c){
   var zon=f.rnu?'Le terrain est soumis au Règlement National d\'Urbanisme (RNU).':Z.length===1?'Le terrain est classé en zone '+Z[0].code+(lib(Z[0])&&lib(Z[0])!==Z[0].code?' ('+lib(Z[0])+')':'')+(f.document&&f.document.type?' du '+f.document.type:'')+'.':
     Z.length?'Le terrain est concerné par plusieurs zones'+(f.document&&f.document.type?' du '+f.document.type:'')+' :\n'+Z.map(function(z){return '- Zone '+z.code+(lib(z)&&lib(z)!==z.code?' : '+lib(z):'');}).join('\n'):'';
   var regl=pdfDirect((Z.filter(function(z){return pdfDirect(z.reglement);})[0]||{}).reglement)||f.reglementPdf||(Z.filter(function(z){return z.reglement;})[0]||{}).reglement;if(zon&&regl)zon+='\n- Règlement : '+regl;
-  V.doc=doc;V.zonage=zon;return V;
+  V.doc=doc;V.zonage=zon;V.eurocodes=c.plu&&c.plu.sansEurocodes?'':euroLignes(c).join('\n');return V;
 }
 function pluDepuisFaisa(c){
   var p=c.plu,V=pluValeursEtude(c);if(!p||!V)return false;
@@ -2657,7 +2744,7 @@ function pluBandeau(c){
   var p=c.plu,f=faisaOk(c),C=p.conflits||{},K=Object.keys(C);
   return (f?'<div class="dp-band">🔎 Pré-rempli par la fiche du dossier et l\'étude de faisabilité du '+dateFr(String(f.date||'').slice(0,10))+' : commune, lieu-dit, parcelles, contenance, document d\'urbanisme et zonage. Vous pouvez modifier ces champs : vos modifications ne seront jamais remplacées.</div>':
     '<div class="rel-note" style="margin-bottom:8px">Commune, lieu-dit, parcelles et contenance sont repris de la fiche du dossier (vos modifications ici ne seront jamais remplacées). Astuce : l\'étude de faisabilité (bouton 🔎 dans la fiche) ajoute le document d\'urbanisme et le zonage.</div>')+
-    K.map(function(k){var lib=(PLU_CHAMPS.find(function(x){return x[0]===k;})||[k,k])[1],srce=k==='doc'||k==='zonage'?'l\'étude de faisabilité indique':'la fiche du dossier indique';
+    K.map(function(k){var lib=(PLU_CHAMPS.find(function(x){return x[0]===k;})||[k,k])[1],srce=k==='doc'||k==='zonage'||k==='eurocodes'?'l\'étude de faisabilité indique':'la fiche du dossier indique';
       return '<div class="gen-al"><b>'+esc(lib)+'</b> : '+srce+' « '+esc(C[k]).replace(/\n/g,' / ')+' », différent de votre saisie « '+esc(pluLire(p,k)).replace(/\n/g,' / ')+' ».'+
         '<div class="ctr-bar" style="margin:4px 0 0"><button class="sml-btn" style="width:auto;margin:0" onclick="pluConflit(\''+k+'\',\'etude\')">Reprendre cette valeur</button><button class="sml-btn" style="width:auto;margin:0" onclick="pluConflit(\''+k+'\',\'garder\')">Garder ma saisie</button></div></div>';}).join('');
 }
