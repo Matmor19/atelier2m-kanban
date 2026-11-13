@@ -1,0 +1,114 @@
+/* A2M Construction — style du panneau (couleurs de l'Atelier 2M). Aucune ressource externe. */
+:root{
+  --or:#d4762a;--or-l:#e8943e;--or-d:#a85a1a;--or-dp:#7a3e10;
+  --bg:#f3efe9;--surface:#fff;--surface2:#faf7f3;
+  --txt:#231e18;--txt2:#5a5146;--txt3:#8c8275;
+  --brd:#e6ddd1;--brd2:#d6c6b1;
+  --red:#d42b2b;--green:#1f9d55;
+  --shadow:0 1px 2px rgba(60,40,20,.08),0 2px 8px rgba(60,40,20,.06);
+  --r:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);
+  font:13px/1.45 'Montserrat','Segoe UI',Arial,sans-serif}
+button,input,select{font:inherit;color:inherit}
+
+/* En-tête */
+.entete{display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--surface);
+  border-bottom:3px solid var(--or)}
+.marque{width:34px;height:34px;border-radius:8px;background:var(--or);color:#fff;font-weight:800;
+  display:grid;place-items:center;font-size:12px;letter-spacing:.5px}
+.entete h1{margin:0;font-size:15px;font-weight:700}
+.entete small{color:var(--txt3);font-size:11px}
+.apercu{margin-left:auto;font-size:10px;background:#fff4e6;color:var(--or-d);border:1px solid #f1cfa6;
+  padding:2px 6px;border-radius:20px}
+
+/* Onglets */
+nav{display:flex;gap:2px;padding:8px 8px 0;background:var(--surface);border-bottom:1px solid var(--brd);
+  position:sticky;top:0;z-index:2}
+nav button{flex:1;border:0;background:none;padding:8px 2px 9px;cursor:pointer;color:var(--txt2);
+  font-weight:600;font-size:12px;border-bottom:3px solid transparent}
+nav button:hover{color:var(--or-d)}
+nav button.actif{color:var(--or-d);border-bottom-color:var(--or)}
+nav .pastille{display:inline-block;min-width:16px;padding:0 4px;border-radius:8px;background:var(--or);
+  color:#fff;font-size:10px;margin-left:3px}
+
+main{padding:14px}
+section{display:none}
+section.actif{display:block}
+
+.carte{background:var(--surface);border:1px solid var(--brd);border-radius:var(--r);padding:12px;
+  margin-bottom:12px;box-shadow:var(--shadow)}
+.carte h2{margin:0 0 10px;font-size:13px;font-weight:700;color:var(--or-dp)}
+label.champ{display:block;margin-bottom:10px}
+label.champ>span{display:block;font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:3px}
+input[type=text],input[type=number],select{width:100%;padding:7px 9px;border:1px solid var(--brd2);
+  border-radius:7px;background:#fff}
+input:focus,select:focus{outline:2px solid var(--or-l);outline-offset:-1px;border-color:var(--or)}
+.ligne{display:flex;gap:8px}
+.ligne>*{flex:1}
+.unite{position:relative}
+.unite input{padding-right:30px}
+.unite::after{content:attr(data-u);position:absolute;right:9px;top:50%;transform:translateY(-50%);
+  color:var(--txt3);font-size:11px;pointer-events:none}
+
+/* Choix segmentés */
+.segments{display:flex;border:1px solid var(--brd2);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.segments button{flex:1;border:0;background:#fff;padding:7px 4px;cursor:pointer;font-size:12px;
+  font-weight:600;color:var(--txt2)}
+.segments button+button{border-left:1px solid var(--brd2)}
+.segments button.actif{background:var(--or);color:#fff}
+
+/* Boutons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--brd2);
+  background:#fff;border-radius:8px;padding:7px 12px;cursor:pointer;font-weight:600}
+.btn:hover{border-color:var(--or);color:var(--or-d)}
+.btn.principal{background:var(--or);border-color:var(--or);color:#fff;width:100%;padding:10px;font-size:14px}
+.btn.principal:hover{background:var(--or-d);color:#fff}
+.btn.petit{padding:3px 8px;font-size:11px}
+.btn.icone{padding:3px 7px;min-width:26px}
+.btn.danger:hover{border-color:var(--red);color:var(--red)}
+
+.aide{color:var(--txt2);font-size:12px;margin:8px 0 0;padding-left:16px}
+.aide li{margin:2px 0}
+kbd{background:var(--surface2);border:1px solid var(--brd2);border-bottom-width:2px;border-radius:4px;
+  padding:0 4px;font-size:11px}
+.note{font-size:11px;color:var(--txt3);margin-top:6px}
+.vide{text-align:center;color:var(--txt3);padding:26px 10px}
+.vide b{display:block;color:var(--txt2);font-size:14px;margin-bottom:4px}
+
+/* Schémas */
+.schema{display:block;width:100%;height:auto;background:var(--surface2);border:1px solid var(--brd);
+  border-radius:8px;margin-bottom:10px}
+
+/* Tableaux */
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.3px;color:var(--txt3);
+  font-weight:700;padding:4px 4px;border-bottom:1px solid var(--brd)}
+td{padding:4px;border-bottom:1px solid var(--brd);vertical-align:middle}
+td.n,th.n{text-align:right;white-space:nowrap}
+table input,table select{padding:4px 5px;font-size:12px}
+tr.total td{font-weight:700;border-bottom:0}
+
+.couleur{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid rgba(0,0,0,.15);
+  vertical-align:-2px;margin-right:5px}
+input[type=color]{width:34px;height:28px;padding:0 2px;border:1px solid var(--brd2);border-radius:6px;background:#fff}
+
+.chiffres{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.chiffres div{background:var(--surface);border:1px solid var(--brd);border-radius:var(--r);padding:8px;
+  text-align:center;box-shadow:var(--shadow)}
+.chiffres b{display:block;font-size:17px;color:var(--or-d)}
+.chiffres span{font-size:10.5px;color:var(--txt3)}
+
+.erreurs{background:#fdecec;border:1px solid #f3b8b8;color:#8f1d1d;border-radius:8px;padding:8px 10px;
+  margin-top:10px;font-size:12px}
+.erreurs ul{margin:4px 0 0;padding-left:16px}
+
+/* Message en bas */
+#toast{position:fixed;left:12px;right:12px;bottom:12px;background:var(--txt);color:#fff;padding:9px 12px;
+  border-radius:8px;font-size:12px;opacity:0;transform:translateY(10px);transition:.2s;pointer-events:none}
+#toast.vu{opacity:1;transform:none}
+#toast.erreur{background:var(--red)}
+table input[type=number]{-moz-appearance:textfield;appearance:textfield;min-width:44px;padding:4px}
+table input[type=number]::-webkit-inner-spin-button,table input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
+table td{padding:4px 3px}

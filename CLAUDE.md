@@ -179,6 +179,14 @@ choix mémorisé par appareil (`localStorage` `a2m_vue`). Sur ces écrans, la vu
 - **Confidentialité** : ne jamais enregistrer dans le dépôt de documents ou données de vrais clients
   (le dossier `public/` est en ligne). Pour les essais, utiliser des clients fictifs.
 
+## Extension SketchUp « A2M Construction » (`outils/sketchup/`)
+
+Extension SketchUp indépendante du Kanban (Ruby, 100 % locale) : murs multicouches, portes / fenêtres, métré CSV.
+Mode d'emploi et organisation du code : `outils/sketchup/LISEZMOI.md`. Calculs dans `plugin/a2m_construction/geo.rb`
+(sans SketchUp, en cm) ; tests `ruby outils/sketchup/tests/test_geo.rb` et `test_sketchup.rb` ; fichier d'installation
+fabriqué par `sh outils/sketchup/fabriquer_rbz.sh` dans `outils/sketchup/dist/`. Écrite de zéro : ne jamais y copier
+de fichiers d'extensions commerciales (ex. MUZWalls, dont la licence interdit l'analyse et la reproduction).
+
 ## Anciennes copies : NE PAS MODIFIER
 
 Ces fichiers et dossiers sont d'anciennes copies inutilisées :

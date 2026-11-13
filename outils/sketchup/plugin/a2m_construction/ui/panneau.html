@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>A2M Construction</title>
+<link rel="stylesheet" href="a2m.css">
+</head>
+<body>
+<header class="entete">
+  <div class="marque">A2M</div>
+  <div><h1>A2M Construction</h1><small id="version">Atelier 2M</small></div>
+  <span class="apercu" id="apercu" hidden>Aperçu hors SketchUp</span>
+</header>
+
+<nav id="onglets">
+  <button data-o="tracer" class="actif">Tracer</button>
+  <button data-o="ouverture">Ouverture</button>
+  <button data-o="mur">Mur <span class="pastille" id="nbSel" hidden></span></button>
+  <button data-o="metre">Métré</button>
+  <button data-o="types">Types</button>
+</nav>
+
+<main>
+  <!-- TRACER -->
+  <section id="o-tracer" class="actif">
+    <div class="carte">
+      <h2>Mur à tracer</h2>
+      <label class="champ"><span>Type de mur</span><select id="t-type"></select></label>
+      <svg id="t-schema" class="schema" viewBox="0 0 320 120" role="img" aria-label="Coupe du mur"></svg>
+      <span style="display:block;font-size:11px;font-weight:600;color:var(--txt2);margin-bottom:3px">Position du mur par rapport au trait</span>
+      <div class="segments" id="t-align">
+        <button data-v="droite">À droite</button>
+        <button data-v="centre">Centré</button>
+        <button data-v="gauche">À gauche</button>
+      </div>
+      <label class="champ"><span>Hauteur</span><div class="unite" data-u="cm"><input type="number" id="t-h" min="10" step="1"></div></label>
+      <button class="btn principal" id="t-go">✏️ Tracer des murs</button>
+      <ul class="aide">
+        <li>Cliquez les angles du mur, <kbd>Double-clic</kbd> ou <kbd>Entrée</kbd> pour finir.</li>
+        <li>Cliquez sur le 1er point pour <b>fermer</b> le contour (angles en onglet).</li>
+        <li>Tapez une longueur au clavier (ex. <kbd>450</kbd>) pour un mur exact.</li>
+        <li><kbd>Ctrl</kbd> change le côté du mur, <kbd>Échap</kbd> annule.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- OUVERTURE -->
+  <section id="o-ouverture">
+    <div class="carte">
+      <h2>Porte ou fenêtre à placer</h2>
+      <div class="segments" id="v-type">
+        <button data-v="porte">Porte</button>
+        <button data-v="fenetre">Fenêtre</button>
+        <button data-v="baie">Porte-fenêtre</button>
+      </div>
+      <svg id="v-schema" class="schema" viewBox="0 0 320 150" role="img" aria-label="Élévation de l'ouverture"></svg>
+      <div class="ligne">
+        <label class="champ"><span>Largeur</span><div class="unite" data-u="cm"><input type="number" id="v-l" min="11" step="1"></div></label>
+        <label class="champ"><span>Hauteur</span><div class="unite" data-u="cm"><input type="number" id="v-h" min="11" step="1"></div></label>
+        <label class="champ"><span>Allège</span><div class="unite" data-u="cm"><input type="number" id="v-a" min="0" step="1"></div></label>
+      </div>
+      <button class="btn principal" id="v-go">🪟 Placer dans un mur</button>
+      <ul class="aide">
+        <li>Survolez un mur A2M : le cadre <b style="color:var(--green)">vert</b> montre la position, <b style="color:var(--red)">rouge</b> s'il n'y a pas la place.</li>
+        <li>Le mur est découpé automatiquement, avec une menuiserie simple.</li>
+        <li><kbd>Ctrl</kbd> change de type pendant le placement.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- MUR SÉLECTIONNÉ -->
+  <section id="o-mur"><div id="m-contenu"></div></section>
+
+  <!-- MÉTRÉ -->
+  <section id="o-metre">
+    <div class="ligne" style="margin-bottom:12px">
+      <button class="btn" id="q-calc">↻ Recalculer</button>
+      <button class="btn" id="q-csv">⬇ Exporter en CSV (Excel)</button>
+    </div>
+    <div id="q-contenu"></div>
+  </section>
+
+  <!-- TYPES DE MURS -->
+  <section id="o-types">
+    <p class="note" style="margin-top:0">La 1re couche est du côté <b>droit</b> du sens de tracé : en traçant le contour dans le
+      sens inverse des aiguilles d'une montre, c'est le côté extérieur. Les murs déjà tracés ne changent pas.</p>
+    <div id="y-liste"></div>
+    <div class="ligne">
+      <button class="btn" id="y-ajout">＋ Nouveau type</button>
+      <button class="btn principal" id="y-save" style="width:auto">Enregistrer les types</button>
+    </div>
+  </section>
+</main>
+
+<div id="toast"></div>
+<script src="panneau.js"></script>
+</body>
+</html>
